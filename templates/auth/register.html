@@ -3,436 +3,488 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inscription - MediTrack Cameroun</title>
-    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>PharmaConnect · Inscription professionnelle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <style>
-        @font-face {
-            font-family: 'Goodly';
-            src: local('Goodly'), url('https://fonts.cdnfonts.com/css/goodly') format('woff2');
-            font-display: swap;
+        * { font-family: 'Inter', sans-serif; }
+        :root {
+            --blue-solid: #2C5F8A;
+            --green-solid: #2E8B57;
+            --gray-bg: #f0f4f9;
+            --error: #c9353e;
         }
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Ubuntu', sans-serif;
-            background: linear-gradient(135deg, #e0f2fe 0%, #bbdef5 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .container {
-            max-width: 800px;
-            width: 100%;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 35px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-        .header {
-            background: #1e3a8a;
-            padding: 25px;
-            text-align: center;
-        }
-        .header h1 {
-            font-family: 'Goodly', 'Ubuntu', sans-serif;
-            color: white;
-            font-size: 28px;
-        }
-        .header p {
-            color: #e0f2fe;
-            margin-top: 8px;
-        }
-        .steps {
-            display: flex;
-            background: #f8fafc;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .step {
-            flex: 1;
-            text-align: center;
-            padding: 15px 5px;
-            font-weight: 500;
-            color: #64748b;
-            background: #f1f5f9;
-            transition: all 0.2s;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        .step.active {
-            background: white;
-            color: #1e3a8a;
-            border-bottom: 3px solid #10b981;
-        }
-        .step.completed {
-            background: #10b98120;
-            color: #10b981;
-        }
-        .step-number {
-            display: inline-block;
-            width: 28px;
-            height: 28px;
-            line-height: 28px;
-            border-radius: 50%;
-            background: #cbd5e1;
-            color: white;
-            margin-right: 8px;
-            font-size: 14px;
-        }
-        .step.active .step-number {
-            background: #1e3a8a;
-        }
-        .step.completed .step-number {
-            background: #10b981;
-        }
-        .form-container {
-            padding: 30px;
-        }
-        .step-form {
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-        .step-form.active-step {
-            display: block;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            font-weight: 500;
-            margin-bottom: 8px;
-            color: #0f172a;
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #cbd5e1;
-            border-radius: 12px;
-            font-family: 'Ubuntu', sans-serif;
-            font-size: 15px;
-            transition: all 0.2s;
-        }
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #10b981;
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
-        }
-        .radio-group {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .radio-group label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: normal;
-            cursor: pointer;
-        }
-        .radio-group input {
-            width: auto;
-        }
-        button {
-            background: #1e3a8a;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 40px;
-            font-family: 'Ubuntu', sans-serif;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        button:hover {
-            background: #0f2b6d;
-            transform: translateY(-2px);
-        }
-        .btn-next, .btn-submit {
-            background: #10b981;
-        }
-        .btn-next:hover, .btn-submit:hover {
-            background: #0d9a6e;
-        }
-        .btn-prev {
-            background: #94a3b8;
-            margin-right: 10px;
-        }
-        .btn-prev:hover {
-            background: #64748b;
-        }
-        .flex-buttons {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 30px;
-        }
-        .alert {
-            padding: 12px 15px;
-            border-radius: 12px;
-            margin-bottom: 15px;
-        }
-        .alert-danger {
-            background: #fee2e2;
-            color: #b91c1c;
-            border-left: 4px solid #dc2626;
-        }
-        .alert-success {
-            background: #d1fae5;
-            color: #065f46;
-            border-left: 4px solid #10b981;
-        }
-        @media (max-width: 640px) {
-            .step span:not(.step-number) { display: none; }
-            .step .step-number { margin-right: 0; }
-        }
+        body { background: linear-gradient(135deg, #e8f0fe 0%, #e0f2e9 100%); }
+        .step-panel { transition: all 0.2s ease; }
+        .step-circle.active { background: var(--blue-solid) !important; color: white; box-shadow: 0 0 0 3px rgba(44,95,138,0.2); }
+        .step-circle.completed { background: var(--green-solid) !important; color: white; }
+        .upload-area { transition: all 0.2s; }
+        .upload-area.drag-over { border-color: var(--blue-solid); background: #e3f0fd; }
+        .error-message { color: var(--error); font-size: 0.7rem; margin-top: 4px; }
+        input.error, select.error { border-color: var(--error); }
+        .btn-primary { background: var(--blue-solid); }
+        .btn-primary:hover { background: #1f4a6e; }
+        .btn-geo { background: var(--blue-solid); }
+        .btn-geo.success { background: var(--green-solid); }
     </style>
 </head>
-<body>
-<div class="container">
-    <div class="header">
-        <h1>MediTrack Cameroun</h1>
-        <p>Inscription sécurisée</p>
-    </div>
+<body class="antialiased">
 
-    <div class="steps">
-        <div class="step active" data-step="1"><span class="step-number">1</span> <span>Identité</span></div>
-        <div class="step" data-step="2"><span class="step-number">2</span> <span>Coordonnées</span></div>
-        <div class="step" data-step="3"><span class="step-number">3</span> <span>Rôle</span></div>
-        <div class="step" data-step="4" id="pharmacy-step" style="display:none;"><span class="step-number">4</span> <span>Pharmacie</span></div>
-    </div>
+<div class="min-h-screen flex items-center justify-center py-10 px-4">
+    <div class="w-full max-w-4xl bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden border border-white/30">
 
-    <div class="form-container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+        <!-- En-tête -->
+        <div class="bg-gradient-to-r from-[#2C5F8A] to-[#2E8B57] px-6 py-5 text-white text-center">
+            <div class="inline-flex bg-white/20 rounded-full p-2 mb-2"><i class="fas fa-prescription-bottle-medical text-2xl"></i></div>
+            <h1 class="text-2xl font-bold">Créer un compte PharmaConnect</h1>
+            <p class="text-emerald-100 text-sm">Cameroun · Santé connectée</p>
+        </div>
 
-        <form method="POST" action="{{ url_for('main.register') }}" id="multiStepForm">
-            <!-- Étape 1 : identité -->
-            <div class="step-form active-step" data-step="1">
-                <h3 style="color:#1e3a8a; margin-bottom:20px;">Qui êtes-vous ?</h3>
-                <div class="form-group">
-                    <label>Nom complet *</label>
-                    <input type="text" name="full_name" required placeholder="Jean Dupont">
-                </div>
-                <div class="form-group">
-                    <label>Email *</label>
-                    <input type="email" name="email" required placeholder="jean@exemple.com">
-                </div>
-                <div class="form-group">
-                    <label>Téléphone *</label>
-                    <input type="tel" name="phone" required placeholder="+237 6XX XXX XXX">
-                </div>
-                <div class="form-group">
-                    <label>Mot de passe *</label>
-                    <input type="password" name="password" required placeholder="••••••••">
-                </div>
-            </div>
+        <!-- Barre de progression -->
+        <div class="h-1 bg-gray-200"><div id="progressFill" class="h-full bg-green-600 transition-all duration-300 w-0"></div></div>
 
-            <!-- Étape 2 : coordonnées -->
-            <div class="step-form" data-step="2">
-                <h3 style="color:#1e3a8a; margin-bottom:20px;">Où nous joindre ?</h3>
-                <div class="form-group">
-                    <label>Adresse (optionnel)</label>
-                    <input type="text" name="address" placeholder="Votre adresse">
-                </div>
-                <div class="form-group">
-                    <label>Ville</label>
-                    <input type="text" name="city" placeholder="Douala, Yaoundé...">
-                </div>
-            </div>
+        <!-- Indicateurs d’étape -->
+        <div class="flex justify-between px-6 pt-6 pb-2 border-b border-gray-100" id="stepIndicators">
+            <div class="step-item flex-1 text-center cursor-pointer" data-step="0"><div class="step-circle w-8 h-8 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center mx-auto text-sm font-bold">1</div><span class="text-xs mt-1 block">Rôle</span></div>
+            <div class="step-item flex-1 text-center cursor-pointer" data-step="1"><div class="step-circle w-8 h-8 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center mx-auto text-sm font-bold">2</div><span class="text-xs mt-1 block">Identité</span></div>
+            <div class="step-item flex-1 text-center cursor-pointer" data-step="2"><div class="step-circle w-8 h-8 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center mx-auto text-sm font-bold">3</div><span class="text-xs mt-1 block">Accès</span></div>
+            <div class="step-item flex-1 text-center cursor-pointer" data-step="3"><div class="step-circle w-8 h-8 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center mx-auto text-sm font-bold">4</div><span class="text-xs mt-1 block">Documents</span></div>
+            <div class="step-item flex-1 text-center cursor-pointer" data-step="4"><div class="step-circle w-8 h-8 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center mx-auto text-sm font-bold">5</div><span class="text-xs mt-1 block">Confirmation</span></div>
+        </div>
 
-            <!-- Étape 3 : rôle -->
-            <div class="step-form" data-step="3">
-                <h3 style="color:#1e3a8a; margin-bottom:20px;">Choisissez votre profil</h3>
-                <div class="form-group">
-                    <div class="radio-group">
-                        <label><input type="radio" name="role" value="patient" required> Patient</label>
-                        <label><input type="radio" name="role" value="pharmacien" id="pharmacienRadio"> Pharmacien</label>
-                        <label><input type="radio" name="role" value="admin"> Administrateur</label>
+        <!-- Contenu des étapes -->
+        <div class="p-6 md:p-8">
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div id="flashContainer">
+                    {% for category, message in messages %}
+                        <div class="mb-4 p-3 rounded-xl text-sm flex items-center gap-2 {% if category == 'danger' %}bg-red-50 text-red-700 border-l-4 border-red-500{% else %}bg-green-50 text-green-700 border-l-4 border-green-500{% endif %}">
+                            <i class="fas {% if category == 'danger' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %}"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <div id="stepPanels">
+                <!-- Étape 0 : Rôle -->
+                <div class="step-panel" data-step="0">
+                    <div class="bg-blue-50 p-4 rounded-xl text-blue-800 text-sm flex gap-2 mb-6"><i class="fas fa-info-circle mt-0.5"></i> Sélectionnez le profil correspondant à votre activité. Ce choix détermine les champs et documents requis.</div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" id="roleSelector">
+                        <label class="role-option border rounded-xl p-3 text-center cursor-pointer transition hover:shadow-md" data-role="patient">
+                            <input type="radio" name="role" value="patient" class="hidden peer" checked>
+                            <i class="fas fa-user text-2xl text-blue-600"></i>
+                            <div class="font-semibold mt-1">Patient</div>
+                        </label>
+                        <label class="role-option border rounded-xl p-3 text-center cursor-pointer transition hover:shadow-md" data-role="pharmacien">
+                            <input type="radio" name="role" value="pharmacien" class="hidden peer">
+                            <i class="fas fa-store text-2xl text-blue-600"></i>
+                            <div class="font-semibold mt-1">Pharmacien</div>
+                        </label>
+                        <label class="role-option border rounded-xl p-3 text-center cursor-pointer transition hover:shadow-md" data-role="admin">
+                            <input type="radio" name="role" value="admin" class="hidden peer">
+                            <i class="fas fa-user-shield text-2xl text-blue-600"></i>
+                            <div class="font-semibold mt-1">Admin CSU</div>
+                        </label>
+                        <label class="role-option border rounded-xl p-3 text-center cursor-pointer transition hover:shadow-md" data-role="grossiste">
+                            <input type="radio" name="role" value="grossiste" class="hidden peer">
+                            <i class="fas fa-truck text-2xl text-blue-600"></i>
+                            <div class="font-semibold mt-1">Grossiste</div>
+                        </label>
+                    </div>
+                    <div class="text-sm text-gray-500 italic" id="roleDescription"><i class="fas fa-comment-dots mr-1"></i> Accès aux soins et suivi médical.</div>
+                    <div class="mt-8 flex justify-end"><button class="nextStepBtn btn-primary px-6 py-2 rounded-full text-white font-semibold flex items-center gap-2">Continuer <i class="fas fa-arrow-right"></i></button></div>
+                </div>
+
+                <!-- Étape 1 : Identité (remplie dynamiquement) -->
+                <div class="step-panel hidden" data-step="1">
+                    <div id="identityFields"></div>
+                    <div id="identityErrors" class="error-message mt-2"></div>
+                    <div class="flex justify-between mt-8">
+                        <button class="prevStepBtn bg-gray-200 px-5 py-2 rounded-full text-gray-700"><i class="fas fa-arrow-left"></i> Retour</button>
+                        <button class="nextStepBtn btn-primary px-6 py-2 rounded-full text-white">Continuer <i class="fas fa-arrow-right"></i></button>
                     </div>
                 </div>
-                <div id="infoPatient" style="background:#f1f5f9; padding:15px; border-radius:16px;">
-                    <p>✅ En tant que patient, vous pourrez rechercher des médicaments, scanner des QR codes et localiser les pharmacies.</p>
-                </div>
-            </div>
 
-            <!-- Étape 4 : informations pharmacie (cachée par défaut) -->
-            <div class="step-form" data-step="4">
-                <h3 style="color:#1e3a8a; margin-bottom:20px;">Votre officine</h3>
-                <div class="form-group">
-                    <label>Nom de la pharmacie *</label>
-                    <input type="text" name="pharmacy_name" id="pharmacy_name">
+                <!-- Étape 2 : Accès -->
+                <div class="step-panel hidden" data-step="2">
+                    <div class="space-y-5">
+                        <div class="relative"><label class="block text-sm font-semibold">Email *</label><i class="fas fa-envelope absolute left-3 top-9 text-gray-400"></i><input type="email" id="email" class="w-full border rounded-xl pl-10 pr-3 py-2"></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label>Mot de passe *</label><div class="relative"><input type="password" id="pwd" class="w-full border rounded-xl px-3 py-2"><button class="togglePwd absolute right-2 top-2 text-gray-500" data-target="pwd"><i class="far fa-eye-slash"></i></button></div><div class="h-1 w-full bg-gray-200 mt-1 rounded"><div id="strengthFill" class="h-full rounded transition-all w-0 bg-red-500"></div></div><div id="pwdError" class="error-message"></div></div>
+                            <div><label>Confirmer *</label><div class="relative"><input type="password" id="cpwd" class="w-full border rounded-xl px-3 py-2"><button class="togglePwd absolute right-2 top-2 text-gray-500" data-target="cpwd"><i class="far fa-eye-slash"></i></button></div><div id="matchIndicator" class="text-xs mt-1"></div></div>
+                        </div>
+                    </div>
+                    <div id="accessErrors" class="error-message mt-3"></div>
+                    <div class="flex justify-between mt-8">
+                        <button class="prevStepBtn bg-gray-200 px-5 py-2 rounded-full text-gray-700">Retour</button>
+                        <button class="nextStepBtn btn-primary px-6 py-2 rounded-full text-white">Continuer</button>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Numéro de licence *</label>
-                    <input type="text" name="license_number" id="license_number">
-                </div>
-                <div class="form-group">
-                    <label>Adresse</label>
-                    <input type="text" name="pharmacy_address" id="pharmacy_address">
-                </div>
-                <div class="form-group">
-                    <label>Ville</label>
-                    <input type="text" name="pharmacy_city" id="pharmacy_city">
-                </div>
-                <div class="form-group">
-                    <label>Téléphone</label>
-                    <input type="tel" name="pharmacy_phone" id="pharmacy_phone">
-                </div>
-                <div class="form-group">
-                    <label>Email professionnel</label>
-                    <input type="email" name="pharmacy_email" id="pharmacy_email">
-                </div>
-            </div>
 
-            <div class="flex-buttons">
-                <button type="button" id="prevBtn" class="btn-prev" style="display:none;">◀ Précédent</button>
-                <button type="button" id="nextBtn" class="btn-next">Suivant ▶</button>
-                <button type="submit" id="submitBtn" class="btn-submit" style="display:none;">S'inscrire</button>
+                <!-- Étape 3 : Documents -->
+                <div class="step-panel hidden" data-step="3">
+                    <div id="documentsContainer"></div>
+                    <div id="documentsErrors" class="error-message mt-3"></div>
+                    <div class="flex justify-between mt-8">
+                        <button class="prevStepBtn bg-gray-200 px-5 py-2 rounded-full text-gray-700">Retour</button>
+                        <button id="submitFinalBtn" class="btn-primary px-6 py-2 rounded-full text-white">Soumettre la demande <i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+
+                <!-- Étape 4 : Succès -->
+                <div class="step-panel hidden" data-step="4">
+                    <div class="text-center py-6">
+                        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fas fa-check-circle text-green-600 text-4xl"></i></div>
+                        <h2 class="text-2xl font-bold">Compte créé !</h2>
+                        <p class="text-gray-600 mt-2" id="successMessage">Un email de vérification vous a été envoyé.</p>
+                        <div class="bg-gray-100 rounded-full px-4 py-2 inline-block mt-4 font-mono" id="uidDisplay"></div>
+                        <div class="mt-6"><a href="{{ url_for('main.login') }}" class="bg-blue-600 text-white px-6 py-2 rounded-full inline-block">Se connecter</a></div>
+                    </div>
+                </div>
             </div>
-        </form>
+        </div>
     </div>
 </div>
 
 <script>
-    let currentStep = 1;
-    const pharmacienRadio = document.getElementById('pharmacienRadio');
-    const pharmacyStep = document.getElementById('pharmacy-step');
-    const stepForms = document.querySelectorAll('.step-form');
-    const stepIndicators = document.querySelectorAll('.step');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const submitBtn = document.getElementById('submitBtn');
-
-    function updateSteps() {
-        let isPharmacien = pharmacienRadio && pharmacienRadio.checked;
-        let maxStep = isPharmacien ? 4 : 3;
-        // Afficher/masquer l'étape 4 dans l'indicateur
-        if (isPharmacien) pharmacyStep.style.display = 'flex';
-        else pharmacyStep.style.display = 'none';
-
-        if (currentStep > maxStep) currentStep = maxStep;
-
-        stepForms.forEach(form => form.classList.remove('active-step'));
-        stepIndicators.forEach(ind => ind.classList.remove('active', 'completed'));
-
-        const activeForm = document.querySelector(`.step-form[data-step="${currentStep}"]`);
-        if (activeForm) activeForm.classList.add('active-step');
-        const activeIndicator = document.querySelector(`.step[data-step="${currentStep}"]`);
-        if (activeIndicator) activeIndicator.classList.add('active');
-
-        for (let i = 1; i < currentStep; i++) {
-            const compInd = document.querySelector(`.step[data-step="${i}"]`);
-            if (compInd) compInd.classList.add('completed');
+    // ---------- Configuration des rôles ----------
+    const roleTemplates = {
+        patient: {
+            fields: `
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div><label>Prénom *</label><input type="text" id="prenom" class="w-full border rounded-xl p-2"></div>
+                    <div><label>Nom *</label><input type="text" id="nom" class="w-full border rounded-xl p-2"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div><label>Date naissance *</label><input type="date" id="dateNaissance" class="w-full border rounded-xl p-2"></div>
+                    <div><label>Sexe *</label><select id="sexe" class="w-full border rounded-xl p-2"><option>Homme</option><option>Femme</option></select></div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div><label>Téléphone *</label><input type="tel" id="telephone" placeholder="+237 6XXXXXXXX" class="w-full border rounded-xl p-2"></div>
+                    <div><label>CNI / Passeport *</label><input type="text" id="cni" class="w-full border rounded-xl p-2"></div>
+                </div>
+                <div><label>Localisation</label><div class="flex gap-2"><input type="text" id="geoInput" readonly class="flex-1 border rounded-xl p-2 bg-gray-50"><button type="button" id="geoBtn" class="btn-geo text-white px-3 rounded-xl"><i class="fas fa-crosshairs"></i> Me géolocaliser</button></div><div id="geoStatus" class="text-xs text-gray-500 mt-1"></div></div>
+                <div><label>Région *</label><select id="region" class="w-full border rounded-xl p-2 mt-2"><option value="">Sélectionnez</option><option>Adamaoua</option><option>Centre</option><option>Littoral</option><option>Nord</option><option>Extrême-Nord</option><option>Ouest</option><option>Sud</option><option>Sud-Ouest</option></select></div>
+            `,
+            docs: `<div class="notice-box bg-blue-50 p-3 rounded-lg text-sm mb-4"><i class="fas fa-info-circle"></i> CNI ou passeport obligatoire</div>
+                   <div class="upload-area border-dashed border-2 p-4 text-center rounded-xl cursor-pointer" data-doc="cni"><i class="fas fa-cloud-upload-alt text-2xl"></i><div class="text-sm mt-1">Cliquez ou glissez votre CNI (PDF/JPG)</div><input type="file" class="hidden" accept=".pdf,.jpg,.png"></div>
+                   <div class="file-list mt-2" data-list="cni"></div>
+                   <label class="flex items-center gap-2 mt-4"><input type="checkbox" id="acceptTerms"> J'accepte les conditions d'utilisation</label>`,
+            requiredDocs: ['cni']
+        },
+        pharmacien: {
+            fields: `
+                <div><label>Nom de la pharmacie *</label><input type="text" id="nomPharmacie" class="w-full border rounded-xl p-2 mb-4"></div>
+                <div><label>Pharmacien titulaire *</label><input type="text" id="pharmacien" class="w-full border rounded-xl p-2 mb-4"></div>
+                <div><label>N° ONPC *</label><input type="text" id="ordreOnpc" placeholder="ONPC-XXXX" class="w-full border rounded-xl p-2 mb-4"></div>
+                <div><label>Téléphone *</label><input type="tel" id="telephone" class="w-full border rounded-xl p-2 mb-4"></div>
+                <div><label>Localisation</label><div class="flex gap-2"><input type="text" id="geoInput" readonly class="flex-1 border rounded-xl p-2 bg-gray-50"><button type="button" id="geoBtn" class="btn-geo text-white px-3 rounded-xl"><i class="fas fa-crosshairs"></i> Me géolocaliser</button></div><div id="geoStatus" class="text-xs text-gray-500 mt-1"></div></div>
+                <div><label>Région *</label><select id="region" class="w-full border rounded-xl p-2 mt-2"><option>Adamaoua</option><option>Centre</option><option>Littoral</option></select></div>
+            `,
+            docs: `<div class="notice-box bg-orange-50 p-3 rounded-lg text-sm mb-4"><i class="fas fa-exclamation-triangle"></i> Documents obligatoires : licence, diplôme, CNI</div>
+                   ${docUpload('Licence d’exploitation', 'licence')}
+                   ${docUpload('Diplôme du titulaire', 'diplome')}
+                   ${docUpload('CNI du titulaire', 'cniPh')}
+                   <label class="flex items-center gap-2 mt-4"><input type="checkbox" id="acceptTerms"> Je certifie l'exactitude des informations</label>`,
+            requiredDocs: ['licence', 'diplome', 'cniPh']
+        },
+        admin: {
+            fields: `<div><label>Direction *</label><input type="text" id="direction" class="w-full border rounded-xl p-2 mb-4"></div>
+                     <div><label>Nom complet *</label><input type="text" id="nom" class="w-full border rounded-xl p-2 mb-4"></div>
+                     <div><label>Matricule *</label><input type="text" id="matricule" class="w-full border rounded-xl p-2 mb-4"></div>
+                     <div><label>Téléphone *</label><input type="tel" id="telephone" class="w-full border rounded-xl p-2 mb-4"></div>
+                     <div><label>Localisation</label><div class="flex gap-2"><input type="text" id="geoInput" readonly class="flex-1 border rounded-xl p-2 bg-gray-50"><button id="geoBtn" class="btn-geo text-white px-3 rounded-xl"><i class="fas fa-crosshairs"></i> Me géolocaliser</button></div></div>`,
+            docs: `<div class="notice-box bg-blue-50 p-3 rounded-lg">Lettre de mission + CNI</div>
+                   ${docUpload('Lettre de mission', 'lettre')}
+                   ${docUpload('CNI', 'cniAdmin')}
+                   <label><input type="checkbox" id="acceptTerms"> Je respecte les directives</label>`,
+            requiredDocs: ['lettre', 'cniAdmin']
+        },
+        grossiste: {
+            fields: `<div><label>Nom de l’entreprise *</label><input type="text" id="entreprise" class="w-full border rounded-xl p-2 mb-4"></div>
+                     <div><label>Représentant légal *</label><input type="text" id="representant" class="w-full border rounded-xl p-2 mb-4"></div>
+                     <div><label>Téléphone *</label><input type="tel" id="telephone" class="w-full border rounded-xl p-2 mb-4"></div>
+                     <div><label>Localisation</label><div class="flex gap-2"><input type="text" id="geoInput" readonly class="flex-1 border rounded-xl p-2 bg-gray-50"><button id="geoBtn" class="btn-geo text-white px-3 rounded-xl"><i class="fas fa-crosshairs"></i> Me géolocaliser</button></div></div>`,
+            docs: `<div class="notice-box">Statuts + RCCM + CNI représentant</div>
+                   ${docUpload('Statuts', 'statuts')}
+                   ${docUpload('RCCM', 'rccm')}
+                   ${docUpload('CNI représentant', 'cniRep')}
+                   <label><input type="checkbox" id="acceptTerms"> J'accepte les conditions</label>`,
+            requiredDocs: ['statuts', 'rccm', 'cniRep']
         }
+    };
 
-        prevBtn.style.display = currentStep === 1 ? 'none' : 'inline-block';
-        if (currentStep === maxStep) {
-            nextBtn.style.display = 'none';
-            submitBtn.style.display = 'inline-block';
-        } else {
-            nextBtn.style.display = 'inline-block';
-            submitBtn.style.display = 'none';
-        }
+    function docUpload(label, id) {
+        return `<div class="mb-4"><label>${label}</label><div class="upload-area border-dashed border-2 p-3 text-center rounded-xl cursor-pointer" data-doc="${id}"><i class="fas fa-cloud-upload-alt text-xl"></i><div class="text-xs">Cliquez ou glissez</div><input type="file" class="hidden" accept=".pdf,.jpg,.png"></div><div class="file-list" data-list="${id}"></div></div>`;
     }
 
-    function validateStep(step) {
-        const stepDiv = document.querySelector(`.step-form[data-step="${step}"]`);
-        const required = stepDiv.querySelectorAll('[required]');
-        for (let inp of required) {
-            if (!inp.value.trim()) {
-                alert("Veuillez remplir tous les champs obligatoires.");
-                inp.focus();
-                return false;
-            }
-        }
-        if (step === 1) {
-            const email = stepDiv.querySelector('input[type="email"]');
-            if (email && !/^\S+@\S+\.\S+$/.test(email.value)) {
-                alert("Email invalide.");
-                email.focus();
-                return false;
-            }
-            const pwd = stepDiv.querySelector('input[type="password"]');
-            if (pwd && pwd.value.length < 6) {
-                alert("Le mot de passe doit contenir au moins 6 caractères.");
-                pwd.focus();
-                return false;
-            }
-        }
-        if (step === 3) {
-            const roleChecked = stepDiv.querySelector('input[name="role"]:checked');
-            if (!roleChecked) {
-                alert("Choisissez un rôle.");
-                return false;
-            }
-        }
-        if (step === 4 && pharmacienRadio && pharmacienRadio.checked) {
-            const licence = document.getElementById('license_number');
-            if (!licence.value.trim()) {
-                alert("Le numéro de licence est obligatoire.");
-                licence.focus();
-                return false;
-            }
-        }
-        return true;
+    let currentStep = 0;
+    let selectedRole = "patient";
+    let uploadedDocs = {};
+    let profileData = {};
+
+    // Récupération CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    // Navigation
+    function goToStep(step) {
+        document.querySelectorAll('.step-panel').forEach(panel => panel.classList.add('hidden'));
+        const targetPanel = document.querySelector(`.step-panel[data-step="${step}"]`);
+        if (targetPanel) targetPanel.classList.remove('hidden');
+        document.querySelectorAll('.step-circle').forEach((circle, idx) => {
+            circle.classList.remove('active', 'completed');
+            if (idx === step) circle.classList.add('active');
+            else if (idx < step) circle.classList.add('completed');
+        });
+        document.getElementById('progressFill').style.width = `${(step / 4) * 100}%`;
+        currentStep = step;
+        if (step === 1) renderIdentityFields();
+        if (step === 3) renderDocumentsFields();
     }
 
-    nextBtn.addEventListener('click', () => {
-        if (validateStep(currentStep)) {
-            let isPharmacien = pharmacienRadio && pharmacienRadio.checked;
-            let maxStep = isPharmacien ? 4 : 3;
-            if (currentStep < maxStep) {
-                currentStep++;
-                updateSteps();
-            }
-        }
-    });
+    // Rendu des champs identité
+    function renderIdentityFields() {
+        const container = document.getElementById('identityFields');
+        container.innerHTML = roleTemplates[selectedRole].fields;
+        attachGeoButton();
+        restoreProfileData();
+    }
 
-    prevBtn.addEventListener('click', () => {
-        if (currentStep > 1) {
-            currentStep--;
-            updateSteps();
-        }
-    });
+    function renderDocumentsFields() {
+        const container = document.getElementById('documentsContainer');
+        container.innerHTML = roleTemplates[selectedRole].docs;
+        attachUploadListeners();
+    }
 
-    pharmacienRadio.addEventListener('change', () => {
-        updateSteps();
-        if (!pharmacienRadio.checked && currentStep === 4) {
-            currentStep = 3;
-            updateSteps();
-        }
-    });
-
-    document.getElementById('multiStepForm').addEventListener('submit', function(e) {
-        let isPharmacien = pharmacienRadio && pharmacienRadio.checked;
-        let maxStep = isPharmacien ? 4 : 3;
-        for (let i = 1; i <= maxStep; i++) {
-            if (!validateStep(i)) {
+    function attachUploadListeners() {
+        document.querySelectorAll('.upload-area').forEach(area => {
+            const input = area.querySelector('input[type="file"]');
+            const docId = area.dataset.doc;
+            area.addEventListener('click', () => input.click());
+            area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('drag-over'); });
+            area.addEventListener('dragleave', () => area.classList.remove('drag-over'));
+            area.addEventListener('drop', async e => {
                 e.preventDefault();
-                currentStep = i;
-                updateSteps();
-                return false;
-            }
+                area.classList.remove('drag-over');
+                const file = e.dataTransfer.files[0];
+                if (file) await uploadDocument(file, docId, area);
+            });
+            input.addEventListener('change', async () => {
+                if (input.files[0]) await uploadDocument(input.files[0], docId, area);
+            });
+        });
+    }
+
+    async function uploadDocument(file, docId, areaElement) {
+        const formData = new FormData();
+        formData.append('document', file);
+        formData.append('type', docId);
+        const response = await fetch('/upload-document', {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': csrfToken },
+            body: formData
+        });
+        const data = await response.json();
+        if (data.success) {
+            uploadedDocs[docId] = data.path;
+            const listContainer = areaElement.parentElement.querySelector(`.file-list[data-list="${docId}"]`);
+            listContainer.innerHTML = `<div class="bg-green-50 p-2 rounded text-sm flex justify-between"><span><i class="fas fa-check-circle text-green-600"></i> ${file.name}</span><button onclick="removeDoc('${docId}')" class="text-red-500"><i class="fas fa-trash"></i></button></div>`;
+        } else {
+            alert("Erreur upload : " + data.message);
+        }
+    }
+
+    window.removeDoc = function(docId) {
+        delete uploadedDocs[docId];
+        const listDiv = document.querySelector(`.file-list[data-list="${docId}"]`);
+        if (listDiv) listDiv.innerHTML = '';
+    };
+
+    function attachGeoButton() {
+        const btn = document.getElementById('geoBtn');
+        if (!btn) return;
+        btn.addEventListener('click', () => {
+            if (!navigator.geolocation) return alert("Géolocalisation non supportée");
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Chargement...';
+            navigator.geolocation.getCurrentPosition(async pos => {
+                const lat = pos.coords.latitude, lng = pos.coords.longitude;
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=fr`);
+                    const data = await res.json();
+                    const ville = data.address?.city || data.address?.town || '';
+                    const region = data.address?.state || '';
+                    document.getElementById('geoInput').value = `${ville}, ${region}`.trim();
+                    document.getElementById('geoStatus').innerHTML = '<span class="text-green-600">✓ Localisation trouvée</span>';
+                } catch {
+                    document.getElementById('geoInput').value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                }
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-crosshairs"></i> Me géolocaliser';
+            }, err => {
+                alert("Erreur géoloc : " + err.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-crosshairs"></i> Me géolocaliser';
+            });
+        });
+    }
+
+    function saveProfileData() {
+        const fields = document.querySelectorAll('#identityFields input, #identityFields select');
+        fields.forEach(f => { if (f.id) profileData[f.id] = f.value; });
+    }
+    function restoreProfileData() {
+        for (let [k, v] of Object.entries(profileData)) {
+            const el = document.getElementById(k);
+            if (el) el.value = v;
+        }
+    }
+
+    // Validation étape 1
+    function validateIdentity() {
+        let ok = true;
+        document.querySelectorAll('#identityFields input, #identityFields select').forEach(el => el.classList.remove('error'));
+        // Vérifications basiques
+        if (selectedRole === 'patient') {
+            if (!document.getElementById('prenom')?.value) ok=false;
+            if (!document.getElementById('nom')?.value) ok=false;
+            if (!document.getElementById('telephone')?.value.match(/^(\+237|0)[6-9][0-9]{8}$/)) ok=false;
+        }
+        if (selectedRole === 'pharmacien') {
+            if (!document.getElementById('nomPharmacie')?.value) ok=false;
+            if (!document.getElementById('ordreOnpc')?.value.match(/ONPC-.+/)) ok=false;
+        }
+        if (!ok) document.getElementById('identityErrors').innerText = "Veuillez remplir tous les champs obligatoires.";
+        return ok;
+    }
+
+    function validateAccess() {
+        let ok = true;
+        const email = document.getElementById('email').value;
+        const pwd = document.getElementById('pwd').value;
+        const cpwd = document.getElementById('cpwd').value;
+        if (!email.match(/^\S+@\S+\.\S+$/)) ok=false;
+        if (pwd.length < 8 || !/[A-Z]/.test(pwd) || !/[a-z]/.test(pwd) || !/[0-9]/.test(pwd)) ok=false;
+        if (pwd !== cpwd) ok=false;
+        if (!ok) document.getElementById('accessErrors').innerText = "Email ou mot de passe invalide (8+ caractères, maj, min, chiffre)";
+        return ok;
+    }
+
+    function validateDocuments() {
+        const required = roleTemplates[selectedRole].requiredDocs;
+        let missing = required.filter(d => !uploadedDocs[d]);
+        if (missing.length) {
+            document.getElementById('documentsErrors').innerText = `Documents manquants : ${missing.join(', ')}`;
+            return false;
+        }
+        const terms = document.getElementById('acceptTerms');
+        if (terms && !terms.checked) {
+            document.getElementById('documentsErrors').innerText = "Vous devez accepter les conditions";
+            return false;
         }
         return true;
+    }
+
+    // Soumission finale
+    async function submitRegistration() {
+        if (!validateDocuments()) return;
+        saveProfileData();
+        const finalData = {
+            role: selectedRole,
+            email: document.getElementById('email').value,
+            password: document.getElementById('pwd').value,
+            profile_data: { ...profileData, geoInput: document.getElementById('geoInput')?.value || '' },
+            documents: uploadedDocs
+        };
+        const btn = document.getElementById('submitFinalBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi...';
+        const response = await fetch('/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            body: JSON.stringify(finalData)
+        });
+        const data = await response.json();
+        if (data.success) {
+            document.getElementById('uidDisplay').innerText = data.upgrade_id;
+            document.getElementById('successMessage').innerHTML = `Un email de vérification a été envoyé à <strong>${data.email}</strong>. Activez votre compte.`;
+            goToStep(4);
+        } else {
+            alert("Erreur : " + data.message);
+            btn.disabled = false;
+            btn.innerHTML = 'Soumettre la demande <i class="fas fa-paper-plane"></i>';
+        }
+    }
+
+    // Écouteurs de navigation
+    document.querySelectorAll('.nextStepBtn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (currentStep === 0) {
+                const checked = document.querySelector('input[name="role"]:checked');
+                if (checked) selectedRole = checked.value;
+                goToStep(1);
+            } else if (currentStep === 1 && validateIdentity()) {
+                saveProfileData();
+                goToStep(2);
+            } else if (currentStep === 2 && validateAccess()) {
+                goToStep(3);
+            }
+        });
+    });
+    document.querySelectorAll('.prevStepBtn').forEach(btn => {
+        btn.addEventListener('click', () => { if (currentStep > 0) goToStep(currentStep - 1); });
+    });
+    document.getElementById('submitFinalBtn')?.addEventListener('click', submitRegistration);
+
+    // Changement de rôle visuel
+    document.querySelectorAll('.role-option').forEach(opt => {
+        opt.addEventListener('click', () => {
+            const radio = opt.querySelector('input');
+            radio.checked = true;
+            selectedRole = radio.value;
+            const desc = document.getElementById('roleDescription');
+            if (selectedRole === 'patient') desc.innerHTML = '<i class="fas fa-comment-dots mr-1"></i> Accès aux soins et suivi médical.';
+            else if (selectedRole === 'pharmacien') desc.innerHTML = '<i class="fas fa-store mr-1"></i> Gestion des stocks, vente et traçabilité.';
+            else if (selectedRole === 'admin') desc.innerHTML = '<i class="fas fa-chart-line mr-1"></i> Supervision nationale, rapports CSU.';
+            else desc.innerHTML = '<i class="fas fa-truck mr-1"></i> Grossiste, approvisionnement des pharmacies.';
+        });
     });
 
-    updateSteps();
+    // Toggle password visibility
+    document.querySelectorAll('.togglePwd').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const target = document.getElementById(btn.dataset.target);
+            if (target.type === 'password') { target.type = 'text'; btn.innerHTML = '<i class="far fa-eye"></i>'; }
+            else { target.type = 'password'; btn.innerHTML = '<i class="far fa-eye-slash"></i>'; }
+        });
+    });
+    document.getElementById('pwd')?.addEventListener('input', () => {
+        const pwd = document.getElementById('pwd').value;
+        let strength = 0;
+        if (pwd.length >= 8) strength += 25;
+        if (/[a-z]/.test(pwd)) strength += 25;
+        if (/[A-Z]/.test(pwd)) strength += 25;
+        if (/[0-9]/.test(pwd)) strength += 25;
+        document.getElementById('strengthFill').style.width = strength + '%';
+        if (strength < 50) document.getElementById('strengthFill').style.backgroundColor = '#c9353e';
+        else if (strength < 75) document.getElementById('strengthFill').style.backgroundColor = '#b95b0d';
+        else document.getElementById('strengthFill').style.backgroundColor = '#2E8B57';
+    });
+    document.getElementById('cpwd')?.addEventListener('input', () => {
+        const pwd = document.getElementById('pwd').value;
+        const cpwd = document.getElementById('cpwd').value;
+        const matchDiv = document.getElementById('matchIndicator');
+        if (cpwd === '') matchDiv.innerHTML = '';
+        else if (pwd === cpwd) matchDiv.innerHTML = '<i class="fas fa-check-circle text-green-600"></i> Mots de passe identiques';
+        else matchDiv.innerHTML = '<i class="fas fa-times-circle text-red-500"></i> Différents';
+    });
+
+    goToStep(0);
 </script>
 </body>
 </html>
