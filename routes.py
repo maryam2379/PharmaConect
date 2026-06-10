@@ -1,15 +1,23 @@
 import secrets
 import random
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from db import db
+import os
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
+from werkzeug.utils import secure_filename
+from db import db                     # instance unique
 from models import User, Pharmacy
 from email_utils import send_email
 
-# Création du blueprint principal
 main_bp = Blueprint('main', __name__)
 
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 # ------------------------------------------------------------------
-# Fonctions internes d'envoi d'emails de vérification
+# Fonctions d'envoi d'emails
 # ------------------------------------------------------------------
 def send_verification_email(user):
     token = user.verification_token
@@ -33,20 +41,81 @@ def home():
 
 @main_bp.route("/register", methods=["GET", "POST"])
 def register():
-    if request.method == "POST":
+    if request.method == "GET":
+        return render_template("auth/register.html")
+
+    if request.is_json:
+        data = request.get_json()
+        role = data.get('role')
+        email = data.get('email')
+        password = data.get('password')
+        profile_data = data.get('profile_data', {})
+        uploaded_docs = data.get('documents', {})
+
+        if not email or not password or not role:
+            return jsonify({'success': False, 'message': 'Champs obligatoires manquants'}), 400
+
+        existing = User.query.filter_by(email=email).first()
+        if existing:
+            return jsonify({'success': False, 'message': 'Email déjà utilisé'}), 400
+
+        prenom = profile_data.get('prenom', '')
+        nom = profile_data.get('nom', '')
+        full_name = f"{prenom} {nom}".strip()
+        phone = profile_data.get('telephone', '')
+
+        new_user = User(
+            email=email,
+            phone=phone,
+            full_name=full_name or email.split('@')[0],
+            role=role,
+            is_active=False,
+            is_verified=False,
+            verification_token=secrets.token_urlsafe(32),
+            otp_code=f"{random.randint(100000, 999999)}",
+            documents=uploaded_docs
+        )
+        new_user.set_password(password)
+        db.session.add(new_user)
+        db.session.flush()
+
+        if role == 'pharmacien':
+            pharmacy = Pharmacy(
+                name=profile_data.get('nomPharmacie', ''),
+                license_number=profile_data.get('ordreOnpc', ''),
+                address=profile_data.get('geoInput', ''),
+                city=profile_data.get('region', ''),
+                phone=phone,
+                email=email,
+                manager_id=new_user.id,
+                is_verified=False
+            )
+            db.session.add(pharmacy)
+
+        db.session.commit()
+        send_verification_email(new_user)
+
+        upgrade_id = f"UPGRADE-CM-{new_user.id:06d}"
+        return jsonify({
+            'success': True,
+            'upgrade_id': upgrade_id,
+            'email': new_user.email,
+            'message': 'Inscription réussie. Vérifiez votre boîte email.'
+        })
+
+    else:
+        # Formulaire classique (compatibilité)
         email = request.form.get("email")
         phone = request.form.get("phone")
         full_name = request.form.get("full_name")
         password = request.form.get("password")
         role = request.form.get("role")
 
-        # Vérifier si l'utilisateur existe déjà
         existing = User.query.filter((User.email == email) | (User.phone == phone)).first()
         if existing:
             flash("Un compte avec cet email ou téléphone existe déjà.", "danger")
             return redirect(url_for("main.register"))
 
-        # Création utilisateur
         new_user = User(
             email=email,
             phone=phone,
@@ -58,40 +127,47 @@ def register():
             otp_code=f"{random.randint(100000, 999999)}"
         )
         new_user.set_password(password)
-
         db.session.add(new_user)
-        db.session.flush()  # pour obtenir l'id
+        db.session.flush()
 
-        # Si pharmacien, créer la pharmacie associée
         if role == "pharmacien":
-            pharmacy_name = request.form.get("pharmacy_name")
-            license_number = request.form.get("license_number")
-            pharmacy_address = request.form.get("pharmacy_address")
-            pharmacy_city = request.form.get("pharmacy_city")
-            pharmacy_phone = request.form.get("pharmacy_phone")
-            pharmacy_email = request.form.get("pharmacy_email")
-
             pharmacy = Pharmacy(
-                name=pharmacy_name,
-                license_number=license_number,
-                address=pharmacy_address,
-                city=pharmacy_city,
-                phone=pharmacy_phone,
-                email=pharmacy_email,
+                name=request.form.get("pharmacy_name"),
+                license_number=request.form.get("license_number"),
+                address=request.form.get("pharmacy_address"),
+                city=request.form.get("pharmacy_city"),
+                phone=request.form.get("pharmacy_phone"),
+                email=request.form.get("pharmacy_email"),
                 manager_id=new_user.id,
                 is_verified=False
             )
             db.session.add(pharmacy)
 
         db.session.commit()
-
-        # Stocker l'id en session pour la vérification
         session['pending_user_id'] = new_user.id
-
-        # Rediriger vers le choix du mode de vérification
         return redirect(url_for("main.verification_choice"))
 
-    return render_template("auth/register.html")
+@main_bp.route("/upload-document", methods=["POST"])
+def upload_document():
+    if 'document' not in request.files:
+        return jsonify({'success': False, 'message': 'Aucun fichier'}), 400
+    file = request.files['document']
+    doc_type = request.form.get('type', 'unknown')
+    if file.filename == '':
+        return jsonify({'success': False, 'message': 'Nom vide'}), 400
+    if not allowed_file(file.filename):
+        return jsonify({'success': False, 'message': 'Type non autorisé (PDF, JPG, PNG)'}), 400
+
+    filename = secure_filename(f"{doc_type}_{file.filename}")
+    filepath = os.path.join(UPLOAD_FOLDER, filename)
+    file.save(filepath)
+
+    return jsonify({
+        'success': True,
+        'path': filepath,
+        'name': filename,
+        'size': os.path.getsize(filepath)
+    })
 
 @main_bp.route("/verification-choice")
 def verification_choice():

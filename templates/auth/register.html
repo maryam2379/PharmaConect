@@ -10,12 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Inter', sans-serif; }
-        :root {
-            --blue-solid: #2C5F8A;
-            --green-solid: #2E8B57;
-            --gray-bg: #f0f4f9;
-            --error: #c9353e;
-        }
+        :root { --blue-solid: #2C5F8A; --green-solid: #2E8B57; --gray-bg: #f0f4f9; --error: #c9353e; }
         body { background: linear-gradient(135deg, #e8f0fe 0%, #e0f2e9 100%); }
         .step-panel { transition: all 0.2s ease; }
         .step-circle.active { background: var(--blue-solid) !important; color: white; box-shadow: 0 0 0 3px rgba(44,95,138,0.2); }
@@ -31,10 +26,8 @@
     </style>
 </head>
 <body class="antialiased">
-
 <div class="min-h-screen flex items-center justify-center py-10 px-4">
     <div class="w-full max-w-4xl bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden border border-white/30">
-
         <!-- En-tête -->
         <div class="bg-gradient-to-r from-[#2C5F8A] to-[#2E8B57] px-6 py-5 text-white text-center">
             <div class="inline-flex bg-white/20 rounded-full p-2 mb-2"><i class="fas fa-prescription-bottle-medical text-2xl"></i></div>
@@ -45,7 +38,7 @@
         <!-- Barre de progression -->
         <div class="h-1 bg-gray-200"><div id="progressFill" class="h-full bg-green-600 transition-all duration-300 w-0"></div></div>
 
-        <!-- Indicateurs d’étape -->
+        <!-- Indicateurs d'étape -->
         <div class="flex justify-between px-6 pt-6 pb-2 border-b border-gray-100" id="stepIndicators">
             <div class="step-item flex-1 text-center cursor-pointer" data-step="0"><div class="step-circle w-8 h-8 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center mx-auto text-sm font-bold">1</div><span class="text-xs mt-1 block">Rôle</span></div>
             <div class="step-item flex-1 text-center cursor-pointer" data-step="1"><div class="step-circle w-8 h-8 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center mx-auto text-sm font-bold">2</div><span class="text-xs mt-1 block">Identité</span></div>
@@ -56,7 +49,6 @@
 
         <!-- Contenu des étapes -->
         <div class="p-6 md:p-8">
-            <!-- Flash messages -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     <div id="flashContainer">
@@ -228,7 +220,7 @@
     let uploadedDocs = {};
     let profileData = {};
 
-    // Récupération CSRF token
+    // Récupération CSRF token (fourni par Flask)
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
     // Navigation
@@ -247,7 +239,6 @@
         if (step === 3) renderDocumentsFields();
     }
 
-    // Rendu des champs identité
     function renderIdentityFields() {
         const container = document.getElementById('identityFields');
         container.innerHTML = roleTemplates[selectedRole].fields;
@@ -349,7 +340,6 @@
     function validateIdentity() {
         let ok = true;
         document.querySelectorAll('#identityFields input, #identityFields select').forEach(el => el.classList.remove('error'));
-        // Vérifications basiques
         if (selectedRole === 'patient') {
             if (!document.getElementById('prenom')?.value) ok=false;
             if (!document.getElementById('nom')?.value) ok=false;
