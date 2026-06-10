@@ -1,0 +1,355 @@
+{% extends "base.html" %}
+
+{% block title %}Pharmacies - PharmaConnect Cameroun{% endblock %}
+
+{% block content %}
+
+<!-- Leaflet CSS et JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+    /* Police Goodly */
+    * {
+        font-family: 'Goodly', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+    
+    .search-input {
+        background: rgba(255, 255, 255, 0.55);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        transition: all 0.2s ease;
+        border-radius: 60px;
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: #2E8B57;
+        background: rgba(255, 255, 255, 0.85);
+        box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.15);
+    }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.5);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 24px;
+        transition: all 0.3s ease;
+    }
+    
+    .badge-open {
+        background: rgba(46, 139, 87, 0.15);
+        color: #2E8B57;
+        border-radius: 40px;
+        padding: 0.2rem 0.75rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    
+    .badge-closed {
+        background: rgba(180, 60, 50, 0.12);
+        color: #b91c1c;
+        border-radius: 40px;
+        padding: 0.2rem 0.75rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    
+    #map {
+        height: 550px;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .leaflet-popup-content {
+        font-family: 'Goodly', system-ui, sans-serif;
+        font-size: 13px;
+        min-width: 200px;
+    }
+    
+    .leaflet-popup-content strong {
+        color: #2C5F8A;
+    }
+    
+    .custom-marker {
+        background: transparent;
+        border: none;
+    }
+    
+    .filter-stats {
+        font-size: 0.75rem;
+        color: #666;
+    }
+    
+    .result-count {
+        background: rgba(46, 139, 87, 0.15);
+        padding: 0.25rem 0.75rem;
+        border-radius: 40px;
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: #2E8B57;
+    }
+</style>
+
+<!-- HEADER -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-16 pb-6">
+    <div class="text-center">
+        <div class="inline-flex items-center gap-2 bg-white/40 backdrop-blur-sm rounded-full px-4 py-1.5 mb-4">
+            <i class="fas fa-store text-[#2E8B57] text-sm"></i>
+            <span class="text-xs font-medium text-gray-600">Réseau de confiance</span>
+        </div>
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-800">
+            <span class="text-[#2C5F8A]">Pharmacies</span> partenaires
+        </h1>
+        <div class="w-20 h-1 bg-[#2E8B57] mx-auto mt-3 rounded-full"></div>
+        <p class="text-gray-600 mt-4 max-w-2xl mx-auto text-sm md:text-base">
+            Trouvez une pharmacie près de chez vous, vérifiez les horaires et réservez vos traitements en quelques clics.
+        </p>
+    </div>
+</section>
+
+<!-- FILTRES (au-dessus de la carte) -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div class="glass-card p-4">
+        <div class="flex flex-col sm:flex-row gap-4">
+            <div class="flex-1 relative">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="text" id="searchInput" placeholder="Rechercher une pharmacie (nom, ville, quartier)..."
+                       class="search-input w-full pl-10 pr-4 py-3 text-gray-700 text-sm">
+            </div>
+            <div class="flex gap-3">
+                <select id="cityFilter" class="search-input px-4 py-3 text-gray-700 text-sm cursor-pointer pr-8">
+                    <option value="all">Toutes les villes</option>
+                    <option value="Yaoundé">Yaoundé</option>
+                    <option value="Douala">Douala</option>
+                    <option value="Garoua">Garoua</option>
+                    <option value="Bafoussam">Bafoussam</option>
+                    <option value="Bamenda">Bamenda</option>
+                </select>
+                <button id="resetFilters" class="bg-white/50 backdrop-blur-sm px-4 py-2 rounded-full text-[#2C5F8A] border border-white/60 hover:bg-white/80 transition text-sm">
+                    <i class="fas fa-undo-alt"></i> <span class="hidden sm:inline">Réinitialiser</span>
+                </button>
+            </div>
+        </div>
+        <div class="flex justify-between items-center mt-3 pt-2 border-t border-white/40">
+            <div class="filter-stats">
+                <i class="fas fa-store text-[#2E8B57] text-xs"></i>
+                <span id="resultCount" class="result-count ml-2">0 pharmacies</span>
+            </div>
+            <div class="filter-stats">
+                <i class="fas fa-info-circle text-[#2C5F8A] text-xs"></i>
+                <span class="ml-1">Cliquez sur un marqueur pour réserver</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CARTE INTERACTIVE PLEINE LARGEUR -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 pb-12">
+    <div class="glass-card p-4">
+        <div class="flex items-center gap-2 mb-3">
+            <i class="fas fa-map-marked-alt text-[#2E8B57] text-lg"></i>
+            <h2 class="text-lg font-semibold text-gray-800">Localisation des pharmacies</h2>
+        </div>
+        <div id="map"></div>
+    </div>
+</section>
+
+<!-- MODALE DE RÉSERVATION -->
+<div id="reservationModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/20 backdrop-blur-md transition-all duration-300">
+    <div class="bg-white/95 backdrop-blur-xl rounded-2xl max-w-md w-full p-6 shadow-2xl border border-white/60">
+        <div class="flex justify-between items-center mb-5">
+            <h3 class="text-xl font-bold text-[#2C5F8A] flex items-center gap-2">
+                <i class="fas fa-calendar-check text-[#2E8B57]"></i>
+                Réservation rapide
+            </h3>
+            <button id="closeModalBtn" class="text-gray-400 hover:text-gray-600 transition text-2xl">&times;</button>
+        </div>
+        <div id="modalPharmacyName" class="text-sm text-gray-500 mb-4 pb-2 border-b border-gray-200"></div>
+        <form id="reservationForm" onsubmit="return false;">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nom complet <span class="text-red-500">*</span></label>
+                <input type="text" id="patientName" required class="w-full px-3 py-2 bg-white/70 border border-gray-200 rounded-xl focus:outline-none focus:border-[#2E8B57] focus:ring-1 focus:ring-[#2E8B57]">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone <span class="text-red-500">*</span></label>
+                <input type="tel" id="patientPhone" required class="w-full px-3 py-2 bg-white/70 border border-gray-200 rounded-xl focus:outline-none focus:border-[#2E8B57]">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Date souhaitée</label>
+                <input type="date" id="reservationDate" required class="w-full px-3 py-2 bg-white/70 border border-gray-200 rounded-xl focus:outline-none focus:border-[#2E8B57]">
+            </div>
+            <div class="mb-5">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Message (médicament / besoin)</label>
+                <textarea id="reservationMessage" rows="2" class="w-full px-3 py-2 bg-white/70 border border-gray-200 rounded-xl focus:outline-none focus:border-[#2E8B57]" placeholder="Précisez votre demande..."></textarea>
+            </div>
+            <button type="submit" class="w-full bg-gradient-to-r from-[#2E8B57] to-[#1f6e46] py-2.5 rounded-xl text-white font-medium text-sm hover:shadow-lg transition-all">
+                Confirmer la réservation
+            </button>
+        </form>
+        <p class="text-[10px] text-center text-gray-400 mt-4">Un pharmacien vous recontactera sous 24h</p>
+    </div>
+</div>
+
+<script>
+    // ============================================
+    // DONNÉES STATIQUES DES PHARMACIES
+    // ============================================
+    const pharmaciesData = [
+        { id: 1, name: "Pharmacie Centrale", city: "Yaoundé", address: "Boulevard du 20 Mai, Mvog-Mbi", phone: "222 20 10 10", email: "contact@centrale.cm", lat: 3.8667, lng: 11.5167, rating: 4.8, is_open: true, schedule: "08h00 - 21h00" },
+        { id: 2, name: "Pharmacie Mvog-Mbi", city: "Yaoundé", address: "Avenue Mvog-Mbi, face CHU", phone: "222 21 34 56", email: "mvogmbi@pharma.cm", lat: 3.8722, lng: 11.5189, rating: 4.5, is_open: true, schedule: "07h30 - 20h00" },
+        { id: 3, name: "Pharmacie Bastos", city: "Yaoundé", address: "Rue Bastos, face Ambassade US", phone: "222 45 67 89", email: "bastos@pharma.cm", lat: 3.8583, lng: 11.5208, rating: 4.9, is_open: true, schedule: "24h/24 (garde)" },
+        { id: 4, name: "Pharmacie Bonapriso", city: "Douala", address: "Rue Bonapriso, près Mairie", phone: "233 42 15 78", email: "bonapriso@pharma.cm", lat: 4.0511, lng: 9.7035, rating: 4.7, is_open: true, schedule: "08h00 - 22h00" },
+        { id: 5, name: "Pharmacie Akwa", city: "Douala", address: "Boulevard Liberté, Akwa", phone: "233 43 22 11", email: "akwa@pharma.cm", lat: 4.0433, lng: 9.6867, rating: 4.2, is_open: false, schedule: "Fermé (réouverture lundi)" },
+        { id: 6, name: "Pharmacie Makepe", city: "Douala", address: "Makepe Bloc 96", phone: "233 55 66 77", email: "makepe@pharma.cm", lat: 4.0625, lng: 9.7186, rating: 4.0, is_open: false, schedule: "Fermé pour inventaire" },
+        { id: 7, name: "Pharmacie Roumde", city: "Garoua", address: "Quartier Roumde, rue principale", phone: "227 33 44 55", email: "roumde@pharma.cm", lat: 9.3014, lng: 13.3956, rating: 4.3, is_open: true, schedule: "08h00 - 19h00" },
+        { id: 8, name: "Pharmacie Bafoussam", city: "Bafoussam", address: "Avenue Brasseries, Dchang", phone: "233 12 34 56", email: "contact@bafoussam.cm", lat: 5.4756, lng: 10.4186, rating: 4.6, is_open: true, schedule: "08h00 - 20h30" },
+        { id: 9, name: "Pharmacie Bamenda", city: "Bamenda", address: "Commercial Avenue, Up Station", phone: "233 88 99 00", email: "bamenda@pharma.cm", lat: 5.9601, lng: 10.1493, rating: 4.4, is_open: true, schedule: "08h00 - 18h30" }
+    ];
+
+    let map;
+    let markers = [];
+    let currentPharmacyId = null;
+
+    // Initialisation de la carte Leaflet
+    function initMap() {
+        map = L.map('map').setView([5.5, 11.5], 7);
+        
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; CartoDB',
+            subdomains: 'abcd',
+            maxZoom: 18
+        }).addTo(map);
+        
+        // Afficher toutes les pharmacies au départ
+        filterAndUpdateMap();
+    }
+    
+    function addMarkersToMap(pharmacies) {
+        // Supprimer les anciens marqueurs
+        markers.forEach(marker => map.removeLayer(marker));
+        markers = [];
+        
+        pharmacies.forEach(pharmacy => {
+            if (!pharmacy.lat || !pharmacy.lng) return;
+            
+            const iconColor = pharmacy.is_open ? '#2E8B57' : '#9ca3af';
+            const customIcon = L.divIcon({
+                html: `<div style="background-color: ${iconColor}; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+                        <i class="fas fa-store" style="color: white; font-size: 16px;"></i>
+                       </div>`,
+                className: 'custom-marker',
+                iconSize: [36, 36],
+                popupAnchor: [0, -18]
+            });
+            
+            const marker = L.marker([pharmacy.lat, pharmacy.lng], { icon: customIcon }).addTo(map);
+            marker.bindPopup(`
+                <div style="font-family: 'Goodly', sans-serif; padding: 6px; min-width: 180px;">
+                    <strong style="color: #2C5F8A; font-size: 14px;">${pharmacy.name}</strong><br>
+                    <i class="fas fa-map-pin" style="color: #2E8B57; font-size: 11px;"></i> ${pharmacy.address}<br>
+                    <i class="fas fa-phone" style="color: #2C5F8A; font-size: 11px;"></i> ${pharmacy.phone}<br>
+                    <span class="${pharmacy.is_open ? 'badge-open' : 'badge-closed'}" style="display: inline-block; margin-top: 6px; font-size: 11px;">
+                        ${pharmacy.is_open ? '✓ Ouvert' : '✗ Fermé'} | ${pharmacy.schedule}
+                    </span><br>
+                    <button onclick="openReservationModal(${pharmacy.id}, '${pharmacy.name.replace(/'/g, "\\'")}')" 
+                            style="margin-top: 8px; background: #2E8B57; color: white; border: none; padding: 5px 12px; border-radius: 25px; font-size: 11px; cursor: pointer; width: 100%; font-family: 'Goodly', sans-serif;">
+                        📅 Réserver
+                    </button>
+                </div>
+            `);
+            markers.push(marker);
+        });
+    }
+    
+    function filterAndUpdateMap() {
+        const searchText = document.getElementById('searchInput').value.toLowerCase();
+        const city = document.getElementById('cityFilter').value;
+        
+        let filtered = pharmaciesData.filter(p => {
+            const matchCity = city === 'all' || p.city === city;
+            const matchSearch = searchText === '' || 
+                p.name.toLowerCase().includes(searchText) || 
+                p.city.toLowerCase().includes(searchText) || 
+                p.address.toLowerCase().includes(searchText);
+            return matchCity && matchSearch;
+        });
+        
+        // Mettre à jour le compteur
+        const resultCount = document.getElementById('resultCount');
+        if (filtered.length === 1) {
+            resultCount.innerHTML = `${filtered.length} pharmacie`;
+        } else {
+            resultCount.innerHTML = `${filtered.length} pharmacies`;
+        }
+        
+        // Mettre à jour les marqueurs sur la carte
+        addMarkersToMap(filtered);
+        
+        // Ajuster la vue de la carte sur les pharmacies filtrées
+        if (filtered.length > 0) {
+            const bounds = L.latLngBounds(filtered.map(p => [p.lat, p.lng]));
+            map.fitBounds(bounds);
+        } else {
+            // Si aucune pharmacie, centrer sur le Cameroun
+            map.setView([5.5, 11.5], 6);
+        }
+    }
+    
+    // Réservation
+    function openReservationModal(id, name) {
+        currentPharmacyId = id;
+        document.getElementById('modalPharmacyName').innerHTML = `<i class="fas fa-store mr-1"></i> Réservation chez <strong class="text-[#2E8B57]">${name}</strong>`;
+        document.getElementById('reservationModal').classList.remove('hidden');
+        document.getElementById('reservationModal').classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeModal() {
+        document.getElementById('reservationModal').classList.add('hidden');
+        document.getElementById('reservationModal').classList.remove('flex');
+        document.body.style.overflow = '';
+        document.getElementById('reservationForm').reset();
+    }
+    
+    function submitReservation() {
+        const patientName = document.getElementById('patientName').value;
+        const patientPhone = document.getElementById('patientPhone').value;
+        const reservationDate = document.getElementById('reservationDate').value;
+        const message = document.getElementById('reservationMessage').value;
+        
+        if (!patientName || !patientPhone || !reservationDate) {
+            alert('Veuillez remplir tous les champs obligatoires');
+            return;
+        }
+        
+        alert(`✅ ${patientName}, votre réservation a bien été envoyée à la pharmacie.\n\nUn pharmacien vous contactera au ${patientPhone} sous 24h.`);
+        closeModal();
+    }
+    
+    // Event listeners
+    document.getElementById('reservationForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        submitReservation();
+    });
+    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+    document.getElementById('reservationModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+    
+    document.getElementById('searchInput').addEventListener('input', filterAndUpdateMap);
+    document.getElementById('cityFilter').addEventListener('change', filterAndUpdateMap);
+    document.getElementById('resetFilters').addEventListener('click', () => {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('cityFilter').value = 'all';
+        filterAndUpdateMap();
+    });
+    
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', () => {
+        initMap();
+    });
+</script>
+
+{% endblock %}

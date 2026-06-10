@@ -344,3 +344,8 @@ def dashboard():
                            recent_users=recent_users,
                            pending_pharmacies=pending_pharmacies,
                            recent_orders=recent_orders)
+
+@main_bp.route("/pharmacies")
+def pharmacies():
+    """Page affichant toutes les pharmacies avec carte interactive"""
+    return render_template("pharmacies.html")
