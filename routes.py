@@ -356,6 +356,7 @@ def pharmacies():
     """Page affichant toutes les pharmacies avec carte interactive"""
     return render_template("pharmacies.html")
 
+
 @main_bp.route("/profile", methods=["GET", "POST"])
 def profile():
     if 'user_id' not in session:
@@ -411,3 +412,8 @@ def profile():
         return redirect(url_for("main.profile"))
     
     return render_template("admin/profile.html", user=user)
+
+@main_bp.route("/faq")
+def faq():
+    """Page Foire Aux Questions"""
+    return render_template("layout/faq.html")
