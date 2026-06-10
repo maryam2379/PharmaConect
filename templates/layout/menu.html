@@ -1,160 +1,162 @@
-    <!-- Font Awesome 6 (CDN officiel) -->
+    <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Police Goodly UNIQUEMENT -->
     <style>
-        /* Définition de la police Goodly */
+        /* Police Goodly */
         @font-face {
             font-family: 'Goodly';
             src: local('Goodly'), local('SF Pro Text'), local('Segoe UI'), local('Helvetica Neue');
             font-display: swap;
-            font-weight: 300 800;
         }
         
-        /* Application STRICTE de Goodly sur TOUS les éléments de la navbar */
-        nav, nav *, .nav-link, button, a, span, div, .navbar-text, .mobile-menu * {
-            font-family: 'Goodly', system-ui, -apple-system, 'Segoe UI', sans-serif !important;
+        * {
+            font-family: 'Goodly', system-ui, -apple-system, 'Segoe UI', sans-serif;
         }
         
-        /* Palette personnalisée Bleu, Vert, Blanc */
+        /* Couleurs */
         :root {
             --pharma-blue: #2C5F8A;
             --pharma-vert: #2E8B57;
-            --pharma-white: #FFFFFF;
-            --pharma-softblue: #EFF6FF;
-            --pharma-softgreen: #E6F4EA;
         }
         
-        .bg-pharma-blue { background-color: #2C5F8A; }
-        .bg-pharma-vert { background-color: #2E8B57; }
-        .bg-pharma-softblue { background-color: #EFF6FF; }
-        .bg-pharma-softgreen { background-color: #E6F4EA; }
-        .text-pharma-blue { color: #2C5F8A; }
-        .text-pharma-vert { color: #2E8B57; }
-        .border-pharma-blue { border-color: #2C5F8A; }
-        .border-pharma-softgreen { border-color: #E6F4EA; }
-        .hover\:bg-pharma-softgreen:hover { background-color: #E6F4EA; }
-        .hover\:text-pharma-vert:hover { color: #2E8B57; }
-        .hover\:bg-pharma-softblue:hover { background-color: #EFF6FF; }
+        /* EFFET GLASS sur la navbar uniquement (blur + transparence) */
+        .navbar-glass {
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        }
         
-        /* Animation subtile sur les liens */
-        .nav-link {
+        /* Bordures arrondies en bas */
+        .rounded-bottom-nav {
+            border-bottom-left-radius: 28px;
+            border-bottom-right-radius: 28px;
+        }
+        
+        @media (max-width: 768px) {
+            .rounded-bottom-nav {
+                border-bottom-left-radius: 20px;
+                border-bottom-right-radius: 20px;
+            }
+        }
+        
+        /* Style des liens au survol (léger, pas de fond opaque) */
+        .nav-link-glass {
             transition: all 0.2s ease;
-            font-family: 'Goodly', sans-serif !important;
         }
         
-        /* Ajustement spécifique pour que les icônes ne cassent pas la police */
-        i, .fas, .far {
-            font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+        .nav-link-glass:hover {
+            background: rgba(255, 255, 255, 0.5);
+            color: var(--pharma-vert);
         }
         
-        /* Police légèrement augmentée */
-        .logo-text {
-            font-size: 1.1rem;
-            letter-spacing: -0.01em;
+        /* Bouton Essai gratuit reste solide (pas d'effet glass) */
+        .btn-solid {
+            background: linear-gradient(135deg, #2E8B57 0%, #267349 100%);
+            box-shadow: 0 2px 8px rgba(46, 139, 87, 0.25);
         }
         
-        .slogan-text {
-            font-size: 0.7rem;
-            letter-spacing: 0.02em;
-        }
-        
-        @media (min-width: 768px) {
-            .logo-text {
-                font-size: 1.3rem;
-            }
-            .slogan-text {
-                font-size: 0.75rem;
-            }
+        .btn-solid:hover {
+            background: linear-gradient(135deg, #267349 0%, #1f5c3e 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(46, 139, 87, 0.35);
         }
     </style>
 </head>
-<body class="bg-gray-50 antialiased">
+<body class="bg-gradient-to-br from-sky-50 via-white to-emerald-50 min-h-screen">
+    
+    <!-- Fond décoratif pour bien voir la transparence de la navbar glass -->
+    <div class="fixed inset-0 -z-10 overflow-hidden">
+        <div class="absolute top-20 left-10 w-80 h-80 bg-blue-200/40 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-20 right-10 w-96 h-96 bg-green-200/40 rounded-full blur-3xl"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 w-72 h-72 bg-teal-100/50 rounded-full blur-3xl"></div>
+        <!-- Pattern subtil -->
+        <div class="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-30"></div>
+    </div>
 
     <!-- ========================================== -->
-    <!-- NAVBAR PHARMACONNECT - 100% Police GOODLY -->
-    <!-- Slogan "Cameroun · Santé connectée" EN DESSOUS du logo -->
-    <!-- Onglets : Pharmacies | Anti-contrefaçon | Commandes -->
-    <!-- Police légèrement augmentée -->
+    <!-- NAVBAR AVEC EFFET GLASS (blur + transparence) -->
+    <!-- Bordures arrondies en bas, bouton Essai gratuit sans glass -->
     <!-- ========================================== -->
-    <nav class="bg-white/98 backdrop-blur-sm sticky top-0 z-50 border-b border-pharma-softgreen shadow-sm">
+    <nav class="navbar-glass rounded-bottom-nav sticky top-0 z-50 w-full transition-all duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-14 md:h-16">
                 
-                <!-- Logo + identité PharmaConnect avec slogan EN DESSOUS -->
+                <!-- Logo + PharmaConnect (slogan en dessous) -->
                 <div class="flex items-center space-x-2.5">
                     <div class="flex-shrink-0">
-                        <div class="bg-gradient-to-br from-pharma-blue to-pharma-vert rounded-xl w-8 h-8 md:w-9 md:h-9 flex items-center justify-center shadow-sm">
+                        <div class="bg-gradient-to-br from-[#2C5F8A] to-[#2E8B57] rounded-xl w-8 h-8 md:w-9 md:h-9 flex items-center justify-center shadow-md">
                             <i class="fas fa-prescription-bottle-medical text-white text-sm md:text-base"></i>
                         </div>
                     </div>
                     <div class="flex flex-col leading-tight">
-                        <!-- Nom PharmaConnect - police légèrement augmentée -->
-                        <span class="logo-text font-bold tracking-tight bg-gradient-to-r from-pharma-blue to-pharma-vert bg-clip-text text-transparent" style="font-family: 'Goodly', sans-serif !important; line-height: 1.2;">
+                        <span class="text-base md:text-xl font-bold tracking-tight bg-gradient-to-r from-[#2C5F8A] to-[#2E8B57] bg-clip-text text-transparent">
                             PharmaConnect
                         </span>
-                        <!-- Slogan EN DESSOUS du logo - légèrement plus grand -->
-                        <span class="slogan-text text-gray-500 mt-0.5 flex items-center gap-1" style="font-family: 'Goodly', sans-serif !important;">
-                            <i class="fas fa-map-marker-alt text-[9px] md:text-[10px] text-pharma-vert"></i>
+                        <span class="text-[10px] md:text-[11px] text-gray-600/80 mt-0.5 flex items-center gap-1">
+                            <i class="fas fa-map-marker-alt text-[8px] md:text-[9px] text-[#2E8B57]"></i>
                             Cameroun · Santé connectée
                         </span>
                     </div>
                 </div>
                 
-                <!-- Liens de navigation : 3 onglets (Pharmacies, Anti-contrefaçon, Commandes) avec Goodly -->
+                <!-- Liens de navigation (3 onglets) -->
                 <div class="hidden md:flex items-center space-x-1 lg:space-x-2">
-                    <a href="#" class="nav-link flex items-center gap-2 px-3 py-1.5 rounded-full text-gray-700 text-sm font-medium hover:bg-pharma-softgreen hover:text-pharma-vert transition-all duration-200" style="font-family: 'Goodly', sans-serif !important;">
+                    <a href="#" class="nav-link-glass flex items-center gap-2 px-3 py-1.5 rounded-full text-gray-700 text-sm font-medium transition-all duration-200">
                         <i class="fas fa-store text-xs"></i>
                         <span>Pharmacies</span>
                     </a>
-                    <a href="#" class="nav-link flex items-center gap-2 px-3 py-1.5 rounded-full text-gray-700 text-sm font-medium hover:bg-pharma-softgreen hover:text-pharma-vert transition-all duration-200" style="font-family: 'Goodly', sans-serif !important;">
+                    <a href="#" class="nav-link-glass flex items-center gap-2 px-3 py-1.5 rounded-full text-gray-700 text-sm font-medium transition-all duration-200">
                         <i class="fas fa-qrcode text-xs"></i>
                         <span>Anti-contrefaçon</span>
                     </a>
-                    <a href="#" class="nav-link flex items-center gap-2 px-3 py-1.5 rounded-full text-gray-700 text-sm font-medium hover:bg-pharma-softgreen hover:text-pharma-vert transition-all duration-200" style="font-family: 'Goodly', sans-serif !important;">
+                    <a href="#" class="nav-link-glass flex items-center gap-2 px-3 py-1.5 rounded-full text-gray-700 text-sm font-medium transition-all duration-200">
                         <i class="fas fa-truck text-xs"></i>
                         <span>Commandes</span>
                     </a>
                 </div>
                 
-                <!-- Boutons d'action droite (connexion + essai gratuit) avec Goodly -->
+                <!-- Boutons d'action -->
                 <div class="flex items-center gap-2">
-                    <a href="#" class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-pharma-blue text-sm border border-pharma-blue bg-transparent hover:bg-pharma-softblue transition-all duration-200 font-medium" style="font-family: 'Goodly', sans-serif !important;">
+                    <!-- Connexion avec léger effet glass mais discret -->
+                    <a href="#" class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[#2C5F8A] text-sm border border-[#2C5F8A]/30 bg-white/30 backdrop-blur-sm hover:bg-white/50 transition-all duration-200 font-medium">
                         <i class="fas fa-user-circle text-xs"></i>
                         <span>Connexion</span>
                     </a>
-                    <a href="#" class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-pharma-vert text-white text-sm shadow-sm hover:bg-[#267349] transition-all duration-200 font-medium" style="font-family: 'Goodly', sans-serif !important;">
+                    <!-- Bouton Essai gratuit : PAS d'effet glass (solide) -->
+                    <a href="#" class="btn-solid inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-white text-sm font-medium transition-all duration-200">
                         <i class="fas fa-gem text-xs"></i>
                         <span>Essai gratuit</span>
                         <i class="fas fa-arrow-right text-[10px] ml-0.5"></i>
                     </a>
-                    <!-- Bouton burger pour mobile -->
-                    <button id="mobile-menu-button" class="md:hidden inline-flex items-center justify-center p-1.5 rounded-md text-pharma-blue hover:bg-pharma-softgreen focus:outline-none transition">
+                    <!-- Menu burger mobile -->
+                    <button id="mobile-menu-button" class="md:hidden inline-flex items-center justify-center p-1.5 rounded-md text-[#2C5F8A] hover:bg-white/40 focus:outline-none transition">
                         <i class="fas fa-bars text-base"></i>
                     </button>
                 </div>
             </div>
         </div>
         
-        <!-- Menu mobile (Goodly appliqué + 3 onglets) -->
-        <div id="mobile-menu" class="md:hidden hidden bg-white/95 backdrop-blur-sm border-t border-pharma-softgreen px-4 pt-2 pb-4 space-y-1 shadow-inner">
-            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 text-sm font-medium hover:bg-pharma-softgreen hover:text-pharma-vert transition" style="font-family: 'Goodly', sans-serif !important;">
-                <i class="fas fa-store w-4 text-pharma-blue"></i>
+        <!-- Menu mobile (avec effet glass également) -->
+        <div id="mobile-menu" class="md:hidden hidden bg-white/70 backdrop-blur-md border-t border-white/40 px-4 pt-3 pb-5 space-y-1 shadow-lg rounded-b-2xl mx-1">
+            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 text-sm font-medium hover:bg-white/50 hover:text-[#2E8B57] transition">
+                <i class="fas fa-store w-4 text-[#2C5F8A]"></i>
                 <span>Pharmacies</span>
             </a>
-            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 text-sm font-medium hover:bg-pharma-softgreen hover:text-pharma-vert transition" style="font-family: 'Goodly', sans-serif !important;">
-                <i class="fas fa-qrcode w-4 text-pharma-blue"></i>
+            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 text-sm font-medium hover:bg-white/50 hover:text-[#2E8B57] transition">
+                <i class="fas fa-qrcode w-4 text-[#2C5F8A]"></i>
                 <span>Anti-contrefaçon</span>
             </a>
-            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 text-sm font-medium hover:bg-pharma-softgreen hover:text-pharma-vert transition" style="font-family: 'Goodly', sans-serif !important;">
-                <i class="fas fa-truck w-4 text-pharma-blue"></i>
+            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 text-sm font-medium hover:bg-white/50 hover:text-[#2E8B57] transition">
+                <i class="fas fa-truck w-4 text-[#2C5F8A]"></i>
                 <span>Commandes</span>
             </a>
-            <div class="pt-3 flex flex-col gap-2 mt-1 border-t border-pharma-softgreen">
-                <a href="#" class="flex items-center justify-center gap-2 px-3 py-2 rounded-full border border-pharma-blue text-pharma-blue text-sm font-medium hover:bg-pharma-softblue transition" style="font-family: 'Goodly', sans-serif !important;">
+            <div class="pt-3 flex flex-col gap-2 mt-1 border-t border-white/40">
+                <a href="#" class="flex items-center justify-center gap-2 px-3 py-2 rounded-full border border-[#2C5F8A]/30 bg-white/40 backdrop-blur-sm text-[#2C5F8A] text-sm font-medium hover:bg-white/70 transition">
                     <i class="fas fa-user-circle text-xs"></i>
                     <span>Connexion</span>
                 </a>
-                <a href="#" class="flex items-center justify-center gap-2 px-3 py-2 rounded-full bg-pharma-vert text-white text-sm font-medium hover:bg-[#267349] transition" style="font-family: 'Goodly', sans-serif !important;">
+                <a href="#" class="btn-solid flex items-center justify-center gap-2 px-3 py-2 rounded-full text-white text-sm font-medium transition">
                     <i class="fas fa-gem text-xs"></i>
                     <span>Essai gratuit</span>
                 </a>
@@ -162,7 +164,63 @@
         </div>
     </nav>
 
-    <!-- Script pour le toggle du menu mobile -->
+    <!-- Contenu principal pour démonstration -->
+    <main class="max-w-7xl mx-auto px-4 py-12 md:py-20">
+        <div class="bg-white/30 backdrop-blur-sm rounded-2xl shadow-lg p-8 md:p-12 border border-white/50">
+            <div class="text-center">
+                <div class="inline-flex items-center gap-2 bg-white/50 backdrop-blur-sm rounded-full px-4 py-2 mb-6">
+                    <i class="fas fa-glass-water text-[#2C5F8A]"></i>
+                    <span class="text-sm font-medium text-gray-700">Effet Glass sur la navbar uniquement</span>
+                </div>
+                <i class="fas fa-hand-peace text-5xl text-[#2E8B57] mb-4"></i>
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-800">
+                    Navbar avec effet <span class="text-[#2C5F8A]">Glassmorphisme</span>
+                </h1>
+                <p class="text-gray-600 mt-4 max-w-2xl mx-auto">
+                    La barre de navigation bénéficie d'un fond transparent avec flou (backdrop-filter: blur).<br>
+                    Le bouton "Essai gratuit" reste solide sans effet glass. Bordures arrondies en bas.
+                </p>
+                <div class="mt-6 flex flex-wrap justify-center gap-3">
+                    <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-white/50 backdrop-blur-sm rounded-full text-xs text-gray-600">
+                        <i class="fas fa-tint text-[#2E8B57] text-xs"></i> Backdrop-blur (14px)
+                    </span>
+                    <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-white/50 backdrop-blur-sm rounded-full text-xs text-gray-600">
+                        <i class="fas fa-border-all text-[#2C5F8A] text-xs"></i> Bordures arrondies en bas
+                    </span>
+                    <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-white/50 backdrop-blur-sm rounded-full text-xs text-gray-600">
+                        <i class="fas fa-font text-[#2E8B57] text-xs"></i> Police Goodly
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Cartes pour voir la transparence -->
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white/40 backdrop-blur-sm rounded-xl p-6 border border-white/50 shadow-sm">
+                <i class="fas fa-store text-2xl text-[#2C5F8A] mb-3"></i>
+                <h3 class="font-semibold text-gray-800">Pharmacies partenaires</h3>
+                <p class="text-sm text-gray-600 mt-1">Gérez vos stocks en temps réel avec notre dashboard</p>
+            </div>
+            <div class="bg-white/40 backdrop-blur-sm rounded-xl p-6 border border-white/50 shadow-sm">
+                <i class="fas fa-shield-alt text-2xl text-[#2E8B57] mb-3"></i>
+                <h3 class="font-semibold text-gray-800">Sécurité maximale</h3>
+                <p class="text-sm text-gray-600 mt-1">Authentification par QR code et IA anti-contrefaçon</p>
+            </div>
+            <div class="bg-white/40 backdrop-blur-sm rounded-xl p-6 border border-white/50 shadow-sm">
+                <i class="fas fa-truck-fast text-2xl text-[#2C5F8A] mb-3"></i>
+                <h3 class="font-semibold text-gray-800">Livraison express</h3>
+                <p class="text-sm text-gray-600 mt-1">Commandez en quelques clics, livraison à domicile</p>
+            </div>
+        </div>
+        
+        <!-- Note sur l'effet glass -->
+        <div class="mt-8 text-center text-sm text-gray-500 bg-white/30 backdrop-blur-sm rounded-xl p-4 border border-white/40">
+            <i class="fas fa-info-circle text-[#2C5F8A] mr-1"></i>
+            La navbar utilise <code class="bg-white/50 px-1 py-0.5 rounded">background: rgba(255,255,255,0.55)</code> + 
+            <code class="bg-white/50 px-1 py-0.5 rounded">backdrop-filter: blur(14px)</code> — Effet glass pur, sans couleur noire.
+        </div>
+    </main>
+
     <script>
         const menuBtn = document.getElementById('mobile-menu-button');
         const mobileMenu = document.getElementById('mobile-menu');
@@ -170,8 +228,6 @@
             menuBtn.addEventListener('click', () => {
                 mobileMenu.classList.toggle('hidden');
             });
-            
-            // Fermeture du menu après clic sur un lien (meilleure UX)
             const mobileLinks = mobileMenu.querySelectorAll('a');
             mobileLinks.forEach(link => {
                 link.addEventListener('click', () => {
@@ -180,15 +236,3 @@
             });
         }
     </script>
-    
-    <!-- Petit espace de visualisation (uniquement pour démonstration) -->
-    <div class="max-w-7xl mx-auto px-4 py-12 text-center">
-        <div class="bg-white rounded-2xl shadow-sm p-8 border border-pharma-softgreen">
-            <i class="fas fa-heartbeat text-4xl text-pharma-vert mb-3"></i>
-            <h2 class="text-xl font-semibold text-gray-700" style="font-family: 'Goodly', sans-serif !important;">Navbar avec police Goodly</h2>
-            <p class="text-gray-500 mt-2" style="font-family: 'Goodly', sans-serif !important;">Design simple, chaleureux & accueillant — Icônes Font Awesome intégrées</p>
-            <p class="text-xs text-pharma-blue mt-3" style="font-family: 'Goodly', sans-serif !important;">
-                <i class="fas fa-check-circle"></i> Slogan "Cameroun · Santé connectée" placé EN DESSOUS du logo
-            </p>
-        </div>
-    </div>
