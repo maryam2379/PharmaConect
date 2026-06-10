@@ -1,0 +1,32 @@
+### Python (Environnement & Caches) ###
+# Ton environnement virtuel
+env/
+venv/
+.venv/
+ENV/
+
+# Caches Python (Tous les pycache et fichiers compilés)
+**/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+### Variables d'environnement ###
+# Fichiers de configuration locale (clés d'API, mot de passe)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+### IDE et Éditeurs ###
+.idea/
+.vscode/
+*.code-workspace
+
+### Systèmes d'exploitation ###
+.DS_Store
+Thumbs.db
