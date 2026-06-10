@@ -7,18 +7,13 @@
         src: local('Goodly'), local('SF Pro Text'), local('Segoe UI'), local('Helvetica Neue');
         font-display: swap;
     }
-
     * {
         font-family: 'Goodly', system-ui, -apple-system, 'Segoe UI', sans-serif;
     }
-
-    /* Couleurs */
     :root {
         --pharma-blue: #2C5F8A;
         --pharma-vert: #2E8B57;
     }
-
-    /* EFFET GLASS TRÈS RENFORCÉ - blur 24px (niveau élevé) */
     .navbar-glass {
         background: rgba(255, 255, 255, 0.4);
         backdrop-filter: blur(24px);
@@ -26,65 +21,50 @@
         border-bottom: 1px solid rgba(255, 255, 255, 0.5);
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
     }
-
-    /* Hauteur fixe à 15vh */
     .navbar-height {
         height: 15vh;
         min-height: 80px;
         max-height: 110px;
     }
-
-    /* Bordures arrondies en bas */
     .rounded-bottom-nav {
         border-bottom-left-radius: 32px;
         border-bottom-right-radius: 32px;
     }
-
     @media (max-width: 768px) {
         .rounded-bottom-nav {
             border-bottom-left-radius: 24px;
             border-bottom-right-radius: 24px;
         }
-
         .navbar-height {
             height: auto;
             min-height: 65px;
             padding: 0.4rem 0;
         }
     }
-
-    /* Conteneur des liens - centrage parfait avec espacement équitable */
     .nav-links-container {
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 2.5rem;
     }
-
     @media (min-width: 1024px) {
         .nav-links-container {
             gap: 3.5rem;
         }
     }
-
-    /* Style des liens - police légèrement réduite */
     .nav-link-glass {
         transition: all 0.25s ease;
         font-size: 0.85rem;
         padding: 0.5rem 1rem;
     }
-
     .nav-link-glass i {
         font-size: 0.8rem;
     }
-
     .nav-link-glass:hover {
         background: rgba(255, 255, 255, 0.55);
         color: var(--pharma-vert);
         transform: translateY(-1px);
     }
-
-    /* Bouton Essai gratuit : solide, sans glass */
     .btn-solid {
         background: linear-gradient(135deg, #2E8B57 0%, #1f6e46 100%);
         box-shadow: 0 4px 12px rgba(46, 139, 87, 0.3);
@@ -92,18 +72,14 @@
         font-size: 0.85rem;
         padding: 0.5rem 1.2rem;
     }
-
     .btn-solid i {
         font-size: 0.8rem;
     }
-
     .btn-solid:hover {
         background: linear-gradient(135deg, #267349 0%, #195a3a 100%);
         transform: translateY(-2px);
         box-shadow: 0 6px 18px rgba(46, 139, 87, 0.4);
     }
-
-    /* Bouton connexion avec glass léger - police réduite */
     .btn-outline-glass {
         background: rgba(255, 255, 255, 0.35);
         backdrop-filter: blur(4px);
@@ -112,46 +88,26 @@
         font-size: 0.85rem;
         padding: 0.5rem 1rem;
     }
-
     .btn-outline-glass i {
         font-size: 0.8rem;
     }
-
     .btn-outline-glass:hover {
         background: rgba(255, 255, 255, 0.7);
         border-color: rgba(44, 95, 138, 0.6);
         transform: translateY(-1px);
     }
-
-    /* Taille du texte du logo réduite */
     .logo-text {
         font-size: 1rem;
     }
-
     .slogan-text {
         font-size: 0.6rem;
     }
-
     @media (min-width: 768px) {
-        .logo-text {
-            font-size: 1.1rem;
-        }
-
-        .slogan-text {
-            font-size: 0.65rem;
-        }
-
-        .nav-link-glass {
-            font-size: 0.9rem;
-        }
-
-        .btn-solid,
-        .btn-outline-glass {
-            font-size: 0.9rem;
-        }
+        .logo-text { font-size: 1.1rem; }
+        .slogan-text { font-size: 0.65rem; }
+        .nav-link-glass { font-size: 0.9rem; }
+        .btn-solid, .btn-outline-glass { font-size: 0.9rem; }
     }
-
-    /* Conteneur principal pour centrage vertical parfait */
     .nav-inner {
         display: flex;
         align-items: center;
@@ -159,196 +115,145 @@
         width: 100%;
         height: 100%;
     }
-
-    /* Sections flex pour un centrage équilibré */
     .logo-section {
         flex: 1;
         display: flex;
         justify-content: flex-start;
     }
-
     .links-section {
         flex: 2;
         display: flex;
         justify-content: center;
     }
-
     .buttons-section {
         flex: 1;
         display: flex;
         justify-content: flex-end;
     }
-
     @media (max-width: 768px) {
-
-        .logo-section,
-        .links-section,
-        .buttons-section {
-            flex: auto;
-        }
-
-        .links-section {
-            display: none;
-        }
-
-        .logo-text {
-            font-size: 0.95rem;
-        }
+        .logo-section, .links-section, .buttons-section { flex: auto; }
+        .links-section { display: none; }
+        .logo-text { font-size: 0.95rem; }
     }
-
-    /* Style pour l'icône du logo */
     .logo-icon {
         width: 2rem;
         height: 2rem;
     }
-
     @media (min-width: 768px) {
-        .logo-icon {
-            width: 2.2rem;
-            height: 2.2rem;
-        }
+        .logo-icon { width: 2.2rem; height: 2.2rem; }
     }
 </style>
-</head>
 
-<body class="bg-gradient-to-br from-blue-100 via-white to-emerald-100 min-h-screen">
+<nav class="navbar-glass rounded-bottom-nav sticky top-0 z-50 w-full navbar-height">
+    <div class="max-w-7xl mx-auto px-4 sm:px-8 h-full">
+        <div class="nav-inner">
 
-    <!-- Fond décoratif pour bien voir l'effet glass renforcé -->
-    <div class="fixed inset-0 -z-10 overflow-hidden">
-        <div class="absolute top-10 left-5 w-96 h-96 bg-blue-300/30 rounded-full blur-3xl"></div>
-        <div class="absolute bottom-10 right-5 w-[30rem] h-[30rem] bg-emerald-300/30 rounded-full blur-3xl"></div>
-        <div
-            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[28rem] h-[28rem] bg-teal-200/30 rounded-full blur-3xl">
-        </div>
-        <div class="absolute top-1/3 right-1/4 w-64 h-64 bg-cyan-300/20 rounded-full blur-2xl"></div>
-        <!-- Pattern subtil -->
-        <div
-            class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIxIiBmaWxsPSIjY2NkZGVlIiBmaWxsLW9wYWNpdHk9IjAuMiIvPjwvc3ZnPg==')] opacity-30">
+            <!-- LOGO (redirige vers l'accueil) -->
+            <div class="logo-section">
+                <a href="{{ url_for('main.home') }}" class="flex items-center space-x-2.5">
+                    <div class="flex-shrink-0">
+                        <div class="w-9 h-9 md:w-10 md:h-10 rounded-xl overflow-hidden">
+                            <img src="{{ url_for('static', filename='images/Group 2.svg') }}" alt="PharmaConnect Logo" class="w-full h-full object-contain">
+                        </div>
+                    </div>
+                    <div class="flex flex-col leading-tight">
+                        <span class="logo-text font-bold tracking-tight bg-gradient-to-r from-[#2C5F8A] to-[#2E8B57] bg-clip-text text-transparent">
+                            PharmaConnect
+                        </span>
+                        <span class="slogan-text text-gray-600/80 mt-0.5 flex items-center gap-1">
+                            <i class="fas fa-map-marker-alt text-[7px] md:text-[8px] text-[#2E8B57]"></i>
+                            Cameroun · Santé connectée
+                        </span>
+                    </div>
+                </a>
+            </div>
+
+            <!-- LIENS CENTRAUX (URLs valides) -->
+            <div class="links-section">
+                <div class="nav-links-container">
+                    <a href="{{ url_for('main.pharmacies') }}" class="nav-link-glass flex items-center gap-2 rounded-full text-gray-700 font-medium">
+                        <i class="fas fa-store"></i><span>Pharmacies</span>
+                    </a>
+                    <a href="" class="nav-link-glass flex items-center gap-2 rounded-full text-gray-700 font-medium">
+                        <i class="fas fa-qrcode"></i><span>Anti-contrefaçon</span>
+                    </a>
+                    <a href="" class="nav-link-glass flex items-center gap-2 rounded-full text-gray-700 font-medium">
+                        <i class="fas fa-truck"></i><span>Commandes</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- BOUTONS DYNAMIQUES (connecté / non connecté) -->
+            <div class="buttons-section">
+                <div class="flex items-center gap-2.5">
+                    {% if session.user_id %}
+                        <!-- Utilisateur connecté -->
+                        <a href="{{ url_for('main.dashboard') }}"
+                           class="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#2E8B57] to-[#1f6e46] text-white font-medium px-4 py-2 shadow-md hover:shadow-lg transition-all hover:translate-y-[-2px]">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Tableau de bord</span>
+                        </a>
+                    {% else %}
+                        <!-- Utilisateur non connecté -->
+                        <a href="{{ url_for('main.login') }}"
+                           class="hidden sm:inline-flex items-center gap-2 rounded-full text-[#2C5F8A] font-medium btn-outline-glass transition-all">
+                            <i class="fas fa-user-circle"></i><span>Connexion</span>
+                        </a>
+                        <a href="{{ url_for('main.register') }}"
+                           class="btn-solid inline-flex items-center gap-2 rounded-full text-white font-medium transition-all">
+                            <i class="fas fa-gem"></i><span>Essai gratuit</span>
+                        </a>
+                    {% endif %}
+                    <!-- Menu burger -->
+                    <button id="mobile-menu-button"
+                        class="md:hidden inline-flex items-center justify-center p-2 rounded-md text-[#2C5F8A] hover:bg-white/40 focus:outline-none transition backdrop-blur-sm">
+                        <i class="fas fa-bars text-base"></i>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- NAVBAR AVEC EFFET GLASS TRÈS RENFORCÉ (blur 24px) -->
-    <!-- Hauteur : 15vh | Éléments centrés et équidistants -->
-    <!-- Police légèrement réduite | Bordures arrondies en bas -->
-    <!-- ========================================== -->
-    <nav class="navbar-glass rounded-bottom-nav sticky top-0 z-50 w-full navbar-height">
-        <div class="max-w-7xl mx-auto px-4 sm:px-8 h-full">
-            <div class="nav-inner">
-
-                <!-- SECTION LOGO (à gauche) -->
-                <div class="logo-section">
-                    <div class="flex items-center space-x-2.5">
-                        <div class="flex-shrink-0">
-                            <div class="w-9 h-9 md:w-10 md:h-10 rounded-xl overflow-hidden">
-                                <img src="{{ url_for('static', filename='images/Group 2.svg') }}" alt="PharmaConnect Logo"
-                                    class="w-full h-full object-contain">
-                            </div>
-                        </div>
-                        <div class="flex flex-col leading-tight">
-                            <span
-                                class="logo-text font-bold tracking-tight bg-gradient-to-r from-[#2C5F8A] to-[#2E8B57] bg-clip-text text-transparent">
-                                PharmaConnect
-                            </span>
-                            <span class="slogan-text text-gray-600/80 mt-0.5 flex items-center gap-1">
-                                <i class="fas fa-map-marker-alt text-[7px] md:text-[8px] text-[#2E8B57]"></i>
-                                Cameroun · Santé connectée
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SECTION LIENS (centrés, équidistants, police réduite) -->
-                <div class="links-section">
-                    <div class="nav-links-container">
-                    <a href="{{ url_for('main.pharmacies') }}"
-                            class="nav-link-glass flex items-center gap-2 rounded-full text-gray-700 font-medium transition-all duration-200">
-                            <i class="fas fa-store"></i>
-                            <span>Pharmacies</span>
-                        </a>
-                        <a href="#"
-                            class="nav-link-glass flex items-center gap-2 rounded-full text-gray-700 font-medium transition-all duration-200">
-                            <i class="fas fa-qrcode"></i>
-                            <span>Anti-contrefaçon</span>
-                        </a>
-                        <a href="#"
-                            class="nav-link-glass flex items-center gap-2 rounded-full text-gray-700 font-medium transition-all duration-200">
-                            <i class="fas fa-truck"></i>
-                            <span>Commandes</span>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- SECTION BOUTONS (à droite) -->
-                <div class="buttons-section">
-                    <div class="flex items-center gap-2.5">
-                        <a href="#"
-                            class="hidden sm:inline-flex items-center gap-2 rounded-full text-[#2C5F8A] font-medium btn-outline-glass transition-all duration-200">
-                            <i class="fas fa-user-circle"></i>
-                            <span>Connexion</span>
-                        </a>
-                        <a href="#"
-                            class="btn-solid inline-flex items-center gap-2 rounded-full text-white font-medium transition-all duration-200">
-                            <i class="fas fa-gem"></i>
-                            <span>Essai gratuit</span>
-                            <!-- <i class="fas fa-arrow-right text-[9px] md:text-[10px] ml-0.5"></i> -->
-                        </a>
-                        <!-- Menu burger mobile -->
-                        <button id="mobile-menu-button"
-                            class="md:hidden inline-flex items-center justify-center p-2 rounded-md text-[#2C5F8A] hover:bg-white/40 focus:outline-none transition backdrop-blur-sm">
-                            <i class="fas fa-bars text-base"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Menu mobile avec effet glass renforcé -->
-        <div id="mobile-menu"
-            class="md:hidden hidden bg-white/60 backdrop-blur-xl border-t border-white/40 px-5 pt-3 pb-4 space-y-1.5 shadow-xl rounded-b-2xl mx-2 mt-1">
-            <a href="#"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 text-sm font-medium hover:bg-white/60 hover:text-[#2E8B57] transition">
-                <i class="fas fa-store w-4 text-[#2C5F8A]"></i>
-                <span>Pharmacies</span>
-            </a>
-            <a href="#"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 text-sm font-medium hover:bg-white/60 hover:text-[#2E8B57] transition">
-                <i class="fas fa-qrcode w-4 text-[#2C5F8A]"></i>
-                <span>Anti-contrefaçon</span>
-            </a>
-            <a href="#"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 text-sm font-medium hover:bg-white/60 hover:text-[#2E8B57] transition">
-                <i class="fas fa-truck w-4 text-[#2C5F8A]"></i>
-                <span>Commandes</span>
-            </a>
-            <div class="pt-3 flex flex-col gap-2 mt-2 border-t border-white/50">
-                <a href="#"
-                    class="flex items-center justify-center gap-2 px-3 py-2 rounded-full border border-[#2C5F8A]/30 bg-white/40 backdrop-blur-sm text-[#2C5F8A] text-sm font-medium hover:bg-white/70 transition">
-                    <i class="fas fa-user-circle text-xs"></i>
-                    <span>Connexion</span>
+    <!-- MENU MOBILE (identique logique) -->
+    <div id="mobile-menu" class="md:hidden hidden bg-white/60 backdrop-blur-xl border-t border-white/40 px-5 pt-3 pb-4 space-y-1.5 shadow-xl rounded-b-2xl mx-2 mt-1">
+        <a href="{{ url_for('main.pharmacies') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 text-sm font-medium hover:bg-white/60">
+            <i class="fas fa-store w-4 text-[#2C5F8A]"></i><span>Pharmacies</span>
+        </a>
+        <a href="" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 text-sm font-medium hover:bg-white/60">
+            <i class="fas fa-qrcode w-4 text-[#2C5F8A]"></i><span>Anti-contrefaçon</span>
+        </a>
+        <a href="" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 text-sm font-medium hover:bg-white/60">
+            <i class="fas fa-truck w-4 text-[#2C5F8A]"></i><span>Commandes</span>
+        </a>
+        <div class="pt-3 flex flex-col gap-2 mt-2 border-t border-white/50">
+            {% if session.user_id %}
+                <a href="{{ url_for('main.dashboard') }}" class="flex items-center justify-center gap-2 px-3 py-2 rounded-full bg-[#2E8B57] text-white text-sm font-medium">
+                    <i class="fas fa-tachometer-alt"></i><span>Tableau de bord</span>
                 </a>
-                <a href="#"
-                    class="btn-solid flex items-center justify-center gap-2 px-3 py-2 rounded-full text-white text-sm font-medium transition">
-                    <i class="fas fa-gem text-xs"></i>
-                    <span>Essai gratuit</span>
+            {% else %}
+                <a href="{{ url_for('main.login') }}" class="flex items-center justify-center gap-2 px-3 py-2 rounded-full border border-[#2C5F8A]/30 bg-white/40 backdrop-blur-sm text-[#2C5F8A] text-sm font-medium">
+                    <i class="fas fa-user-circle"></i><span>Connexion</span>
                 </a>
-            </div>
+                <a href="{{ url_for('main.register') }}" class="btn-solid flex items-center justify-center gap-2 px-3 py-2 rounded-full text-white text-sm font-medium">
+                    <i class="fas fa-gem"></i><span>Essai gratuit</span>
+                </a>
+            {% endif %}
         </div>
-    </nav>
+    </div>
+</nav>
 
-
-    <script>
-        const menuBtn = document.getElementById('mobile-menu-button');
-        const mobileMenu = document.getElementById('mobile-menu');
-        if (menuBtn && mobileMenu) {
-            menuBtn.addEventListener('click', () => {
-                mobileMenu.classList.toggle('hidden');
+<script>
+    const menuBtn = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    if (menuBtn && mobileMenu) {
+        menuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+        const mobileLinks = mobileMenu.querySelectorAll('a');
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
             });
-            const mobileLinks = mobileMenu.querySelectorAll('a');
-            mobileLinks.forEach(link => {
-                link.addEventListener('click', () => {
-                    mobileMenu.classList.add('hidden');
-                });
-            });
-        }
-    </script>
+        });
+    }
+</script>
