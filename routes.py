@@ -293,11 +293,54 @@ def logout():
 # Dashboards (protégés par rôle)
 # ------------------------------------------------------------------
 @main_bp.route("/dashboard")
-def dashboardt():
-    if 'user_id' not in session or session.get('role') != 'patient':
-        flash("Accès non autorisé.", "danger")
+def dashboard():
+    if 'user_id' not in session:
+        flash("Veuillez vous connecter.", "warning")
         return redirect(url_for("main.login"))
+
     user = User.query.get(session['user_id'])
-    return render_template("admin/dashboard.html", user=user)
+    role = session.get('role')
 
+    # Initialisation de toutes les variables attendues par le template
+    stats = {}
+    recent_searches = []
+    critical_stock = []
+    recent_users = []
+    pending_pharmacies = []
+    recent_orders = []
 
+    if role == 'patient':
+        # Remplacez ces valeurs par de vraies requêtes SQLAlchemy
+        stats['recent_searches'] = 0
+        stats['scans'] = 0
+        stats['nearby_pharmacies'] = 0
+        # recent_searches = ... (ex: user.searches.all())
+
+    elif role == 'pharmacien':
+        stats['total_stock'] = 0
+        stats['low_stock'] = 0
+        stats['pending_orders'] = 0
+        # critical_stock = ...
+
+    elif role == 'admin':
+        stats['users'] = User.query.count()
+        stats['pharmacies'] = Pharmacy.query.count()
+        stats['medicines'] = Medicine.query.count()
+        stats['orders'] = Order.query.count()
+        recent_users = User.query.order_by(User.id.desc()).limit(5).all()
+        pending_pharmacies = Pharmacy.query.filter_by(is_verified=False).all()
+
+    elif role == 'grossiste':
+        stats['supplier_orders'] = 0
+        stats['deliveries'] = 0
+        stats['revenue'] = "0 FCFA"
+        # recent_orders = ...
+
+    return render_template("admin/dashboard.html",
+                           user=user,
+                           stats=stats,
+                           recent_searches=recent_searches,
+                           critical_stock=critical_stock,
+                           recent_users=recent_users,
+                           pending_pharmacies=pending_pharmacies,
+                           recent_orders=recent_orders)
