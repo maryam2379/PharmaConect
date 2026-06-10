@@ -1,11 +1,15 @@
 import secrets
 import random
 import os
+import cv2
+import numpy as np
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from werkzeug.utils import secure_filename
-from db import db                     # instance unique
-from models import User, Pharmacy, Medicine, Order   # ajout des modèles manquants
+from db import db
+from models import User, Pharmacy, Medicine, Order, Stock, QRCode
 from email_utils import send_email
+from datetime import datetime
+from pyzbar.pyzbar import decode
 
 main_bp = Blueprint('main', __name__)
 
@@ -272,16 +276,10 @@ def login():
     session['user_id'] = user.id
     session['role'] = user.role
     session['full_name'] = user.full_name
+    session['email'] = user.email
     
-    role_dashboards = {
-        'patient': 'main.dashboard',
-        'pharmacien': 'main.dashboard',
-        'admin': 'main.dashboard',
-        'grossiste': 'main.dashboard'
-    }
-    dashboard = role_dashboards.get(user.role, 'main.home')
     flash(f"Bienvenue {user.full_name} !", "success")
-    return redirect(url_for(dashboard))
+    return redirect(url_for("main.dashboard"))
 
 @main_bp.route("/logout")
 def logout():
@@ -301,7 +299,6 @@ def dashboard():
     user = User.query.get(session['user_id'])
     role = session.get('role')
 
-    # Initialisation de toutes les variables attendues par le template
     stats = {}
     recent_searches = []
     critical_stock = []
@@ -310,18 +307,13 @@ def dashboard():
     recent_orders = []
 
     if role == 'patient':
-        # Remplacez ces valeurs par de vraies requêtes SQLAlchemy
         stats['recent_searches'] = 0
         stats['scans'] = 0
         stats['nearby_pharmacies'] = 0
-        # recent_searches = ... (ex: user.searches.all())
-
     elif role == 'pharmacien':
         stats['total_stock'] = 0
         stats['low_stock'] = 0
         stats['pending_orders'] = 0
-        # critical_stock = ...
-
     elif role == 'admin':
         stats['users'] = User.query.count()
         stats['pharmacies'] = Pharmacy.query.count()
@@ -329,12 +321,10 @@ def dashboard():
         stats['orders'] = Order.query.count()
         recent_users = User.query.order_by(User.id.desc()).limit(5).all()
         pending_pharmacies = Pharmacy.query.filter_by(is_verified=False).all()
-
     elif role == 'grossiste':
         stats['supplier_orders'] = 0
         stats['deliveries'] = 0
         stats['revenue'] = "0 FCFA"
-        # recent_orders = ...
 
     return render_template("admin/dashboard.html",
                            user=user,
@@ -345,18 +335,24 @@ def dashboard():
                            pending_pharmacies=pending_pharmacies,
                            recent_orders=recent_orders)
 
-# Assurez-vous que cette route est présente dans routes.py
+# ------------------------------------------------------------------
+# Pages publiques
+# ------------------------------------------------------------------
 @main_bp.route("/anti-counterfeit")
 def anti_counterfeit():
-    """Page de vérification anti-contrefaçon avec caméra"""
     return render_template("anti_counterfeit.html")
 
 @main_bp.route("/pharmacies")
 def pharmacies():
-    """Page affichant toutes les pharmacies avec carte interactive"""
     return render_template("pharmacies.html")
 
+@main_bp.route("/faq")
+def faq():
+    return render_template("layout/faq.html")
 
+# ------------------------------------------------------------------
+# Profil utilisateur
+# ------------------------------------------------------------------
 @main_bp.route("/profile", methods=["GET", "POST"])
 def profile():
     if 'user_id' not in session:
@@ -366,54 +362,222 @@ def profile():
     user = User.query.get(session['user_id'])
     if not user:
         session.clear()
-        flash("Utilisateur introuvable. Veuillez vous reconnecter.", "danger")
+        flash("Utilisateur introuvable.", "danger")
         return redirect(url_for("main.login"))
     
+    pharmacy = None
+    if user.role == 'pharmacien':
+        pharmacy = Pharmacy.query.filter_by(manager_id=user.id).first()
+    
     if request.method == "POST":
-        full_name = request.form.get("full_name", "").strip()
-        email = request.form.get("email", "").strip()
-        phone = request.form.get("phone", "").strip()
+        form_type = request.form.get("form_type")
         
-        # Vérifier l'unicité de l'email si changé
-        if email != user.email:
-            existing = User.query.filter(User.email == email, User.id != user.id).first()
-            if existing:
-                flash("Cet email est déjà utilisé par un autre compte.", "danger")
-                return redirect(url_for("main.profile"))
+        if form_type == "user":
+            full_name = request.form.get("full_name", "").strip()
+            email = request.form.get("email", "").strip()
+            phone = request.form.get("phone", "").strip()
+            if email != user.email:
+                if User.query.filter(User.email == email, User.id != user.id).first():
+                    flash("Cet email est déjà utilisé.", "danger")
+                    return redirect(url_for("main.profile"))
+            user.full_name = full_name
+            user.email = email
+            user.phone = phone
+            
+            old = request.form.get("old_password")
+            new = request.form.get("new_password")
+            confirm = request.form.get("confirm_password")
+            if old and new and confirm:
+                if not user.check_password(old):
+                    flash("Ancien mot de passe incorrect.", "danger")
+                    return redirect(url_for("main.profile"))
+                if new != confirm:
+                    flash("Les mots de passe ne correspondent pas.", "danger")
+                    return redirect(url_for("main.profile"))
+                if len(new) < 6:
+                    flash("Mot de passe trop court (min 6).", "danger")
+                    return redirect(url_for("main.profile"))
+                user.set_password(new)
+                flash("Mot de passe mis à jour.", "success")
+            db.session.commit()
+            session['full_name'] = user.full_name
+            flash("Informations personnelles mises à jour.", "success")
         
-        # Mise à jour des champs
-        user.full_name = full_name
-        user.email = email
-        user.phone = phone
+        elif form_type == "pharmacy" and pharmacy:
+            pharmacy.name = request.form.get("pharmacy_name", "").strip()
+            pharmacy.license_number = request.form.get("license_number", "").strip()
+            pharmacy.address = request.form.get("address", "").strip()
+            pharmacy.city = request.form.get("city", "").strip()
+            pharmacy.phone = request.form.get("pharmacy_phone", "").strip()
+            pharmacy.email = request.form.get("pharmacy_email", "").strip()
+            db.session.commit()
+            flash("Informations de la pharmacie mises à jour.", "success")
         
-        # Changement de mot de passe (optionnel)
-        old_password = request.form.get("old_password")
-        new_password = request.form.get("new_password")
-        confirm_password = request.form.get("confirm_password")
+        elif form_type == "preferences":
+            flash("Préférences enregistrées (démonstration).", "success")
         
-        if old_password and new_password and confirm_password:
-            if not user.check_password(old_password):
-                flash("L'ancien mot de passe est incorrect.", "danger")
-                return redirect(url_for("main.profile"))
-            if new_password != confirm_password:
-                flash("Les nouveaux mots de passe ne correspondent pas.", "danger")
-                return redirect(url_for("main.profile"))
-            if len(new_password) < 6:
-                flash("Le nouveau mot de passe doit contenir au moins 6 caractères.", "danger")
-                return redirect(url_for("main.profile"))
-            user.set_password(new_password)
-            flash("Votre mot de passe a été mis à jour.", "success")
-        
-        db.session.commit()
-        session['full_name'] = user.full_name
-        session['email'] = user.email
-        
-        flash("Votre profil a été mis à jour avec succès.", "success")
         return redirect(url_for("main.profile"))
     
-    return render_template("admin/profile.html", user=user)
+    return render_template("admin/profile.html", user=user, pharmacy=pharmacy)
 
-@main_bp.route("/faq")
-def faq():
-    """Page Foire Aux Questions"""
-    return render_template("layout/faq.html")
+# ------------------------------------------------------------------
+# API Scan et upload QR code
+# ------------------------------------------------------------------
+@main_bp.route("/scan")
+def scan_page():
+    if 'user_id' not in session:
+        flash("Veuillez vous connecter.", "warning")
+        return redirect(url_for("main.login"))
+    return render_template("admin/scan.html")
+
+@main_bp.route("/api/scan", methods=["POST"])
+def api_scan():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Non authentifié'}), 401
+    
+    data = request.get_json()
+    scanned_code = data.get('code', '').strip()
+    if not scanned_code:
+        return jsonify({'success': False, 'message': 'Code vide'}), 400
+    
+    user = User.query.get(session['user_id'])
+    role = user.role
+    
+    qr = QRCode.query.filter_by(code=scanned_code).first()
+    if qr:
+        medicine = qr.medicine
+        if qr.status == 'used' and role != 'pharmacien':
+            return jsonify({
+                'success': False,
+                'message': '⚠️ Ce médicament a déjà été scanné auparavant ! Possible contrefaçon.'
+            })
+        if role == 'patient' and qr.status == 'active':
+            qr.status = 'used'
+            qr.verified_at = datetime.utcnow()
+            qr.verified_by = 'patient'
+            db.session.commit()
+        return jsonify({
+            'success': True,
+            'medicine': {
+                'name': medicine.name,
+                'generic_name': medicine.generic_name,
+                'manufacturer': medicine.manufacturer,
+                'dosage': medicine.dosage,
+                'form': medicine.form,
+                'prescription_required': medicine.prescription_required,
+                'authentic': qr.status == 'used' if role == 'patient' else True
+            }
+        })
+    else:
+        return jsonify({
+            'success': False,
+            'not_found': True,
+            'message': 'Médicament non trouvé dans la base.'
+        }), 404
+
+@main_bp.route("/api/upload-qrcode", methods=["POST"])
+def api_upload_qrcode():
+    """Reçoit une image, utilise pyzbar pour extraire le QR code"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Non authentifié'}), 401
+    
+    if 'image' not in request.files:
+        return jsonify({'success': False, 'message': 'Aucune image fournie'}), 400
+    
+    file = request.files['image']
+    if file.filename == '':
+        return jsonify({'success': False, 'message': 'Fichier vide'}), 400
+    
+    try:
+        img_bytes = file.read()
+        np_arr = np.frombuffer(img_bytes, np.uint8)
+        img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+        
+        if img is None:
+            return jsonify({'success': False, 'message': 'Image invalide'}), 400
+        
+        decoded_objects = decode(img)
+        
+        if not decoded_objects:
+            return jsonify({'success': False, 'message': 'Aucun QR code trouvé dans l\'image'}), 404
+        
+        qr_data = decoded_objects[0].data.decode('utf-8')
+        return jsonify({'success': True, 'code': qr_data})
+    
+    except Exception as e:
+        print(f"Erreur décodage: {e}")
+        return jsonify({'success': False, 'message': 'Erreur lors du décodage'}), 500
+
+@main_bp.route("/api/medicine/add", methods=["POST"])
+def api_add_medicine():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Non authentifié'}), 401
+    
+    user = User.query.get(session['user_id'])
+    if user.role not in ['pharmacien', 'admin']:
+        return jsonify({'success': False, 'message': 'Permission refusée'}), 403
+    
+    data = request.get_json()
+    name = data.get('name', '').strip()
+    generic_name = data.get('generic_name', '').strip()
+    manufacturer = data.get('manufacturer', '').strip()
+    dosage = data.get('dosage', '').strip()
+    form = data.get('form', '').strip()
+    prescription_required = data.get('prescription_required', False)
+    barcode = data.get('barcode', '').strip()
+    quantity = int(data.get('quantity', 0))
+    expiry_date = data.get('expiry_date')
+    price = float(data.get('price', 0))
+    
+    if not name:
+        return jsonify({'success': False, 'message': 'Nom du médicament requis'}), 400
+    
+    existing = Medicine.query.filter_by(name=name, dosage=dosage, manufacturer=manufacturer).first()
+    if not existing:
+        medicine = Medicine(
+            name=name,
+            generic_name=generic_name,
+            manufacturer=manufacturer,
+            dosage=dosage,
+            form=form,
+            prescription_required=prescription_required
+        )
+        db.session.add(medicine)
+        db.session.flush()
+    else:
+        medicine = existing
+    
+    if user.role == 'pharmacien':
+        pharmacy = Pharmacy.query.filter_by(manager_id=user.id).first()
+        if not pharmacy:
+            return jsonify({'success': False, 'message': 'Aucune pharmacie associée'}), 400
+        
+        stock = Stock.query.filter_by(pharmacy_id=pharmacy.id, medicine_id=medicine.id).first()
+        if stock:
+            stock.quantity += quantity
+            if expiry_date:
+                stock.expiry_date = datetime.strptime(expiry_date, '%Y-%m-%d')
+            stock.price = price
+        else:
+            stock = Stock(
+                pharmacy_id=pharmacy.id,
+                medicine_id=medicine.id,
+                quantity=quantity,
+                expiry_date=datetime.strptime(expiry_date, '%Y-%m-%d') if expiry_date else None,
+                price=price,
+                batch_number=data.get('batch_number', '')
+            )
+            db.session.add(stock)
+    
+    if barcode and not QRCode.query.filter_by(code=barcode).first():
+        qr = QRCode(
+            code=barcode,
+            serial_number=barcode,
+            status='active',
+            medicine_id=medicine.id,
+            pharmacy_id=pharmacy.id if user.role == 'pharmacien' else None
+        )
+        db.session.add(qr)
+    
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Médicament ajouté avec succès', 'medicine_id': medicine.id})

@@ -1,0 +1,332 @@
+{% extends "admin/master.html" %}
+
+{% block title %}Anti-Contrefaçon - PharmaConnect Cameroun{% endblock %}
+
+{% block content %}
+<style>
+  /* Réutilisation des variables CSS du master */
+  :root {
+    --vert-principal: #2E8B57;
+    --vert-fonce: #267349;
+    --bleu-profondeur: #0F4C81;
+    --bleu-clair: #eef2ff;
+    --blanc-carte: #ffffff;
+    --gris-fond: #f8fafc;
+    --gris-bordure: #e2e8f0;
+    --texte-fonce: #1e293b;
+    --texte-mute: #64748b;
+    --ombre: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 28px;
+    transition: all 0.3s ease;
+  }
+
+  .method-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+  }
+  .method-card:hover {
+    transform: translateY(-4px);
+    background: rgba(255,255,255,0.7);
+    border-color: var(--vert-principal);
+  }
+  .method-card.active {
+    border-color: var(--vert-principal);
+    background: rgba(46,139,87,0.1);
+  }
+
+  .scanner-area {
+    background: #1e293b;
+    border-radius: 24px;
+    padding: 1rem;
+    text-align: center;
+  }
+  #reader {
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .result-card {
+    background: var(--blanc-carte);
+    border-radius: 24px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    box-shadow: var(--ombre);
+  }
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  .info-label {
+    font-weight: 600;
+    color: var(--texte-mute);
+  }
+  .authentic-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    font-weight: bold;
+  }
+  .authentic-true {
+    background: #e0f2e9;
+    color: #166534;
+  }
+  .authentic-false {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+  .field-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid var(--gris-bordure);
+    border-radius: 20px;
+    font-size: 0.9rem;
+    background: var(--blanc-carte);
+  }
+  .field-input:focus {
+    outline: none;
+    border-color: var(--vert-principal);
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--vert-principal), var(--vert-fonce));
+    color: white;
+    border: none;
+    padding: 0.7rem 1.8rem;
+    border-radius: 40px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-secondary {
+    background: transparent;
+    border: 1.5px solid var(--gris-bordure);
+    padding: 0.7rem 1.8rem;
+    border-radius: 40px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  @media (max-width: 640px) {
+    .info-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="text-center mb-8">
+    <h1 class="text-3xl md:text-4xl font-bold text-gray-800">
+      <span class="text-[#2E8B57]">Vérification</span> anti-contrefaçon
+    </h1>
+    <div class="w-20 h-1 bg-[#2E8B57] mx-auto mt-3 rounded-full"></div>
+    <p class="text-gray-600 mt-4 max-w-2xl mx-auto">
+      Choisissez votre méthode de vérification et protégez-vous des faux médicaments
+    </p>
+  </div>
+
+  <!-- 3 méthodes sous forme de cartes -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="glass-card method-card p-5 text-center" data-method="scan">
+      <i class="fas fa-camera text-4xl text-[#2E8B57] mb-3"></i>
+      <h3 class="font-bold text-lg">Scanner par caméra</h3>
+      <p class="text-sm text-gray-500 mt-1">Utilisez votre caméra pour lire le QR code ou code-barres</p>
+    </div>
+    <div class="glass-card method-card p-5 text-center" data-method="manual">
+      <i class="fas fa-keyboard text-4xl text-[#2E8B57] mb-3"></i>
+      <h3 class="font-bold text-lg">Saisie manuelle</h3>
+      <p class="text-sm text-gray-500 mt-1">Entrez le numéro de série ou le code inscrit sur l'emballage</p>
+    </div>
+    <div class="glass-card method-card p-5 text-center" data-method="upload">
+      <i class="fas fa-image text-4xl text-[#2E8B57] mb-3"></i>
+      <h3 class="font-bold text-lg">Téléverser une photo</h3>
+      <p class="text-sm text-gray-500 mt-1">Importez une image du QR code depuis votre appareil</p>
+    </div>
+  </div>
+
+  <!-- Zone dynamique selon la méthode choisie -->
+  <div class="glass-card p-6">
+    <div id="method-scan" class="method-content" style="display: none;">
+      <div class="scanner-area">
+        <div id="reader"></div>
+        <p class="text-sm text-gray-300 mt-2">Placez un QR code ou code-barres devant la caméra</p>
+      </div>
+      <div id="scan-result" class="result-card" style="display: none;">
+        <h3 class="font-bold mb-2">Résultat du scan</h3>
+        <div id="scan-result-content"></div>
+        <button id="reset-scanner" class="btn-secondary mt-3">🔄 Scanner un autre</button>
+      </div>
+    </div>
+
+    <div id="method-manual" class="method-content" style="display: none;">
+      <div class="max-w-md mx-auto">
+        <label class="block text-sm font-medium mb-1">Code à vérifier</label>
+        <input type="text" id="manualCode" class="field-input" placeholder="Ex: PHARMA-CM-123456789">
+        <button id="verifyManualBtn" class="btn-primary w-full mt-4">Vérifier</button>
+        <div id="manual-result" class="result-card mt-4" style="display: none;"></div>
+      </div>
+    </div>
+
+    <div id="method-upload" class="method-content" style="display: none;">
+      <div class="max-w-md mx-auto text-center">
+        <label class="block w-full cursor-pointer">
+          <input type="file" id="qrImageInput" accept="image/*" class="hidden">
+          <div class="border-2 border-dashed border-gray-300 rounded-2xl p-8 hover:border-[#2E8B57] transition">
+            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
+            <p class="text-sm text-gray-500">Cliquez ou glissez une image contenant un QR code</p>
+          </div>
+        </label>
+        <div id="upload-result" class="result-card mt-4" style="display: none;"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Librairies -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<script>
+  // État
+  let html5QrCode = null;
+  let isScanning = false;
+  let currentMethod = null;
+
+  // Sélection des cartes méthodes
+  const methodCards = document.querySelectorAll('.method-card');
+  const methodContents = {
+    scan: document.getElementById('method-scan'),
+    manual: document.getElementById('method-manual'),
+    upload: document.getElementById('method-upload')
+  };
+
+  // Gestion du changement de méthode
+  methodCards.forEach(card => {
+    card.addEventListener('click', () => {
+      const method = card.dataset.method;
+      if (currentMethod === method) return;
+      currentMethod = method;
+      methodCards.forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      Object.values(methodContents).forEach(content => content.style.display = 'none');
+      methodContents[method].style.display = 'block';
+      if (html5QrCode && isScanning) {
+        html5QrCode.stop().then(() => { isScanning = false; });
+      }
+      if (method === 'scan') startScanner();
+    });
+  });
+
+  // Scanner (caméra)
+  async function startScanner() {
+    if (!document.getElementById('reader')) return;
+    if (html5QrCode && isScanning) return;
+    html5QrCode = new Html5Qrcode("reader");
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    try {
+      await html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure);
+      isScanning = true;
+    } catch(e) { console.error(e); }
+  }
+
+  function onScanSuccess(decodedText) {
+    if (html5QrCode && isScanning) {
+      html5QrCode.stop();
+      isScanning = false;
+    }
+    verifyCode(decodedText, 'scan-result-content', 'scan-result');
+  }
+
+  function onScanFailure(error) { /* ignorer */ }
+
+  document.getElementById('reset-scanner')?.addEventListener('click', () => {
+    document.getElementById('scan-result').style.display = 'none';
+    if (html5QrCode && !isScanning) startScanner();
+  });
+
+  // Saisie manuelle
+  document.getElementById('verifyManualBtn')?.addEventListener('click', () => {
+    const code = document.getElementById('manualCode').value.trim();
+    if (!code) { alert('Veuillez entrer un code'); return; }
+    verifyCode(code, 'manual-result', 'manual-result');
+  });
+
+  // Upload image (envoie l'image au serveur pour décodage avec pyzbar)
+  const fileInput = document.getElementById('qrImageInput');
+  fileInput?.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    const resultDiv = document.getElementById('upload-result');
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = '<div class="text-gray-500">🔍 Décodage en cours...</div>';
+    
+    try {
+      const response = await fetch('/api/upload-qrcode', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        verifyCode(data.code, 'upload-result', 'upload-result');
+      } else {
+        resultDiv.innerHTML = `<div class="text-red-600">❌ ${data.message}</div>`;
+      }
+    } catch (err) {
+      resultDiv.innerHTML = '<div class="text-red-600">❌ Erreur de connexion au serveur</div>';
+    }
+    
+    fileInput.value = '';
+  });
+
+  // Fonction centrale de vérification (appelle le backend)
+  function verifyCode(code, resultDivId, containerId) {
+    fetch('/api/scan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: code })
+    })
+    .then(res => res.json())
+    .then(data => {
+      const resultDiv = document.getElementById(containerId);
+      const contentDiv = document.getElementById(resultDivId);
+      if (data.success) {
+        const med = data.medicine;
+        let authenticHtml = med.authentic ? '<span class="authentic-badge authentic-true">✓ Authentique</span>' : '<span class="authentic-badge authentic-false">✗ Déjà scanné - Risque</span>';
+        contentDiv.innerHTML = `
+          <div class="info-grid">
+            <div><span class="info-label">Médicament :</span> ${med.name}</div>
+            <div><span class="info-label">Générique :</span> ${med.generic_name || '-'}</div>
+            <div><span class="info-label">Fabricant :</span> ${med.manufacturer || '-'}</div>
+            <div><span class="info-label">Dosage :</span> ${med.dosage || '-'}</div>
+            <div><span class="info-label">Forme :</span> ${med.form || '-'}</div>
+            <div><span class="info-label">Authenticité :</span> ${authenticHtml}</div>
+            <div><span class="info-label">Ordonnance :</span> ${med.prescription_required ? 'Oui' : 'Non'}</div>
+          </div>
+        `;
+      } else if (data.not_found) {
+        contentDiv.innerHTML = `<div class="bg-yellow-50 p-3 rounded-xl"><i class="fas fa-exclamation-triangle text-yellow-600"></i> ${data.message}</div>`;
+      } else {
+        contentDiv.innerHTML = `<div class="text-red-600">${data.message}</div>`;
+      }
+      resultDiv.style.display = 'block';
+    })
+    .catch(err => {
+      document.getElementById(resultDivId).innerHTML = '<div class="text-red-600">Erreur de connexion</div>';
+      document.getElementById(containerId).style.display = 'block';
+    });
+  }
+
+  // Activer la première méthode par défaut (scan)
+  if (methodCards.length) methodCards[0].click();
+</script>
+{% endblock %}
