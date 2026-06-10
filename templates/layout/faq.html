@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}FAQ - PharmaConnect Cameroun{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Police Goodly */
+    * {
+        font-family: 'Goodly', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.5);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 24px;
+        transition: all 0.3s ease;
+    }
+    
+    .glass-card:hover {
+        background: rgba(255, 255, 255, 0.7);
+        box-shadow: 0 20px 30px -12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .faq-question {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .faq-question:hover {
+        background: rgba(46, 139, 87, 0.1);
+    }
+    
+    .faq-answer {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s ease-out;
+    }
+    
+    .faq-answer.open {
+        max-height: 500px;
+        transition: max-height 0.4s ease-in;
+    }
+    
+    .rotate-icon {
+        transition: transform 0.3s ease;
+    }
+    
+    .rotate-icon.open {
+        transform: rotate(180deg);
+    }
+    
+    .category-active {
+        background: linear-gradient(135deg, #2E8B57, #1f6e46);
+        color: white;
+    }
+    
+    .search-input {
+        background: rgba(255, 255, 255, 0.55);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        transition: all 0.2s ease;
+        border-radius: 60px;
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: #2E8B57;
+        background: rgba(255, 255, 255, 0.85);
+        box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.15);
+    }
+    
+    /* Animation bounce pour l'icône du footer */
+    @keyframes bounce {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-5px);
+        }
+    }
+    
+    .bounce-icon {
+        animation: bounce 1s ease-in-out infinite;
+    }
+    
+    .bounce-icon:hover {
+        animation: none;
+        transform: scale(1.1);
+    }
+</style>
+
+<!-- HEADER -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-16 pb-8">
+    <div class="text-center">
+        <div class="inline-flex items-center gap-2 bg-white/40 backdrop-blur-sm rounded-full px-4 py-1.5 mb-4">
+            <i class="fas fa-question-circle text-[#2E8B57] text-sm"></i>
+            <span class="text-xs font-medium text-gray-600">Questions fréquentes</span>
+        </div>
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-800">
+            Foire aux <span class="text-[#2C5F8A]">questions</span>
+        </h1>
+        <div class="w-20 h-1 bg-[#2E8B57] mx-auto mt-3 rounded-full"></div>
+        <p class="text-gray-600 mt-4 max-w-2xl mx-auto text-sm md:text-base">
+            Trouvez rapidement des réponses à vos questions sur PharmaConnect.
+            Si vous ne trouvez pas votre réponse, contactez notre équipe.
+        </p>
+    </div>
+</section>
+
+<!-- BARRE DE RECHERCHE -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div class="max-w-2xl mx-auto">
+        <div class="relative">
+            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+            <input type="text" id="searchFaq" placeholder="Rechercher une question..." 
+                   class="search-input w-full pl-10 pr-4 py-3 text-gray-700 text-sm">
+        </div>
+    </div>
+</section>
+
+<!-- CATÉGORIES -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="flex flex-wrap justify-center gap-3">
+        <button data-category="all" class="category-btn px-5 py-2 rounded-full text-sm font-medium transition-all bg-white/50 backdrop-blur-sm text-gray-700 hover:bg-[#2E8B57] hover:text-white border border-white/60">
+            Toutes
+        </button>
+        <button data-category="general" class="category-btn px-5 py-2 rounded-full text-sm font-medium transition-all bg-white/50 backdrop-blur-sm text-gray-700 hover:bg-[#2E8B57] hover:text-white border border-white/60">
+            📌 Générales
+        </button>
+        <button data-category="patient" class="category-btn px-5 py-2 rounded-full text-sm font-medium transition-all bg-white/50 backdrop-blur-sm text-gray-700 hover:bg-[#2E8B57] hover:text-white border border-white/60">
+            👤 Patients
+        </button>
+        <button data-category="pharmacist" class="category-btn px-5 py-2 rounded-full text-sm font-medium transition-all bg-white/50 backdrop-blur-sm text-gray-700 hover:bg-[#2E8B57] hover:text-white border border-white/60">
+            💊 Pharmaciens
+        </button>
+        <button data-category="technical" class="category-btn px-5 py-2 rounded-full text-sm font-medium transition-all bg-white/50 backdrop-blur-sm text-gray-700 hover:bg-[#2E8B57] hover:text-white border border-white/60">
+            🔧 Technique
+        </button>
+        <button data-category="payment" class="category-btn px-5 py-2 rounded-full text-sm font-medium transition-all bg-white/50 backdrop-blur-sm text-gray-700 hover:bg-[#2E8B57] hover:text-white border border-white/60">
+            💰 Paiement
+        </button>
+    </div>
+</section>
+
+<!-- FAQ ACCORDÉON -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-16">
+    <div class="max-w-4xl mx-auto space-y-4" id="faqContainer"></div>
+    <div id="noResults" class="hidden text-center py-12">
+        <i class="fas fa-search-slash text-5xl text-gray-300 mb-3"></i>
+        <p class="text-gray-500">Aucune question ne correspond à votre recherche.</p>
+    </div>
+</section>
+
+<!-- SECTION CONTACT SUPPLEMENTAIRE -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mb-12">
+    <div class="glass-card p-8 text-center">
+        <i class="fas fa-headset text-4xl text-[#2E8B57] mb-4"></i>
+        <h2 class="text-2xl font-bold text-gray-800">Vous n'avez pas trouvé votre réponse ?</h2>
+        <p class="text-gray-600 mt-2 max-w-lg mx-auto">
+            Notre équipe est là pour vous aider. Contactez-nous et nous vous répondrons dans les plus brefs délais.
+        </p>
+        <div class="flex flex-wrap gap-4 justify-center mt-6">
+            <a href="#" class="bg-gradient-to-r from-[#2E8B57] to-[#1f6e46] px-6 py-2.5 rounded-full text-white font-medium hover:shadow-lg transition-all">
+                <i class="fas fa-envelope mr-2"></i>Nous contacter
+            </a>
+            <a href="#" class="bg-white/50 backdrop-blur-sm border border-[#2C5F8A]/30 px-6 py-2.5 rounded-full text-[#2C5F8A] font-medium hover:bg-white/70 transition-all">
+                <i class="fas fa-phone-alt mr-2"></i>+237 600 123 456
+            </a>
+        </div>
+    </div>
+</section>
+
+<script>
+    const faqData = [
+        { id: 1, category: "general", question: "Qu'est-ce que PharmaConnect ?", answer: "PharmaConnect est une plateforme numérique qui connecte les pharmacies, les grossistes et les patients au Cameroun. Notre objectif est de lutter contre les faux médicaments et de moderniser la gestion des stocks pharmaceutiques." },
+        { id: 2, category: "general", question: "PharmaConnect est-il gratuit ?", answer: "L'application est gratuite pour les patients. Pour les pharmacies, nous proposons différents abonnements adaptés à vos besoins, avec un essai gratuit de 30 jours." },
+        { id: 3, category: "general", question: "Dans quelles villes PharmaConnect est-il disponible ?", answer: "PharmaConnect est actuellement disponible à Yaoundé, Douala, Garoua, Bafoussam et Bamenda. Nous prévoyons une extension dans tout le Cameroun d'ici fin 2026." },
+        { id: 4, category: "patient", question: "Comment trouver un médicament près de chez moi ?", answer: "Utilisez la fonctionnalité de recherche géolocalisée dans l'application. Vous pouvez chercher par nom de médicament, par molécule ou par pharmacie. La carte interactive vous montre toutes les pharmacies à proximité avec les disponibilités en temps réel." },
+        { id: 5, category: "patient", question: "Comment vérifier si un médicament est authentique ?", answer: "Scannez le QR code présent sur l'emballage du médicament avec l'application. Notre système vérifie instantanément l'authenticité et vous indique si le médicament est certifié par les autorités sanitaires." },
+        { id: 6, category: "patient", question: "Puis-je commander des médicaments en ligne ?", answer: "Oui ! Vous pouvez réserver vos médicaments directement depuis l'application et choisir entre la livraison à domicile ou le retrait en pharmacie. Le paiement se fait sécurisé via Mobile Money." },
+        { id: 7, category: "pharmacist", question: "Comment inscrire ma pharmacie sur la plateforme ?", answer: "Créez un compte professionnel avec le rôle 'Pharmacien', fournissez votre numéro d'ordre ONPC et les documents requis. Notre équipe vérifiera votre demande sous 48h et activera votre compte." },
+        { id: 8, category: "pharmacist", question: "Quels sont les avantages pour les pharmaciens ?", answer: "Les pharmaciens bénéficient d'une gestion centralisée des stocks, d'alertes de rupture et de péremption, d'un module de commande auprès des grossistes, et d'une visibilité accrue auprès des patients." },
+        { id: 9, category: "technical", question: "L'application fonctionne-t-elle sans internet ?", answer: "Oui ! PharmaConnect dispose d'un mode hors-ligne. Les données sont synchronisées automatiquement dès que la connexion est rétablie." },
+        { id: 10, category: "payment", question: "Quels moyens de paiement sont acceptés ?", answer: "Nous acceptons Orange Money, MTN Mobile Money, et les cartes bancaires (Visa, Mastercard). Les paiements sont sécurisés." },
+    ];
+
+    let currentCategory = "all";
+    let searchTerm = "";
+
+    function renderFAQ() {
+        const container = document.getElementById('faqContainer');
+        const noResultsDiv = document.getElementById('noResults');
+        
+        let filtered = faqData;
+        if (currentCategory !== "all") filtered = filtered.filter(item => item.category === currentCategory);
+        if (searchTerm.trim() !== "") {
+            const term = searchTerm.toLowerCase();
+            filtered = filtered.filter(item => item.question.toLowerCase().includes(term) || item.answer.toLowerCase().includes(term));
+        }
+        
+        if (filtered.length === 0) {
+            container.innerHTML = '';
+            noResultsDiv.classList.remove('hidden');
+            return;
+        }
+        
+        noResultsDiv.classList.add('hidden');
+        container.innerHTML = filtered.map(item => `
+            <div class="glass-card overflow-hidden" data-id="${item.id}">
+                <div class="faq-question p-5 flex justify-between items-center" onclick="toggleAnswer(${item.id})">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#2C5F8A]/20 to-[#2E8B57]/20 flex items-center justify-center">
+                            <i class="fas fa-question text-[#2C5F8A] text-xs"></i>
+                        </div>
+                        <h3 class="font-semibold text-gray-800 text-base md:text-lg">${item.question}</h3>
+                    </div>
+                    <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300" id="icon-${item.id}"></i>
+                </div>
+                <div id="answer-${item.id}" class="faq-answer">
+                    <div class="p-5 pt-0 text-gray-600 text-sm leading-relaxed border-t border-white/40 ml-11">
+                        <i class="fas fa-reply-all text-[#2E8B57] text-xs mr-2"></i>
+                        ${item.answer}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    window.toggleAnswer = function(id) {
+        const answerDiv = document.getElementById(`answer-${id}`);
+        const icon = document.getElementById(`icon-${id}`);
+        answerDiv.classList.toggle('open');
+        icon.classList.toggle('open');
+    };
+    
+    function filterByCategory(category) {
+        currentCategory = category;
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            if (btn.dataset.category === category) {
+                btn.classList.add('category-active');
+                btn.classList.remove('bg-white/50', 'text-gray-700');
+            } else {
+                btn.classList.remove('category-active');
+                btn.classList.add('bg-white/50', 'text-gray-700');
+            }
+        });
+        renderFAQ();
+    }
+    
+    document.getElementById('searchFaq').addEventListener('input', (e) => {
+        searchTerm = e.target.value;
+        renderFAQ();
+    });
+    
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.addEventListener('click', () => filterByCategory(btn.dataset.category));
+    });
+    
+    renderFAQ();
+</script>
+
+{% endblock %}

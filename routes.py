@@ -355,3 +355,8 @@ def anti_counterfeit():
 def pharmacies():
     """Page affichant toutes les pharmacies avec carte interactive"""
     return render_template("pharmacies.html")
+
+@main_bp.route("/faq")
+def faq():
+    """Page Foire Aux Questions"""
+    return render_template("layout/faq.html")
