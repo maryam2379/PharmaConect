@@ -109,6 +109,235 @@
         transform: scale(1.1);
     }
 </style>
+<!-- chat bot -->
+ <!-- Icône Chatbot flottant (à droite du footer) -->
+<div class="fixed bottom-8 right-8 z-50">
+    <button id="chatbotToggle" class="chatbot-icon flex items-center justify-center w-14 h-14 bg-gradient-to-r from-[#2C5F8A] to-[#1f6e46] rounded-full shadow-lg hover:shadow-xl transition-all duration-300 robot-animation group">
+        <i class="fas fa-robot text-white text-xl"></i>
+        <span class="absolute right-16 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+            Assistant PharmaConnect
+        </span>
+    </button>
+</div>
+
+<!-- Fenêtre de Chat (cachée par défaut) -->
+<div id="chatbotWindow" class="fixed bottom-24 right-8 z-50 w-80 md:w-96 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/60 hidden transform transition-all duration-300 scale-95 opacity-0">
+    <!-- En-tête du chat -->
+    <div class="bg-gradient-to-r from-[#2E8B57] to-[#1f6e46] rounded-t-2xl p-4 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <i class="fas fa-robot text-white text-lg"></i>
+            <div>
+                <h3 class="text-white font-semibold text-sm">Assistant PharmaConnect</h3>
+                <p class="text-white/70 text-xs">En ligne</p>
+            </div>
+        </div>
+        <button id="closeChatbot" class="text-white/80 hover:text-white transition">
+            <i class="fas fa-times text-lg"></i>
+        </button>
+    </div>
+    
+    <!-- Corps du chat (messages) -->
+    <div id="chatMessages" class="h-80 overflow-y-auto p-4 space-y-3 bg-white/50">
+        <!-- Message de bienvenue -->
+        <div class="flex items-start gap-2">
+            <div class="w-7 h-7 rounded-full bg-gradient-to-br from-[#2C5F8A] to-[#2E8B57] flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-robot text-white text-[10px]"></i>
+            </div>
+            <div class="bg-white/80 backdrop-blur-sm rounded-2xl rounded-tl-none px-3 py-2 max-w-[85%]">
+                <p class="text-xs text-gray-700">Bonjour ! Je suis l'assistant de PharmaConnect. Comment puis-je vous aider ?</p>
+                <span class="text-[9px] text-gray-400 mt-1 block">Aujourd'hui</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Zone de saisie -->
+    <div class="p-3 border-t border-white/40 bg-white/50 rounded-b-2xl">
+        <div class="flex gap-2">
+            <input type="text" id="chatInput" placeholder="Écrivez votre message..." 
+                   class="flex-1 px-3 py-2 text-sm bg-white/70 border border-gray-200 rounded-xl focus:outline-none focus:border-[#2E8B57] focus:ring-1 focus:ring-[#2E8B57]">
+            <button id="sendMessage" class="bg-gradient-to-r from-[#2E8B57] to-[#1f6e46] text-white px-4 py-2 rounded-xl text-sm hover:shadow-md transition-all">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+        <p class="text-[9px] text-gray-400 text-center mt-2">Appuyez sur Entrée pour envoyer</p>
+    </div>
+</div>
+
+<style>
+    /* Animation robot */
+    @keyframes robotWave {
+        0%, 100% {
+            transform: rotate(0deg);
+        }
+        25% {
+            transform: rotate(10deg);
+        }
+        75% {
+            transform: rotate(-10deg);
+        }
+    }
+    
+    .robot-animation {
+        animation: robotWave 1.5s ease-in-out infinite;
+    }
+    
+    .robot-animation:hover {
+        animation: none;
+        transform: scale(1.1);
+    }
+    
+    /* Animation d'ouverture du chat */
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+    
+    .chat-open {
+        animation: slideUp 0.3s ease-out forwards !important;
+    }
+    
+    /* Scrollbar personnalisée */
+    #chatMessages::-webkit-scrollbar {
+        width: 4px;
+    }
+    
+    #chatMessages::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 10px;
+    }
+    
+    #chatMessages::-webkit-scrollbar-thumb {
+        background: rgba(46, 139, 87, 0.5);
+        border-radius: 10px;
+    }
+    
+    #chatMessages::-webkit-scrollbar-thumb:hover {
+        background: rgba(46, 139, 87, 0.8);
+    }
+</style>
+
+<script>
+    // Éléments du chat
+    const chatbotToggle = document.getElementById('chatbotToggle');
+    const chatbotWindow = document.getElementById('chatbotWindow');
+    const closeChatbot = document.getElementById('closeChatbot');
+    const chatInput = document.getElementById('chatInput');
+    const sendButton = document.getElementById('sendMessage');
+    const chatMessages = document.getElementById('chatMessages');
+
+    // Ouvrir/Fermer le chat
+    chatbotToggle.addEventListener('click', () => {
+        if (chatbotWindow.classList.contains('hidden')) {
+            chatbotWindow.classList.remove('hidden');
+            setTimeout(() => {
+                chatbotWindow.classList.add('chat-open');
+                chatbotWindow.style.opacity = '1';
+                chatbotWindow.style.transform = 'scale(1)';
+            }, 10);
+            chatInput.focus();
+        } else {
+            chatbotWindow.classList.add('hidden');
+            chatbotWindow.classList.remove('chat-open');
+        }
+    });
+
+    closeChatbot.addEventListener('click', () => {
+        chatbotWindow.classList.add('hidden');
+        chatbotWindow.classList.remove('chat-open');
+    });
+
+    // Ajouter un message utilisateur
+    function addUserMessage(message) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'flex items-start gap-2 justify-end';
+        messageDiv.innerHTML = `
+            <div class="bg-gradient-to-r from-[#2E8B57] to-[#1f6e46] text-white rounded-2xl rounded-tr-none px-3 py-2 max-w-[85%]">
+                <p class="text-xs">${escapeHtml(message)}</p>
+                <span class="text-[9px] text-white/60 mt-1 block text-right">${getCurrentTime()}</span>
+            </div>
+            <div class="w-7 h-7 rounded-full bg-gray-400 flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-user text-white text-[10px]"></i>
+            </div>
+        `;
+        chatMessages.appendChild(messageDiv);
+        scrollToBottom();
+    }
+
+    // Ajouter un message assistant (simple accusé de réception)
+    function addAssistantMessage() {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'flex items-start gap-2';
+        messageDiv.innerHTML = `
+            <div class="w-7 h-7 rounded-full bg-gradient-to-br from-[#2C5F8A] to-[#2E8B57] flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-robot text-white text-[10px]"></i>
+            </div>
+            <div class="bg-white/80 backdrop-blur-sm rounded-2xl rounded-tl-none px-3 py-2 max-w-[85%]">
+                <p class="text-xs text-gray-700">Merci pour votre message. Un conseiller vous répondra dans les plus brefs délais.</p>
+                <span class="text-[9px] text-gray-400 mt-1 block">${getCurrentTime()}</span>
+            </div>
+        `;
+        chatMessages.appendChild(messageDiv);
+        scrollToBottom();
+    }
+
+    // Envoyer un message
+    function sendMessage() {
+        const message = chatInput.value.trim();
+        if (message === '') return;
+        
+        // Ajouter le message de l'utilisateur
+        addUserMessage(message);
+        
+        // Vider l'input
+        chatInput.value = '';
+        
+        // Ajouter une réponse automatique (simple accusé)
+        setTimeout(() => {
+            addAssistantMessage();
+        }, 500);
+    }
+
+    // Échapper les caractères HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Obtenir l'heure actuelle (HH:MM)
+    function getCurrentTime() {
+        const now = new Date();
+        return now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // Scroll automatique vers le bas
+    function scrollToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Événements
+    sendButton.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    // Fermer le chat si on clique en dehors (optionnel)
+    document.addEventListener('click', (e) => {
+        if (!chatbotWindow.contains(e.target) && !chatbotToggle.contains(e.target) && !chatbotWindow.classList.contains('hidden')) {
+            chatbotWindow.classList.add('hidden');
+            chatbotWindow.classList.remove('chat-open');
+        }
+    });
+</script>
 </footer>
 
 <!-- Styles CSS pour le footer -->
