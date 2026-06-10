@@ -195,11 +195,10 @@
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <a href="{{ url_for('main.dashboard') }}" class="logo">
-                <div class="logo-icon"><i class="fas fa-shield-alt"></i></div>
-                <div>
-                    <div class="logo-text">PharmaFind</div>
-                    <div class="logo-small" style="font-size: 0.65rem;">Cameroun</div>
-                </div>
+                <!-- Logo de l'application -->
+                <img src="{{ url_for('static', filename='images/Group 2.svg') }}" alt="PharmaConnect Logo" style="width: 42px; height: 42px; object-fit: contain;">
+                <!-- Texte Dashboard à côté du logo -->
+                <span class="logo-text">Dashboard</span>
             </a>
         </div>
         <div class="user-info">
