@@ -345,6 +345,12 @@ def dashboard():
                            pending_pharmacies=pending_pharmacies,
                            recent_orders=recent_orders)
 
+# Assurez-vous que cette route est présente dans routes.py
+@main_bp.route("/anti-counterfeit")
+def anti_counterfeit():
+    """Page de vérification anti-contrefaçon avec caméra"""
+    return render_template("anti_counterfeit.html")
+
 @main_bp.route("/pharmacies")
 def pharmacies():
     """Page affichant toutes les pharmacies avec carte interactive"""
