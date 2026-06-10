@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription - MediTrack Cameroun</title>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        @font-face {
+            font-family: 'Goodly';
+            src: local('Goodly'), url('https://fonts.cdnfonts.com/css/goodly') format('woff2');
+            font-display: swap;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Ubuntu', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #bbdef5 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 35px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: #1e3a8a;
+            padding: 25px;
+            text-align: center;
+        }
+        .header h1 {
+            font-family: 'Goodly', 'Ubuntu', sans-serif;
+            color: white;
+            font-size: 28px;
+        }
+        .header p {
+            color: #e0f2fe;
+            margin-top: 8px;
+        }
+        .steps {
+            display: flex;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .step {
+            flex: 1;
+            text-align: center;
+            padding: 15px 5px;
+            font-weight: 500;
+            color: #64748b;
+            background: #f1f5f9;
+            transition: all 0.2s;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .step.active {
+            background: white;
+            color: #1e3a8a;
+            border-bottom: 3px solid #10b981;
+        }
+        .step.completed {
+            background: #10b98120;
+            color: #10b981;
+        }
+        .step-number {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            line-height: 28px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            color: white;
+            margin-right: 8px;
+            font-size: 14px;
+        }
+        .step.active .step-number {
+            background: #1e3a8a;
+        }
+        .step.completed .step-number {
+            background: #10b981;
+        }
+        .form-container {
+            padding: 30px;
+        }
+        .step-form {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .step-form.active-step {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #0f172a;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            font-family: 'Ubuntu', sans-serif;
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        }
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: normal;
+            cursor: pointer;
+        }
+        .radio-group input {
+            width: auto;
+        }
+        button {
+            background: #1e3a8a;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 40px;
+            font-family: 'Ubuntu', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: #0f2b6d;
+            transform: translateY(-2px);
+        }
+        .btn-next, .btn-submit {
+            background: #10b981;
+        }
+        .btn-next:hover, .btn-submit:hover {
+            background: #0d9a6e;
+        }
+        .btn-prev {
+            background: #94a3b8;
+            margin-right: 10px;
+        }
+        .btn-prev:hover {
+            background: #64748b;
+        }
+        .flex-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        .alert {
+            padding: 12px 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+        .alert-danger {
+            background: #fee2e2;
+            color: #b91c1c;
+            border-left: 4px solid #dc2626;
+        }
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+        @media (max-width: 640px) {
+            .step span:not(.step-number) { display: none; }
+            .step .step-number { margin-right: 0; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>MediTrack Cameroun</h1>
+        <p>Inscription sécurisée</p>
+    </div>
+
+    <div class="steps">
+        <div class="step active" data-step="1"><span class="step-number">1</span> <span>Identité</span></div>
+        <div class="step" data-step="2"><span class="step-number">2</span> <span>Coordonnées</span></div>
+        <div class="step" data-step="3"><span class="step-number">3</span> <span>Rôle</span></div>
+        <div class="step" data-step="4" id="pharmacy-step" style="display:none;"><span class="step-number">4</span> <span>Pharmacie</span></div>
+    </div>
+
+    <div class="form-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('main.register') }}" id="multiStepForm">
+            <!-- Étape 1 : identité -->
+            <div class="step-form active-step" data-step="1">
+                <h3 style="color:#1e3a8a; margin-bottom:20px;">Qui êtes-vous ?</h3>
+                <div class="form-group">
+                    <label>Nom complet *</label>
+                    <input type="text" name="full_name" required placeholder="Jean Dupont">
+                </div>
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" name="email" required placeholder="jean@exemple.com">
+                </div>
+                <div class="form-group">
+                    <label>Téléphone *</label>
+                    <input type="tel" name="phone" required placeholder="+237 6XX XXX XXX">
+                </div>
+                <div class="form-group">
+                    <label>Mot de passe *</label>
+                    <input type="password" name="password" required placeholder="••••••••">
+                </div>
+            </div>
+
+            <!-- Étape 2 : coordonnées -->
+            <div class="step-form" data-step="2">
+                <h3 style="color:#1e3a8a; margin-bottom:20px;">Où nous joindre ?</h3>
+                <div class="form-group">
+                    <label>Adresse (optionnel)</label>
+                    <input type="text" name="address" placeholder="Votre adresse">
+                </div>
+                <div class="form-group">
+                    <label>Ville</label>
+                    <input type="text" name="city" placeholder="Douala, Yaoundé...">
+                </div>
+            </div>
+
+            <!-- Étape 3 : rôle -->
+            <div class="step-form" data-step="3">
+                <h3 style="color:#1e3a8a; margin-bottom:20px;">Choisissez votre profil</h3>
+                <div class="form-group">
+                    <div class="radio-group">
+                        <label><input type="radio" name="role" value="patient" required> Patient</label>
+                        <label><input type="radio" name="role" value="pharmacien" id="pharmacienRadio"> Pharmacien</label>
+                        <label><input type="radio" name="role" value="admin"> Administrateur</label>
+                    </div>
+                </div>
+                <div id="infoPatient" style="background:#f1f5f9; padding:15px; border-radius:16px;">
+                    <p>✅ En tant que patient, vous pourrez rechercher des médicaments, scanner des QR codes et localiser les pharmacies.</p>
+                </div>
+            </div>
+
+            <!-- Étape 4 : informations pharmacie (cachée par défaut) -->
+            <div class="step-form" data-step="4">
+                <h3 style="color:#1e3a8a; margin-bottom:20px;">Votre officine</h3>
+                <div class="form-group">
+                    <label>Nom de la pharmacie *</label>
+                    <input type="text" name="pharmacy_name" id="pharmacy_name">
+                </div>
+                <div class="form-group">
+                    <label>Numéro de licence *</label>
+                    <input type="text" name="license_number" id="license_number">
+                </div>
+                <div class="form-group">
+                    <label>Adresse</label>
+                    <input type="text" name="pharmacy_address" id="pharmacy_address">
+                </div>
+                <div class="form-group">
+                    <label>Ville</label>
+                    <input type="text" name="pharmacy_city" id="pharmacy_city">
+                </div>
+                <div class="form-group">
+                    <label>Téléphone</label>
+                    <input type="tel" name="pharmacy_phone" id="pharmacy_phone">
+                </div>
+                <div class="form-group">
+                    <label>Email professionnel</label>
+                    <input type="email" name="pharmacy_email" id="pharmacy_email">
+                </div>
+            </div>
+
+            <div class="flex-buttons">
+                <button type="button" id="prevBtn" class="btn-prev" style="display:none;">◀ Précédent</button>
+                <button type="button" id="nextBtn" class="btn-next">Suivant ▶</button>
+                <button type="submit" id="submitBtn" class="btn-submit" style="display:none;">S'inscrire</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    let currentStep = 1;
+    const pharmacienRadio = document.getElementById('pharmacienRadio');
+    const pharmacyStep = document.getElementById('pharmacy-step');
+    const stepForms = document.querySelectorAll('.step-form');
+    const stepIndicators = document.querySelectorAll('.step');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+
+    function updateSteps() {
+        let isPharmacien = pharmacienRadio && pharmacienRadio.checked;
+        let maxStep = isPharmacien ? 4 : 3;
+        // Afficher/masquer l'étape 4 dans l'indicateur
+        if (isPharmacien) pharmacyStep.style.display = 'flex';
+        else pharmacyStep.style.display = 'none';
+
+        if (currentStep > maxStep) currentStep = maxStep;
+
+        stepForms.forEach(form => form.classList.remove('active-step'));
+        stepIndicators.forEach(ind => ind.classList.remove('active', 'completed'));
+
+        const activeForm = document.querySelector(`.step-form[data-step="${currentStep}"]`);
+        if (activeForm) activeForm.classList.add('active-step');
+        const activeIndicator = document.querySelector(`.step[data-step="${currentStep}"]`);
+        if (activeIndicator) activeIndicator.classList.add('active');
+
+        for (let i = 1; i < currentStep; i++) {
+            const compInd = document.querySelector(`.step[data-step="${i}"]`);
+            if (compInd) compInd.classList.add('completed');
+        }
+
+        prevBtn.style.display = currentStep === 1 ? 'none' : 'inline-block';
+        if (currentStep === maxStep) {
+            nextBtn.style.display = 'none';
+            submitBtn.style.display = 'inline-block';
+        } else {
+            nextBtn.style.display = 'inline-block';
+            submitBtn.style.display = 'none';
+        }
+    }
+
+    function validateStep(step) {
+        const stepDiv = document.querySelector(`.step-form[data-step="${step}"]`);
+        const required = stepDiv.querySelectorAll('[required]');
+        for (let inp of required) {
+            if (!inp.value.trim()) {
+                alert("Veuillez remplir tous les champs obligatoires.");
+                inp.focus();
+                return false;
+            }
+        }
+        if (step === 1) {
+            const email = stepDiv.querySelector('input[type="email"]');
+            if (email && !/^\S+@\S+\.\S+$/.test(email.value)) {
+                alert("Email invalide.");
+                email.focus();
+                return false;
+            }
+            const pwd = stepDiv.querySelector('input[type="password"]');
+            if (pwd && pwd.value.length < 6) {
+                alert("Le mot de passe doit contenir au moins 6 caractères.");
+                pwd.focus();
+                return false;
+            }
+        }
+        if (step === 3) {
+            const roleChecked = stepDiv.querySelector('input[name="role"]:checked');
+            if (!roleChecked) {
+                alert("Choisissez un rôle.");
+                return false;
+            }
+        }
+        if (step === 4 && pharmacienRadio && pharmacienRadio.checked) {
+            const licence = document.getElementById('license_number');
+            if (!licence.value.trim()) {
+                alert("Le numéro de licence est obligatoire.");
+                licence.focus();
+                return false;
+            }
+        }
+        return true;
+    }
+
+    nextBtn.addEventListener('click', () => {
+        if (validateStep(currentStep)) {
+            let isPharmacien = pharmacienRadio && pharmacienRadio.checked;
+            let maxStep = isPharmacien ? 4 : 3;
+            if (currentStep < maxStep) {
+                currentStep++;
+                updateSteps();
+            }
+        }
+    });
+
+    prevBtn.addEventListener('click', () => {
+        if (currentStep > 1) {
+            currentStep--;
+            updateSteps();
+        }
+    });
+
+    pharmacienRadio.addEventListener('change', () => {
+        updateSteps();
+        if (!pharmacienRadio.checked && currentStep === 4) {
+            currentStep = 3;
+            updateSteps();
+        }
+    });
+
+    document.getElementById('multiStepForm').addEventListener('submit', function(e) {
+        let isPharmacien = pharmacienRadio && pharmacienRadio.checked;
+        let maxStep = isPharmacien ? 4 : 3;
+        for (let i = 1; i <= maxStep; i++) {
+            if (!validateStep(i)) {
+                e.preventDefault();
+                currentStep = i;
+                updateSteps();
+                return false;
+            }
+        }
+        return true;
+    });
+
+    updateSteps();
+</script>
+</body>
+</html>
