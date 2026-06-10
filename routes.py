@@ -274,10 +274,10 @@ def login():
     session['full_name'] = user.full_name
     
     role_dashboards = {
-        'patient': 'main.dashboard_patient',
-        'pharmacien': 'main.dashboard_pharmacien',
-        'admin': 'main.dashboard_admin',
-        'grossiste': 'main.dashboard_grossiste'
+        'patient': 'main.dashboard',
+        'pharmacien': 'main.dashboard',
+        'admin': 'main.dashboard',
+        'grossiste': 'main.dashboard'
     }
     dashboard = role_dashboards.get(user.role, 'main.home')
     flash(f"Bienvenue {user.full_name} !", "success")
@@ -355,3 +355,59 @@ def anti_counterfeit():
 def pharmacies():
     """Page affichant toutes les pharmacies avec carte interactive"""
     return render_template("pharmacies.html")
+
+@main_bp.route("/profile", methods=["GET", "POST"])
+def profile():
+    if 'user_id' not in session:
+        flash("Veuillez vous connecter.", "warning")
+        return redirect(url_for("main.login"))
+    
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        flash("Utilisateur introuvable. Veuillez vous reconnecter.", "danger")
+        return redirect(url_for("main.login"))
+    
+    if request.method == "POST":
+        full_name = request.form.get("full_name", "").strip()
+        email = request.form.get("email", "").strip()
+        phone = request.form.get("phone", "").strip()
+        
+        # Vérifier l'unicité de l'email si changé
+        if email != user.email:
+            existing = User.query.filter(User.email == email, User.id != user.id).first()
+            if existing:
+                flash("Cet email est déjà utilisé par un autre compte.", "danger")
+                return redirect(url_for("main.profile"))
+        
+        # Mise à jour des champs
+        user.full_name = full_name
+        user.email = email
+        user.phone = phone
+        
+        # Changement de mot de passe (optionnel)
+        old_password = request.form.get("old_password")
+        new_password = request.form.get("new_password")
+        confirm_password = request.form.get("confirm_password")
+        
+        if old_password and new_password and confirm_password:
+            if not user.check_password(old_password):
+                flash("L'ancien mot de passe est incorrect.", "danger")
+                return redirect(url_for("main.profile"))
+            if new_password != confirm_password:
+                flash("Les nouveaux mots de passe ne correspondent pas.", "danger")
+                return redirect(url_for("main.profile"))
+            if len(new_password) < 6:
+                flash("Le nouveau mot de passe doit contenir au moins 6 caractères.", "danger")
+                return redirect(url_for("main.profile"))
+            user.set_password(new_password)
+            flash("Votre mot de passe a été mis à jour.", "success")
+        
+        db.session.commit()
+        session['full_name'] = user.full_name
+        session['email'] = user.email
+        
+        flash("Votre profil a été mis à jour avec succès.", "success")
+        return redirect(url_for("main.profile"))
+    
+    return render_template("admin/profile.html", user=user)

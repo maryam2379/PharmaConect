@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* --- Styles existants (inchangés pour desktop) --- */
         @font-face {
             font-family: 'Goodly';
             src: local('Goodly'), local('SF Pro Text'), local('Segoe UI');
@@ -31,6 +32,7 @@
             color: var(--texte-fonce);
             overflow-x: hidden;
         }
+        /* Sidebar pour desktop */
         .sidebar {
             position: fixed;
             left: 0;
@@ -181,23 +183,101 @@
         .alert-success { background: #e0f2e9; border-left: 4px solid var(--vert-principal); color: #166534; }
         .alert-danger { background: #fee2e2; border-left: 4px solid #dc2626; color: #991b1b; }
         .content { padding: 2rem; flex: 1; }
+
+        /* --- NOUVEAU : Barre flottante mobile (icônes seulement, logo centré) --- */
+        .mobile-bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 16px;
+            right: 16px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 40px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255,255,255,0.6);
+            z-index: 100;
+            padding: 8px 12px;
+        }
+        .mobile-nav-items {
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+            width: 100%;
+        }
+        .mobile-nav-item {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 8px 0;
+            color: var(--texte-mute);
+            text-decoration: none;
+            font-size: 1.5rem;
+            transition: all 0.2s;
+            border-radius: 30px;
+        }
+        .mobile-nav-item i {
+            font-size: 1.4rem;
+        }
+        .mobile-nav-item.active {
+            color: var(--vert-principal);
+            background: rgba(46,139,87,0.15);
+        }
+        .mobile-nav-center {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .mobile-nav-center .mobile-nav-item {
+            background: linear-gradient(135deg, var(--vert-principal), var(--bleu-profondeur));
+            color: white;
+            width: 52px;
+            height: 52px;
+            border-radius: 30px;
+            margin-top: -20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .mobile-nav-center .mobile-nav-item i {
+            font-size: 1.8rem;
+        }
+        /* Masquer l'ancien bouton toggle et sidebar sur mobile */
         @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); }
-            .main-content { margin-left: 0; }
-            .sidebar.open { transform: translateX(0); }
-            .top-bar { padding: 0.8rem 1rem; }
-            .content { padding: 1rem; }
+            .sidebar {
+                transform: translateX(-100%);
+                display: none; /* On cache complètement la sidebar sur mobile */
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .top-bar {
+                padding: 0.8rem 1rem;
+            }
+            .content {
+                padding: 1rem;
+                padding-bottom: 90px; /* pour éviter que le contenu soit caché sous la barre */
+            }
+            .btn-logout {
+                display: none; /* on utilise la déconnexion dans la barre mobile */
+            }
+            .mobile-bottom-nav {
+                display: block;
+            }
+            #menu-toggle {
+                display: none;
+            }
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+    <!-- Sidebar desktop (conservée mais cachée sur mobile via CSS) -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <a href="{{ url_for('main.dashboard') }}" class="logo">
-                <!-- Logo de l'application -->
                 <img src="{{ url_for('static', filename='images/Group 2.svg') }}" alt="PharmaConnect Logo" style="width: 42px; height: 42px; object-fit: contain;">
-                <!-- Texte Dashboard à côté du logo -->
                 <span class="logo-text">Dashboard</span>
             </a>
         </div>
@@ -230,10 +310,11 @@
                 <a href="#" class="nav-item"><i class="fas fa-truck-fast"></i> Livraisons</a>
             {% endif %}
             <div class="nav-section">Compte</div>
-            <a href="#" class="nav-item"><i class="fas fa-user-cog"></i> Mon profil</a>
+            <a href="{{ url_for('main.profile') }}" class="nav-item"><i class="fas fa-user-cog"></i> Mon profil</a>
             <a href="{{ url_for('main.logout') }}" class="nav-item"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
         </nav>
     </aside>
+
     <div class="main-content">
         <header class="top-bar">
             <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
@@ -253,18 +334,67 @@
             {% block content %}{% endblock %}
         </main>
     </div>
+
+    <!-- BARRE DE NAVIGATION MOBILE FLOTTANTE (icônes seulement, logo centré) -->
+    <div class="mobile-bottom-nav">
+        <div class="mobile-nav-items">
+            <!-- Item gauche : Tableau de bord -->
+            <a href="{{ url_for('main.dashboard') }}" class="mobile-nav-item {% if request.endpoint == 'main.dashboard' %}active{% endif %}">
+                <i class="fas fa-tachometer-alt"></i>
+            </a>
+
+            <!-- Item selon rôle (exemple : pour patient, recherche; pour pharmacien, stocks; etc.) -->
+            {% if session.role == 'patient' %}
+                <a href="#" class="mobile-nav-item">
+                    <i class="fas fa-search"></i>
+                </a>
+            {% elif session.role == 'pharmacien' %}
+                <a href="#" class="mobile-nav-item">
+                    <i class="fas fa-boxes"></i>
+                </a>
+            {% elif session.role == 'admin' %}
+                <a href="#" class="mobile-nav-item">
+                    <i class="fas fa-users"></i>
+                </a>
+            {% elif session.role == 'grossiste' %}
+                <a href="#" class="mobile-nav-item">
+                    <i class="fas fa-chart-line"></i>
+                </a>
+            {% else %}
+                <a href="#" class="mobile-nav-item">
+                    <i class="fas fa-th-large"></i>
+                </a>
+            {% endif %}
+
+            <!-- Logo central (surélevé) -->
+            <div class="mobile-nav-center">
+                <a href="{{ url_for('main.dashboard') }}" class="mobile-nav-item">
+                    <img src="{{ url_for('static', filename='images/Group 2.svg') }}" alt="Logo" style="width: 30px; height: 30px; object-fit: contain;">
+                </a>
+            </div>
+
+            <!-- Item : Profil -->
+            <a href="{{ url_for('main.profile') }}" class="mobile-nav-item">
+                <i class="fas fa-user-circle"></i>
+            </a>
+
+            <!-- Item : Déconnexion -->
+            <a href="{{ url_for('main.logout') }}" class="mobile-nav-item">
+                <i class="fas fa-sign-out-alt"></i>
+            </a>
+        </div>
+    </div>
+
     <button id="menu-toggle" class="fixed bottom-4 left-4 z-50 md:hidden bg-white rounded-full p-3 shadow-lg border">
         <i class="fas fa-bars text-vert-principal"></i>
     </button>
     <script>
+        // Supprimer l'ancienne gestion du toggle car la sidebar est cachée sur mobile
+        // On garde juste pour éviter les erreurs, mais on désactive
         const sidebar = document.getElementById('sidebar');
         const toggle = document.getElementById('menu-toggle');
         if (toggle) {
-            toggle.addEventListener('click', () => sidebar.classList.toggle('open'));
-            document.addEventListener('click', (e) => {
-                if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== toggle)
-                    sidebar.classList.remove('open');
-            });
+            toggle.style.display = 'none';
         }
     </script>
     {% block extra_js %}{% endblock %}

@@ -1,0 +1,263 @@
+{% extends "admin/master.html" %}
+
+{% block title %}Mon profil{% endblock %}
+{% block page_title %}Mon profil{% endblock %}
+
+{% block content %}
+<style>
+    /* Styles complémentaires pour le profil */
+    .profile-tabs {
+        display: flex;
+        gap: 0.5rem;
+        border-bottom: 1px solid var(--gris-bordure);
+        margin-bottom: 1.5rem;
+    }
+    .tab-btn {
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        border-radius: 30px;
+        transition: all 0.2s;
+        color: var(--texte-mute);
+    }
+    .tab-btn.active {
+        background: var(--bleu-clair);
+        color: var(--vert-principal);
+    }
+    .tab-pane {
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+    .tab-pane.active {
+        display: block;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .info-card {
+        background: var(--blanc-carte);
+        border-radius: 24px;
+        box-shadow: var(--ombre);
+        border: 1px solid var(--gris-bordure);
+        overflow: hidden;
+    }
+    .info-header {
+        background: linear-gradient(135deg, rgba(46,139,87,0.05), rgba(15,76,129,0.03));
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--gris-bordure);
+    }
+    .field-group {
+        margin-bottom: 1.25rem;
+    }
+    .field-label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--texte-mute);
+        margin-bottom: 0.3rem;
+    }
+    .field-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--gris-bordure);
+        border-radius: 16px;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+        background: var(--blanc-carte);
+    }
+    .field-input:focus {
+        outline: none;
+        border-color: var(--vert-principal);
+        box-shadow: 0 0 0 3px rgba(46,139,87,0.1);
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, var(--vert-principal), var(--vert-fonce));
+        color: white;
+        border: none;
+        padding: 0.75rem 1.8rem;
+        border-radius: 40px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 14px rgba(46,139,87,0.3);
+    }
+    .btn-secondary {
+        background: transparent;
+        border: 1px solid var(--gris-bordure);
+        padding: 0.75rem 1.8rem;
+        border-radius: 40px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .btn-secondary:hover {
+        background: var(--gris-fond);
+    }
+    .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    @media (max-width: 640px) {
+        .grid-2 { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="max-w-4xl mx-auto">
+    <!-- Carte principale -->
+    <div class="info-card">
+        <div class="info-header">
+            <div class="flex items-center gap-4">
+                <div class="avatar" style="width: 70px; height: 70px; font-size: 2rem;">
+                    {{ user.full_name[0]|upper if user.full_name else 'U' }}
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold" style="color: var(--texte-fonce);">{{ user.full_name }}</h2>
+                    <p class="text-sm" style="color: var(--texte-mute);">
+                        <i class="fas fa-tag"></i> {{ user.role|title }}
+                        {% if user.is_verified %}
+                        <span class="ml-2 text-green-600"><i class="fas fa-check-circle"></i> Vérifié</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onglets (si pharmacien, afficher deux onglets) -->
+        <div class="px-6 pt-4">
+            <div class="profile-tabs">
+                <button class="tab-btn active" data-tab="personal">
+                    <i class="fas fa-user-circle mr-2"></i> Informations personnelles
+                </button>
+                {% if pharmacy %}
+                <button class="tab-btn" data-tab="pharmacy">
+                    <i class="fas fa-store mr-2"></i> Ma pharmacie
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Panneau Informations personnelles -->
+        <div id="personal-pane" class="tab-pane active">
+            <form method="POST" class="p-6">
+                <input type="hidden" name="form_type" value="user">
+                
+                <div class="grid-2">
+                    <div class="field-group">
+                        <label class="field-label">Nom complet</label>
+                        <input type="text" name="full_name" value="{{ user.full_name or '' }}" class="field-input">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Adresse email</label>
+                        <input type="email" name="email" value="{{ user.email }}" class="field-input">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Téléphone</label>
+                        <input type="tel" name="phone" value="{{ user.phone or '' }}" class="field-input">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Rôle</label>
+                        <input type="text" value="{{ user.role|title }}" disabled class="field-input" style="background: var(--gris-fond);">
+                    </div>
+                </div>
+
+                <!-- Changement de mot de passe -->
+                <div class="mt-6 pt-4 border-t border-gray-200">
+                    <h3 class="font-semibold mb-3" style="color: var(--texte-fonce);">Changer le mot de passe</h3>
+                    <div class="grid-2">
+                        <div class="field-group">
+                            <label class="field-label">Ancien mot de passe</label>
+                            <input type="password" name="old_password" class="field-input">
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Nouveau mot de passe</label>
+                            <input type="password" name="new_password" class="field-input">
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Confirmation</label>
+                            <input type="password" name="confirm_password" class="field-input">
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">Laissez vide si inchangé.</p>
+                </div>
+
+                <div class="flex justify-end gap-3 mt-8">
+                    <a href="{{ url_for('main.dashboard') }}" class="btn-secondary">Annuler</a>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save mr-2"></i> Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Panneau Ma pharmacie (visible uniquement pour les pharmaciens) -->
+        {% if pharmacy %}
+        <div id="pharmacy-pane" class="tab-pane">
+            <form method="POST" class="p-6">
+                <input type="hidden" name="form_type" value="pharmacy">
+                
+                <div class="grid-2">
+                    <div class="field-group">
+                        <label class="field-label">Nom de la pharmacie</label>
+                        <input type="text" name="pharmacy_name" value="{{ pharmacy.name }}" class="field-input">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Numéro de licence</label>
+                        <input type="text" name="license_number" value="{{ pharmacy.license_number }}" class="field-input">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Adresse</label>
+                        <input type="text" name="address" value="{{ pharmacy.address or '' }}" class="field-input">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Ville</label>
+                        <input type="text" name="city" value="{{ pharmacy.city or '' }}" class="field-input">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Téléphone</label>
+                        <input type="tel" name="pharmacy_phone" value="{{ pharmacy.phone or '' }}" class="field-input">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Email</label>
+                        <input type="email" name="pharmacy_email" value="{{ pharmacy.email or '' }}" class="field-input">
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 mt-8">
+                    <a href="{{ url_for('main.dashboard') }}" class="btn-secondary">Annuler</a>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save mr-2"></i> Mettre à jour la pharmacie
+                    </button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Gestion des onglets
+    const tabs = document.querySelectorAll('.tab-btn');
+    const panes = document.querySelectorAll('.tab-pane');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const target = tab.getAttribute('data-tab');
+            
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            panes.forEach(pane => pane.classList.remove('active'));
+            document.getElementById(`${target}-pane`).classList.add('active');
+        });
+    });
+</script>
+{% endblock %}
