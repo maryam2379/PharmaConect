@@ -1,19 +1,22 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>{% block title %}PharmaConnect Cameroun{% endblock %}</title>
-    
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <!-- Google Fonts pour Goodly (fallback) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap"
+        rel="stylesheet">
+
     <style>
         /* Définition de la police Goodly */
         @font-face {
@@ -23,7 +26,7 @@
             font-style: normal;
             font-display: swap;
         }
-        
+
         @font-face {
             font-family: 'Goodly';
             src: url("{{ url_for('static', filename='fonts/Goodly-Bold.woff2') }}") format('woff2');
@@ -31,107 +34,137 @@
             font-style: normal;
             font-display: swap;
         }
-        
+
         * {
             font-family: 'Goodly', 'Inter', system-ui, -apple-system, sans-serif;
         }
-        
+
         body {
             background: linear-gradient(135deg, #f5f7fa 0%, #eef2f7 100%);
             min-height: 100vh;
         }
-        
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        
+
         .animate-fadeIn {
             animation: fadeIn 0.6s ease-out;
         }
-        
+
         ::-webkit-scrollbar {
             width: 8px;
         }
-        
+
         ::-webkit-scrollbar-track {
             background: rgba(255, 255, 255, 0.3);
             border-radius: 10px;
         }
-        
+
         ::-webkit-scrollbar-thumb {
             background: rgba(46, 139, 87, 0.5);
             border-radius: 10px;
         }
-        
+
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(46, 139, 87, 0.7);
         }
-        
+
         .nav-active {
             background: rgba(46, 139, 87, 0.15);
             color: #2E8B57;
         }
-        
+
         @keyframes slideInRight {
             from {
                 transform: translateX(100%);
                 opacity: 0;
             }
+
             to {
                 transform: translateX(0);
                 opacity: 1;
             }
         }
     </style>
-    
+
     {% block extra_css %}{% endblock %}
 </head>
+
 <body class="antialiased">
-    
+
     <!-- NAVIGATION PRINCIPALE -->
     <nav class="bg-white/70 backdrop-blur-md border-b border-white/60 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
-                
+
                 <div class="flex items-center gap-2">
                     <a href="{{ url_for('main.home') }}" class="flex items-center gap-2 group">
-                        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2E8B57] to-[#2C5F8A] flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
-                            <i class="fas fa-heartbeat text-white text-sm"></i>
+                        <div class="flex-shrink-0">
+                            <div class="w-9 h-9 md:w-10 md:h-10 rounded-xl overflow-hidden">
+                                <img src="{{ url_for('static', filename='images/Group 2.svg') }}"
+                                    alt="PharmaConnect Logo" class="w-full h-full object-contain">
+                            </div>
                         </div>
+                        <div class="flex flex-col leading-tight">
                         <span class="font-bold text-gray-800 text-lg hidden sm:inline">
                             Pharma<span class="text-[#2E8B57]">Connect</span>
                         </span>
+                        <span class="slogan-text text-gray-600/80 mt-0.5 flex items-center gap-1">
+                            <i class="fas fa-map-marker-alt text-[7px] md:text-[8px] text-[#2E8B57]"></i>
+                            Cameroun · Santé connectée
+                        </span>
+                    </div>
+
+                        
                     </a>
                 </div>
-                
+
                 <div class="hidden md:flex items-center gap-1">
-                    <a href="{{ url_for('main.home') }}" class="px-4 py-2 rounded-full text-gray-700 hover:bg-white/50 transition-all text-sm font-medium" id="nav-home">
+                    <a href="{{ url_for('main.home') }}"
+                        class="px-4 py-2 rounded-full text-gray-700 hover:bg-white/50 transition-all text-sm font-medium"
+                        id="nav-home">
                         <i class="fas fa-home mr-2"></i>Accueil
                     </a>
-                    <a href="{{ url_for('main.pharmacies') }}" class="px-4 py-2 rounded-full text-gray-700 hover:bg-white/50 transition-all text-sm font-medium" id="nav-pharmacies">
+                    <a href="{{ url_for('main.pharmacies') }}"
+                        class="px-4 py-2 rounded-full text-gray-700 hover:bg-white/50 transition-all text-sm font-medium"
+                        id="nav-pharmacies">
                         <i class="fas fa-store mr-2"></i>Pharmacies
                     </a>
-                    <a href="{{ url_for('main.anti_counterfeit') }}" class="px-4 py-2 rounded-full text-gray-700 hover:bg-white/50 transition-all text-sm font-medium" id="nav-antifake">
+                    <a href="{{ url_for('main.anti_counterfeit') }}"
+                        class="px-4 py-2 rounded-full text-gray-700 hover:bg-white/50 transition-all text-sm font-medium"
+                        id="nav-antifake">
                         <i class="fas fa-shield-alt mr-2"></i>Anti-Contrefaçon
                     </a>
                     {% if session.user_id %}
-                        <a href="{{ url_for('main.dashboard') }}" class="px-4 py-2 rounded-full text-gray-700 hover:bg-white/50 transition-all text-sm font-medium">
-                            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
-                        </a>
-                        <a href="{{ url_for('main.logout') }}" class="ml-2 px-4 py-2 rounded-full bg-red-500/10 text-red-600 hover:bg-red-500/20 transition-all text-sm font-medium">
-                            <i class="fas fa-sign-out-alt mr-2"></i>Déconnexion
-                        </a>
+                    <a href="{{ url_for('main.dashboard') }}"
+                        class="px-4 py-2 rounded-full text-gray-700 hover:bg-white/50 transition-all text-sm font-medium">
+                        <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                    </a>
+                    <a href="{{ url_for('main.logout') }}"
+                        class="ml-2 px-4 py-2 rounded-full bg-red-500/10 text-red-600 hover:bg-red-500/20 transition-all text-sm font-medium">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Déconnexion
+                    </a>
                     {% else %}
-                        <a href="{{ url_for('main.login') }}" class="ml-2 px-5 py-2 rounded-full bg-gradient-to-r from-[#2E8B57] to-[#1f6e46] text-white hover:shadow-lg transition-all text-sm font-medium">
-                            <i class="fas fa-sign-in-alt mr-2"></i>Connexion
-                        </a>
-                        <a href="{{ url_for('main.register') }}" class="px-4 py-2 rounded-full text-[#2E8B57] border border-[#2E8B57]/30 hover:bg-white/50 transition-all text-sm font-medium">
-                            <i class="fas fa-user-plus mr-2"></i>Inscription
-                        </a>
+                    <a href="{{ url_for('main.login') }}"
+                        class="ml-2 px-5 py-2 rounded-full bg-gradient-to-r from-[#2E8B57] to-[#1f6e46] text-white hover:shadow-lg transition-all text-sm font-medium">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Connexion
+                    </a>
+                    <a href="{{ url_for('main.register') }}"
+                        class="px-4 py-2 rounded-full text-[#2E8B57] border border-[#2E8B57]/30 hover:bg-white/50 transition-all text-sm font-medium">
+                        <i class="fas fa-user-plus mr-2"></i>Inscription
+                    </a>
                     {% endif %}
                 </div>
-                
+
                 <div class="md:hidden">
                     <button id="mobileMenuBtn" class="p-2 rounded-full hover:bg-white/50 transition-all">
                         <i class="fas fa-bars text-gray-700 text-xl"></i>
@@ -139,150 +172,96 @@
                 </div>
             </div>
         </div>
-        
+
         <div id="mobileMenu" class="hidden md:hidden bg-white/95 backdrop-blur-md border-t border-white/60">
             <div class="px-4 py-3 space-y-2">
-                <a href="{{ url_for('main.home') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/60 transition-all">
+                <a href="{{ url_for('main.home') }}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/60 transition-all">
                     <i class="fas fa-home w-5 text-[#2E8B57]"></i>
                     <span>Accueil</span>
                 </a>
-                <a href="{{ url_for('main.pharmacies') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/60 transition-all">
+                <a href="{{ url_for('main.pharmacies') }}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/60 transition-all">
                     <i class="fas fa-store w-5 text-[#2E8B57]"></i>
                     <span>Pharmacies</span>
                 </a>
-                <a href="{{ url_for('main.anti_counterfeit') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/60 transition-all">
+                <a href="{{ url_for('main.anti_counterfeit') }}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/60 transition-all">
                     <i class="fas fa-shield-alt w-5 text-[#2E8B57]"></i>
                     <span>Anti-Contrefaçon</span>
                 </a>
                 {% if session.user_id %}
-                    <a href="{{ url_for('main.dashboard') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/60 transition-all">
-                        <i class="fas fa-tachometer-alt w-5 text-[#2E8B57]"></i>
-                        <span>Dashboard</span>
-                    </a>
-                    <a href="{{ url_for('main.logout') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-50 text-red-600">
-                        <i class="fas fa-sign-out-alt w-5"></i>
-                        <span>Déconnexion</span>
-                    </a>
+                <a href="{{ url_for('main.dashboard') }}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/60 transition-all">
+                    <i class="fas fa-tachometer-alt w-5 text-[#2E8B57]"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('main.logout') }}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-50 text-red-600">
+                    <i class="fas fa-sign-out-alt w-5"></i>
+                    <span>Déconnexion</span>
+                </a>
                 {% else %}
-                    <a href="{{ url_for('main.login') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-[#2E8B57] to-[#1f6e46] text-white">
-                        <i class="fas fa-sign-in-alt w-5"></i>
-                        <span>Connexion</span>
-                    </a>
-                    <a href="{{ url_for('main.register') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl border border-[#2E8B57]/30 text-[#2E8B57]">
-                        <i class="fas fa-user-plus w-5"></i>
-                        <span>Inscription</span>
-                    </a>
+                <a href="{{ url_for('main.login') }}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-[#2E8B57] to-[#1f6e46] text-white">
+                    <i class="fas fa-sign-in-alt w-5"></i>
+                    <span>Connexion</span>
+                </a>
+                <a href="{{ url_for('main.register') }}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl border border-[#2E8B57]/30 text-[#2E8B57]">
+                    <i class="fas fa-user-plus w-5"></i>
+                    <span>Inscription</span>
+                </a>
                 {% endif %}
             </div>
         </div>
     </nav>
-    
+
     <!-- Messages flash -->
     {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="fixed top-20 right-4 left-4 sm:left-auto sm:right-4 z-50 space-y-2 max-w-sm">
-                {% for category, message in messages %}
-                    <div class="flash-message p-4 rounded-xl shadow-lg backdrop-blur-md animate-fadeIn
+    {% if messages %}
+    <div class="fixed top-20 right-4 left-4 sm:left-auto sm:right-4 z-50 space-y-2 max-w-sm">
+        {% for category, message in messages %}
+        <div class="flash-message p-4 rounded-xl shadow-lg backdrop-blur-md animate-fadeIn
                         {% if category == 'success' %}bg-green-500/90 text-white
                         {% elif category == 'danger' %}bg-red-500/90 text-white
                         {% elif category == 'warning' %}bg-yellow-500/90 text-white
                         {% else %}bg-blue-500/90 text-white{% endif %}">
-                        <div class="flex items-center gap-2">
-                            <i class="fas {% if category == 'success' %}fa-check-circle{% elif category == 'danger' %}fa-exclamation-triangle{% elif category == 'warning' %}fa-clock{% else %}fa-info-circle{% endif %}"></i>
-                            <span class="text-sm flex-1">{{ message }}</span>
-                            <button onclick="this.parentElement.parentElement.remove()" class="hover:opacity-70">&times;</button>
-                        </div>
-                    </div>
-                {% endfor %}
+            <div class="flex items-center gap-2">
+                <i
+                    class="fas {% if category == 'success' %}fa-check-circle{% elif category == 'danger' %}fa-exclamation-triangle{% elif category == 'warning' %}fa-clock{% else %}fa-info-circle{% endif %}"></i>
+                <span class="text-sm flex-1">{{ message }}</span>
+                <button onclick="this.parentElement.parentElement.remove()" class="hover:opacity-70">&times;</button>
             </div>
-        {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
     {% endwith %}
-    
+
     <!-- CONTENU PRINCIPAL -->
     <main class="animate-fadeIn">
         {% block content %}{% endblock %}
     </main>
-    
-    <!-- FOOTER -->
-    <footer class="bg-white/40 backdrop-blur-sm border-t border-white/60 mt-16">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <div>
-                    <div class="flex items-center gap-2 mb-4">
-                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#2E8B57] to-[#2C5F8A] flex items-center justify-center">
-                            <i class="fas fa-heartbeat text-white text-xs"></i>
-                        </div>
-                        <span class="font-bold text-gray-800">Pharma<span class="text-[#2E8B57]">Connect</span></span>
-                    </div>
-                    <p class="text-gray-500 text-sm">La première plateforme camerounaise de traçabilité et de lutte contre la contrefaçon de médicaments.</p>
-                </div>
-                
-                <div>
-                    <h4 class="font-semibold text-gray-800 mb-3">Liens rapides</h4>
-                    <ul class="space-y-2 text-sm">
-                        <li><a href="{{ url_for('main.home') }}" class="text-gray-500 hover:text-[#2E8B57] transition">Accueil</a></li>
-                        <li><a href="{{ url_for('main.pharmacies') }}" class="text-gray-500 hover:text-[#2E8B57] transition">Pharmacies</a></li>
-                        <li><a href="{{ url_for('main.anti_counterfeit') }}" class="text-gray-500 hover:text-[#2E8B57] transition">Anti-Contrefaçon</a></li>
-                        <li><a href="#" class="text-gray-500 hover:text-[#2E8B57] transition">Blog</a></li>
-                    </ul>
-                </div>
-                
-                <div>
-                    <h4 class="font-semibold text-gray-800 mb-3">Support</h4>
-                    <ul class="space-y-2 text-sm">
-                        <li><a href="#" class="text-gray-500 hover:text-[#2E8B57] transition">FAQ</a></li>
-                        <li><a href="#" class="text-gray-500 hover:text-[#2E8B57] transition">Contact</a></li>
-                        <li><a href="#" class="text-gray-500 hover:text-[#2E8B57] transition">Conditions</a></li>
-                        <li><a href="#" class="text-gray-500 hover:text-[#2E8B57] transition">Confidentialité</a></li>
-                    </ul>
-                </div>
-                
-                <div>
-                    <h4 class="font-semibold text-gray-800 mb-3">Suivez-nous</h4>
-                    <div class="flex gap-3">
-                        <a href="#" class="w-9 h-9 rounded-full bg-white/50 flex items-center justify-center text-gray-600 hover:bg-[#2E8B57] hover:text-white transition-all">
-                            <i class="fab fa-facebook-f text-sm"></i>
-                        </a>
-                        <a href="#" class="w-9 h-9 rounded-full bg-white/50 flex items-center justify-center text-gray-600 hover:bg-[#2E8B57] hover:text-white transition-all">
-                            <i class="fab fa-twitter text-sm"></i>
-                        </a>
-                        <a href="#" class="w-9 h-9 rounded-full bg-white/50 flex items-center justify-center text-gray-600 hover:bg-[#2E8B57] hover:text-white transition-all">
-                            <i class="fab fa-linkedin-in text-sm"></i>
-                        </a>
-                        <a href="#" class="w-9 h-9 rounded-full bg-white/50 flex items-center justify-center text-gray-600 hover:bg-[#2E8B57] hover:text-white transition-all">
-                            <i class="fab fa-instagram text-sm"></i>
-                        </a>
-                    </div>
-                    <div class="mt-4">
-                        <p class="text-gray-500 text-xs">📞 +237 222 123 456</p>
-                        <p class="text-gray-500 text-xs">📧 contact@pharmaconnect.cm</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="border-t border-white/40 mt-8 pt-6 text-center">
-                <p class="text-gray-400 text-xs">&copy; 2026 PharmaConnect Cameroun. Tous droits réservés.</p>
-            </div>
-        </div>
-    </footer>
-    
+
+    {% include 'layout/footer.html' %}
     <script>
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const mobileMenu = document.getElementById('mobileMenu');
-        
+
         if (mobileMenuBtn) {
             mobileMenuBtn.addEventListener('click', () => {
                 mobileMenu.classList.toggle('hidden');
             });
         }
-        
+
         setTimeout(() => {
             document.querySelectorAll('.flash-message').forEach(msg => {
                 msg.style.opacity = '0';
                 setTimeout(() => msg.remove(), 300);
             });
         }, 5000);
-        
+
         const currentPath = window.location.pathname;
         if (currentPath === '/' || currentPath === '') {
             const homeLink = document.getElementById('nav-home');
@@ -295,7 +274,8 @@
             if (antifakeLink) antifakeLink.classList.add('nav-active');
         }
     </script>
-    
+
     {% block extra_js %}{% endblock %}
 </body>
+
 </html>
