@@ -3,1727 +3,272 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}GitFetch Admin{% endblock %}</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>PharmaFind · {% block title %}Accueil{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        @font-face {
+            font-family: 'Goodly';
+            src: local('Goodly'), local('SF Pro Text'), local('Segoe UI');
+            font-display: swap;
         }
-        html { width: 100%; }
-
         :root {
-            --jaune-primaire: #ffc107;
-            --jaune-fonce: #f9a825;
-            --fond-barre-laterale: #ffffff;
-            --survol-barre-laterale: #f8f9fa;
-            --texte-sombre: #2c3e50;
-            --texte-clair: #6c757d;
-            --blanc: #ffffff;
-            --gris-clair: #f8f9fa;
-            --couleur-bordure: #e9ecef;
-            --couleur-admin: #9c27b0;
-            --admin-clair: #e1bee7;
-            --couleur-portfolio: #17a2b8;
-            --couleur-me-connaitre: #28a745;
-            --couleur-github: #24292e;
-            --couleur-github-clair: #6e5494;
-            --nav-mobile-height: 68px;
+            --vert-principal: #2E8B57;
+            --vert-fonce: #267349;
+            --bleu-profondeur: #0F4C81;
+            --bleu-clair: #eef2ff;
+            --blanc-carte: #ffffff;
+            --gris-fond: #f8fafc;
+            --gris-bordure: #e2e8f0;
+            --texte-fonce: #1e293b;
+            --texte-mute: #64748b;
+            --ombre: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
         }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--gris-clair);
-            color: #333;
+            background: var(--gris-fond);
+            font-family: 'Ubuntu', sans-serif;
+            color: var(--texte-fonce);
             overflow-x: hidden;
-            width: 100%;
         }
-
-        /* ===== BARRE LATERALE ===== */
-        .barre-laterale {
+        .sidebar {
             position: fixed;
             left: 0;
             top: 0;
             width: 280px;
             height: 100vh;
-            background: var(--fond-barre-laterale);
-            padding: 0;
-            z-index: 1000;
+            background: var(--blanc-carte);
+            border-right: 1px solid var(--gris-bordure);
+            box-shadow: var(--ombre);
+            z-index: 40;
             transition: transform 0.3s ease;
             overflow-y: auto;
-            box-shadow: 4px 0 15px rgba(0,0,0,0.08);
-            border-right: 1px solid var(--couleur-bordure);
         }
-
-        .barre-laterale::-webkit-scrollbar { width: 6px; }
-        .barre-laterale::-webkit-scrollbar-track { background: #f8f9fa; }
-        .barre-laterale::-webkit-scrollbar-thumb { background: var(--jaune-primaire); border-radius: 3px; }
-
-        .entete-barre-laterale {
-            padding: 30px 25px;
-            background: linear-gradient(135deg, rgba(255,193,7,0.08), rgba(255,193,7,0.03));
-            border-bottom: 2px solid rgba(255,193,7,0.2);
+        .sidebar-header {
+            padding: 2rem 1.5rem;
+            border-bottom: 1px solid var(--gris-bordure);
+            background: linear-gradient(135deg, rgba(46,139,87,0.03), rgba(15,76,129,0.02));
         }
-
-        .logo-barre-laterale {
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, var(--vert-principal), var(--bleu-profondeur));
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            text-decoration: none;
+            color: white;
+            font-size: 1.3rem;
         }
-
-        .conteneur-logo {
+        .logo-text {
+            font-family: 'Goodly', 'Ubuntu', sans-serif;
+            font-weight: 800;
+            font-size: 1.3rem;
+            background: linear-gradient(135deg, var(--vert-principal), var(--bleu-profondeur));
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        .user-info {
+            padding: 1.5rem;
+            background: var(--bleu-clair);
+            margin: 1rem;
+            border-radius: 20px;
             display: flex;
-            flex-direction: column;
             align-items: center;
             gap: 12px;
         }
-
-        .image-logo {
-            width: 100px;
-            height: auto;
-            border-radius: 15px;
-            border: 3px solid var(--jaune-primaire);
-            box-shadow: 0 8px 20px rgba(255,193,7,0.3);
-            transition: all 0.3s ease;
-            object-fit: cover;
-        }
-
-        .logo-barre-laterale:hover .image-logo {
-            transform: scale(1.05);
-            box-shadow: 0 12px 30px rgba(255,193,7,0.4);
-        }
-
-        .texte-logo {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--texte-sombre);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-align: center;
-        }
-
-        .utilisateur-barre-laterale {
-            padding: 20px 25px;
-            background: linear-gradient(135deg, rgba(255,193,7,0.06), transparent);
-            border-bottom: 1px solid var(--couleur-bordure);
-        }
-
-        .info-utilisateur {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .avatar-utilisateur {
-            width: 50px;
-            height: 50px;
+        .avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--vert-principal), var(--bleu-profondeur));
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--jaune-primaire), var(--jaune-fonce));
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
-            color: var(--blanc);
-            font-weight: 700;
-            box-shadow: 0 4px 10px rgba(255,193,7,0.3);
-            overflow: hidden;
-            flex-shrink: 0;
-        }
-
-        .avatar-utilisateur img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
-        }
-
-        .details-utilisateur { flex: 1; min-width: 0; }
-
-        .details-utilisateur h3 {
-            font-size: 16px;
-            color: var(--texte-sombre);
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .role-utilisateur {
-            font-size: 13px;
-            color: var(--texte-clair);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .role-utilisateur i { color: var(--jaune-primaire); }
-        .role-utilisateur.admin { color: var(--couleur-admin); font-weight: 600; }
-        .role-utilisateur.admin i { color: var(--couleur-admin); }
-
-        .status-github {
-            margin-top: 12px;
-            padding: 8px 12px;
-            background: rgba(36,41,46,0.05);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 12px;
-        }
-
-        .status-github.connecte { background: rgba(46,164,79,0.1); color: #2ea44f; }
-        .status-github.non-connecte { background: rgba(207,34,46,0.1); color: #cf222e; }
-        .status-github i { font-size: 14px; }
-        .status-github.connecte i { color: #2ea44f; }
-        .status-github.non-connecte i { color: #cf222e; }
-
-        .bouton-github {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            background: var(--couleur-github);
             color: white;
-            border-radius: 6px;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        .user-details h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+        .user-details p {
+            font-size: 0.7rem;
+            color: var(--texte-mute);
+        }
+        .nav-menu {
+            padding: 0 1rem 1rem;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin: 4px 0;
+            border-radius: 14px;
+            color: var(--texte-fonce);
             text-decoration: none;
-            font-size: 12px;
+            transition: all 0.2s;
             font-weight: 500;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
         }
-
-        .bouton-github:hover {
-            background: #1b1f23;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(36,41,46,0.3);
+        .nav-item i { width: 24px; color: var(--vert-principal); }
+        .nav-item:hover { background: var(--bleu-clair); }
+        .nav-item.active {
+            background: linear-gradient(135deg, rgba(46,139,87,0.12), rgba(15,76,129,0.08));
+            border-right: 3px solid var(--vert-principal);
+            color: var(--vert-principal);
         }
-
-        .navigation-barre-laterale { padding: 20px 0; }
-
-        .titre-section-navigation {
-            padding: 15px 25px 10px;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--texte-clair);
+        .nav-section {
+            font-size: 0.7rem;
             text-transform: uppercase;
             letter-spacing: 1px;
+            color: var(--texte-mute);
+            padding: 1.2rem 1rem 0.5rem;
         }
-
-        .titre-section-navigation.admin {
-            color: var(--couleur-admin);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .titre-section-navigation i { font-size: 14px; }
-
-        .lien-navigation {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 14px 25px;
-            color: var(--texte-sombre);
-            text-decoration: none;
-            transition: all 0.3s ease;
-            position: relative;
-            font-weight: 500;
-            margin: 4px 12px;
-            border-radius: 10px;
-        }
-
-        .lien-navigation::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            height: 0;
-            width: 4px;
-            background: var(--jaune-primaire);
-            border-radius: 0 3px 3px 0;
-            transition: height 0.3s ease;
-        }
-
-        .lien-navigation.admin::before { background: var(--couleur-admin); }
-        .lien-navigation.portfolio::before { background: var(--couleur-portfolio); }
-        .lien-navigation.me-connaitre::before { background: var(--couleur-me-connaitre); }
-
-        .lien-navigation:hover,
-        .lien-navigation.actif {
-            background: linear-gradient(135deg, rgba(255,193,7,0.12), rgba(255,193,7,0.06));
-            color: var(--jaune-fonce);
-        }
-
-        .lien-navigation.admin:hover,
-        .lien-navigation.admin.actif {
-            background: linear-gradient(135deg, rgba(156,39,176,0.12), rgba(156,39,176,0.06));
-            color: var(--couleur-admin);
-        }
-
-        .lien-navigation.portfolio:hover,
-        .lien-navigation.portfolio.actif {
-            background: linear-gradient(135deg, rgba(23,162,184,0.12), rgba(23,162,184,0.06));
-            color: var(--couleur-portfolio);
-        }
-
-        .lien-navigation.me-connaitre:hover,
-        .lien-navigation.me-connaitre.actif {
-            background: linear-gradient(135deg, rgba(40,167,69,0.12), rgba(40,167,69,0.06));
-            color: var(--couleur-me-connaitre);
-        }
-
-        .lien-navigation:hover::before,
-        .lien-navigation.actif::before { height: 60%; }
-
-        .lien-navigation i {
-            font-size: 20px;
-            width: 24px;
-            text-align: center;
-            color: var(--jaune-primaire);
-        }
-
-        .lien-navigation.admin i { color: var(--couleur-admin); }
-        .lien-navigation.portfolio i { color: var(--couleur-portfolio); }
-        .lien-navigation.me-connaitre i { color: var(--couleur-me-connaitre); }
-        .lien-navigation span { font-size: 15px; }
-
-        .badge-admin {
-            background: var(--couleur-admin);
-            color: white;
-            font-size: 10px;
-            padding: 3px 8px;
-            border-radius: 12px;
-            margin-left: auto;
-            font-weight: 600;
-            display: none;
-        }
-
-        .badge-portfolio {
-            background: var(--couleur-portfolio);
-            color: white;
-            font-size: 10px;
-            padding: 3px 8px;
-            border-radius: 12px;
-            margin-left: auto;
-            font-weight: 600;
-            display: none;
-        }
-
-        .badge-me-connaitre {
-            background: var(--couleur-me-connaitre);
-            color: white;
-            font-size: 10px;
-            padding: 3px 8px;
-            border-radius: 12px;
-            margin-left: auto;
-            font-weight: 600;
-            display: none;
-        }
-
-        .badge-github {
-            background: var(--couleur-github);
-            color: white;
-            font-size: 10px;
-            padding: 3px 8px;
-            border-radius: 12px;
-            margin-left: auto;
-            font-weight: 600;
-        }
-
-        .pied-barre-laterale {
-            padding: 20px 25px;
-            margin-top: auto;
-            border-top: 1px solid var(--couleur-bordure);
-        }
-
-        .bouton-deconnexion {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 12px;
-            background: rgba(244,67,54,0.08);
-            color: #f44336;
-            border: 1px solid rgba(244,67,54,0.2);
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .bouton-deconnexion:hover {
-            background: #f44336;
-            color: var(--blanc);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(244,67,54,0.3);
-        }
-
-        /* ===== CONTENU PRINCIPAL ===== */
-        .contenu-principal {
+        .main-content {
             margin-left: 280px;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
-
-        /* ===== EN-TETE SUPERIEUR ===== */
-        .en-tete-superieur {
-            background: var(--blanc);
-            padding: 20px 40px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        .top-bar {
+            background: var(--blanc-carte);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--gris-bordure);
             position: sticky;
             top: 0;
-            z-index: 999;
-            border-radius: 0 0 10px 10px;
+            z-index: 30;
         }
-
-        .contenu-en-tete {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .gauche-en-tete h2 {
-            font-size: 24px;
-            color: var(--texte-sombre);
-            margin-bottom: 5px;
+        .page-title {
+            font-family: 'Goodly', 'Ubuntu', sans-serif;
             font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--texte-fonce);
         }
-
-        .metadonnees-en-tete {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            font-size: 14px;
-            color: var(--texte-clair);
-        }
-
-        .element-metadonnee {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .element-metadonnee i { color: var(--jaune-primaire); }
-
-        .droite-en-tete {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .bouton-primaire {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 24px;
-            background: linear-gradient(135deg, var(--jaune-primaire), var(--jaune-fonce));
-            color: var(--blanc);
-            border: none;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(255,193,7,0.3);
-        }
-
-        .bouton-primaire:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255,193,7,0.4);
-        }
-
-        .bouton-github-header {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 20px;
-            background: var(--couleur-github);
-            color: white;
-            border-radius: 10px;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .bouton-github-header:hover {
-            background: #1b1f23;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(36,41,46,0.3);
-        }
-
-        /* ===== BOUTONS DE PARTAGE ===== */
-        .boutons-partage {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .bouton-partage {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            color: white;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            border: none;
-            font-size: 16px;
-        }
-
-        .bouton-partage:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
-        }
-
-        .bouton-partage.whatsapp { background: linear-gradient(135deg, #25D366, #128C7E); }
-        .bouton-partage.linkedin { background: linear-gradient(135deg, #0077B5, #005885); }
-        .bouton-partage.facebook { background: linear-gradient(135deg, #1877F2, #0C63D4); }
-        .bouton-partage.copier { background: linear-gradient(135deg, #6c757d, #495057); }
-        .bouton-partage.copier.copie-effectuee { background: linear-gradient(135deg, #28a745, #1e7e34); }
-
-        .infobulle { position: relative; }
-
-        .infobulle::after {
-            content: attr(data-infobulle);
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%) translateY(-8px);
-            background: rgba(0,0,0,0.9);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            white-space: nowrap;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease, transform 0.3s ease;
-            z-index: 1000;
-        }
-
-        .infobulle:hover::after {
-            opacity: 1;
-            transform: translateX(-50%) translateY(-4px);
-        }
-
-        /* ===== MESSAGES FLASH ===== */
-        .messages-flash { padding: 20px 40px; }
-
-        .alerte {
-            padding: 16px 20px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            font-size: 14px;
-            animation: glissementEntree 0.4s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-
-        @keyframes glissementEntree {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .alerte i { font-size: 20px; }
-        .alerte.succes { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
-        .alerte.succes i { color: #28a745; }
-        .alerte.erreur { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
-        .alerte.erreur i { color: #dc3545; }
-        .alerte.info { background: #fff3cd; color: #856404; border-left: 4px solid var(--jaune-primaire); }
-        .alerte.info i { color: var(--jaune-primaire); }
-        .alerte.github-warning { background: #ffe6e6; color: #cf222e; border-left: 4px solid #cf222e; }
-        .alerte.github-warning i { color: #cf222e; }
-
-        main {
-            flex: 1;
-            padding: 30px 40px;
-            background: var(--gris-clair);
-        }
-
-        /* ===== PAGE AUTHORIZE ===== */
-        .conteneur-authorize {
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 40px;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-
-        .logo-github-authorize {
-            width: 120px;
-            height: 120px;
-            background: var(--couleur-github);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 30px;
-            color: white;
-            font-size: 60px;
-            box-shadow: 0 10px 30px rgba(36,41,46,0.3);
-        }
-
-        .titre-authorize { font-size: 32px; color: var(--texte-sombre); margin-bottom: 20px; font-weight: 700; }
-        .sous-titre-authorize { font-size: 18px; color: var(--texte-clair); margin-bottom: 30px; }
-
-        .permissions-authorize {
-            background: #f8f9fa;
-            padding: 30px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            text-align: left;
-        }
-
-        .permission-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 12px 0;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .permission-item:last-child { border-bottom: none; }
-        .permission-item i { color: var(--jaune-primaire); font-size: 20px; }
-
-        .bouton-authorize {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            padding: 16px 40px;
-            background: linear-gradient(135deg, var(--couleur-github), #1b1f23);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            margin-bottom: 20px;
-        }
-
-        .bouton-authorize:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(36,41,46,0.4);
-        }
-
-        .lien-plus-tard {
-            color: var(--texte-clair);
-            text-decoration: none;
-            font-size: 14px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            transition: color 0.3s ease;
-        }
-
-        .lien-plus-tard:hover { color: var(--couleur-github); }
-
-        /* ===== MODAL DE PARTAGE ===== */
-        .modal-partage {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.75);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(8px);
-        }
-
-        .modal-partage.actif {
-            display: flex;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .conteneur-modal {
-            background: white;
-            border-radius: 32px;
-            max-width: 420px;
-            width: 90%;
-            padding: 32px 28px;
-            text-align: center;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
-            animation: slideUp 0.3s ease;
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(40px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .modal-titre {
-            font-size: 26px;
-            font-weight: 700;
-            color: var(--texte-sombre);
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .modal-titre i {
-            color: var(--couleur-portfolio);
-            font-size: 28px;
-        }
-
-        .modal-sous-titre {
-            font-size: 14px;
-            color: var(--texte-clair);
-            margin-bottom: 28px;
-        }
-
-        .modal-options {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 24px;
-            margin-bottom: 32px;
-        }
-
-        .modal-option {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            padding: 8px;
-            border-radius: 16px;
-        }
-
-        .modal-option:hover {
-            transform: translateY(-6px);
-            background: rgba(0,0,0,0.03);
-        }
-
-        .modal-option:active {
-            transform: translateY(-2px);
-        }
-
-        .modal-option-icone {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            color: white;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-            transition: all 0.2s ease;
-        }
-
-        .modal-option-icone.whatsapp { background: linear-gradient(135deg, #25D366, #128C7E); }
-        .modal-option-icone.linkedin { background: linear-gradient(135deg, #0077B5, #005885); }
-        .modal-option-icone.facebook { background: linear-gradient(135deg, #1877F2, #0C63D4); }
-        .modal-option-icone.copier { background: linear-gradient(135deg, #6c757d, #495057); }
-        .modal-option-icone.copier.copie-modal { background: linear-gradient(135deg, #28a745, #1e7e34); }
-
-        .modal-option-label {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--texte-sombre);
-        }
-
-        .modal-lien {
-            background: #f8f9fa;
-            padding: 14px 18px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 24px;
-            border: 1px solid #e9ecef;
-        }
-
-        .modal-lien-texte {
-            font-size: 12px;
-            color: var(--couleur-portfolio);
-            word-break: break-all;
-            text-align: left;
-            flex: 1;
-            font-family: monospace;
-        }
-
-        .bouton-fermer-modal {
-            width: 100%;
-            padding: 14px;
-            background: #f1f3f5;
-            border: none;
-            border-radius: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            color: var(--texte-sombre);
-            font-size: 15px;
-        }
-
-        .bouton-fermer-modal:hover {
-            background: #e9ecef;
-            transform: translateY(-1px);
-        }
-
-        /* ===== NAVIGATION MOBILE ===== */
-        .navigation-mobile {
-            display: none;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: var(--nav-mobile-height);
-            background: var(--blanc);
-            box-shadow: 0 -2px 20px rgba(0,0,0,0.12);
-            border-top: 1px solid var(--couleur-bordure);
-            z-index: 1100;
-        }
-
-        .conteneur-navigation-mobile {
-            display: flex;
-            align-items: stretch;
-            height: 100%;
-            overflow-x: auto;
-            overflow-y: hidden;
-            -webkit-overflow-scrolling: touch;
-            scroll-snap-type: x proximity;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
-
-        .conteneur-navigation-mobile::-webkit-scrollbar {
-            display: none;
-        }
-
-        .element-navigation-mobile {
-            flex: 0 0 auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
+        .btn-logout {
+            background: rgba(239,68,68,0.1);
             padding: 8px 18px;
-            color: var(--texte-clair);
+            border-radius: 40px;
+            color: #dc2626;
             text-decoration: none;
-            transition: color 0.2s ease, background 0.2s ease;
-            white-space: nowrap;
-            min-width: 72px;
-            scroll-snap-align: start;
-            position: relative;
-            border-radius: 0;
-        }
-
-        .element-navigation-mobile::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 3px;
-            background: var(--jaune-primaire);
-            border-radius: 0 0 4px 4px;
-            transition: width 0.3s ease;
-        }
-
-        .element-navigation-mobile.actif::after,
-        .element-navigation-mobile:active::after {
-            width: 60%;
-        }
-
-        .element-navigation-mobile.actif {
-            color: var(--jaune-primaire);
-        }
-
-        .element-navigation-mobile i { font-size: 20px; }
-        .element-navigation-mobile span { font-size: 11px; font-weight: 500; }
-
-        .indicateur-scroll-mobile {
-            position: absolute;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            width: 32px;
-            background: linear-gradient(to right, transparent, rgba(255,255,255,0.95));
-            pointer-events: none;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding-right: 6px;
-            z-index: 2;
-            transition: opacity 0.3s ease;
-        }
-
-        .indicateur-scroll-mobile i {
-            font-size: 12px;
-            color: var(--texte-clair);
-            animation: pulsation 2s infinite;
-        }
-
-        .indicateur-scroll-mobile.masque { opacity: 0; pointer-events: none; }
-
-        @keyframes pulsation {
-            0%, 100% { opacity: 1; transform: translateX(0); }
-            50% { opacity: 0.4; transform: translateX(3px); }
-        }
-
-        /* ===== BULLE FLOTTANTE MOBILE ===== */
-        .bulle-flottante {
-            display: none;
-            position: fixed;
-            bottom: calc(var(--nav-mobile-height) + 16px);
-            right: 16px;
-            z-index: 1200;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 10px;
-        }
-
-        .bulle-bouton-principal {
-            width: 52px;
-            height: 52px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--jaune-primaire), var(--jaune-fonce));
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 6px 20px rgba(255,193,7,0.45);
-            transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease;
-            color: white;
-            font-size: 20px;
-            position: relative;
-            z-index: 2;
-        }
-
-        .bulle-bouton-principal:active {
-            transform: scale(0.92);
-        }
-
-        .bulle-bouton-principal.ouvert {
-            transform: rotate(45deg);
-            background: linear-gradient(135deg, #ef5350, #e53935);
-            box-shadow: 0 6px 20px rgba(239,83,80,0.4);
-        }
-
-        .bulle-options {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 10px;
-            opacity: 0;
-            pointer-events: none;
-            transform: translateY(10px) scale(0.92);
-            transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
-            transform-origin: bottom right;
-        }
-
-        .bulle-options.visible {
-            opacity: 1;
-            pointer-events: all;
-            transform: translateY(0) scale(1);
-        }
-
-        .bulle-option {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            border: none;
-            background: none;
-            padding: 0;
-            text-decoration: none;
-        }
-
-        .bulle-option-label {
-            background: rgba(30,30,30,0.88);
-            color: white;
-            font-size: 12px;
             font-weight: 600;
-            padding: 6px 12px;
-            border-radius: 20px;
-            white-space: nowrap;
-            backdrop-filter: blur(4px);
-            letter-spacing: 0.3px;
+            font-size: 0.85rem;
+            transition: 0.2s;
         }
-
-        .bulle-option-icone {
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 17px;
-            color: white;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            transition: transform 0.2s ease;
-            flex-shrink: 0;
-        }
-
-        .bulle-option:active .bulle-option-icone {
-            transform: scale(0.88);
-        }
-
-        .bulle-option-icone.partage {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-        }
-
-        .bulle-option-icone.traduction {
-            background: linear-gradient(135deg, #11998e, #38ef7d);
-        }
-
-        .bulle-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            z-index: 1190;
-        }
-
-        .bulle-overlay.actif { display: block; }
-
-        .bulle-sous-menu-partage {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 8px;
-            opacity: 0;
-            pointer-events: none;
-            transform: translateX(8px);
-            transition: opacity 0.2s ease, transform 0.2s ease;
-            position: absolute;
-            bottom: 0;
-            right: 52px;
-            width: max-content;
-        }
-
-        .bulle-sous-menu-partage.visible {
-            opacity: 1;
-            pointer-events: all;
-            transform: translateX(0);
-        }
-
-        .sous-menu-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            border: none;
-            background: none;
-            padding: 0;
-            text-decoration: none;
-        }
-
-        .sous-menu-label {
-            background: rgba(30,30,30,0.85);
-            color: white;
-            font-size: 11px;
-            font-weight: 600;
-            padding: 5px 10px;
+        .btn-logout:hover { background: #dc2626; color: white; }
+        .flash-messages { padding: 1rem 2rem; }
+        .alert {
+            padding: 12px 16px;
             border-radius: 16px;
-            white-space: nowrap;
-        }
-
-        .sous-menu-icone {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
+            margin-bottom: 1rem;
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 15px;
-            color: white;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-            flex-shrink: 0;
+            gap: 10px;
+            font-size: 0.85rem;
         }
-
-        .sous-menu-icone.whatsapp { background: linear-gradient(135deg, #25D366, #128C7E); }
-        .sous-menu-icone.linkedin { background: linear-gradient(135deg, #0077B5, #005885); }
-        .sous-menu-icone.facebook { background: linear-gradient(135deg, #1877F2, #0C63D4); }
-        .sous-menu-icone.copier   { background: linear-gradient(135deg, #6c757d, #495057); }
-        .sous-menu-icone.partage  { background: linear-gradient(135deg, #667eea, #764ba2); }
-
-        /* ===== RESPONSIVE ===== */
+        .alert-success { background: #e0f2e9; border-left: 4px solid var(--vert-principal); color: #166534; }
+        .alert-danger { background: #fee2e2; border-left: 4px solid #dc2626; color: #991b1b; }
+        .content { padding: 2rem; flex: 1; }
         @media (max-width: 768px) {
-            .barre-laterale {
-                transform: translateX(-100%);
-                pointer-events: none;
-            }
-
-            .contenu-principal {
-                margin-left: 0;
-                padding-bottom: var(--nav-mobile-height);
-            }
-
-            .en-tete-superieur {
-                display: none;
-            }
-
-            .messages-flash { padding: 10px 14px; }
-            .alerte { font-size: 13px; padding: 11px 13px; gap: 10px; }
-            main { padding: 0; }
-            .conteneur-authorize { margin: 16px; padding: 24px 16px; }
-            .titre-authorize { font-size: 22px; }
-            .sous-titre-authorize { font-size: 15px; }
-            .navigation-mobile { display: block; }
-            .bulle-flottante { display: flex; }
-        }
-
-        @media (max-width: 480px) {
-            .element-navigation-mobile {
-                min-width: 64px;
-                padding: 8px 12px;
-            }
-            .element-navigation-mobile i { font-size: 18px; }
-            .element-navigation-mobile span { font-size: 10px; }
-        }
-
-        @supports (padding-bottom: env(safe-area-inset-bottom)) {
-            .navigation-mobile {
-                padding-bottom: env(safe-area-inset-bottom);
-                height: calc(var(--nav-mobile-height) + env(safe-area-inset-bottom));
-            }
-            .contenu-principal {
-                padding-bottom: calc(var(--nav-mobile-height) + env(safe-area-inset-bottom));
-            }
+            .sidebar { transform: translateX(-100%); }
+            .main-content { margin-left: 0; }
+            .sidebar.open { transform: translateX(0); }
+            .top-bar { padding: 0.8rem 1rem; }
+            .content { padding: 1rem; }
         }
     </style>
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    {# Variables de session GitHub #}
-    {% set github_connecte = current_user.jeton_github is not none %}
-    {% set github_utilisateur = session.get('github_user') %}
-    {% set github_token_session = session.get('github_token') %}
-
-    {% if not github_connecte and request.endpoint not in ['admin.authorize_page', 'github_bp.callback', 'admin.skipp_authorize'] and not session.get('skip_github') %}
-        <script>
-            window.location.href = "{{ url_for('admin.authorize_page') }}";
-        </script>
-        
-        <div class="contenu-principal" style="margin-left: 0;">
-            <div class="conteneur-authorize">
-                <div class="logo-github-authorize">
-                    <i class="fab fa-github"></i>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('main.dashboard') }}" class="logo">
+                <div class="logo-icon"><i class="fas fa-shield-alt"></i></div>
+                <div>
+                    <div class="logo-text">PharmaFind</div>
+                    <div class="logo-small" style="font-size: 0.65rem;">Cameroun</div>
                 </div>
-                <h1 class="titre-authorize">Connexion GitHub requise</h1>
-                <p class="sous-titre-authorize">Pour utiliser GitFetch et gérer vos projets, vous devez autoriser l'accès à votre compte GitHub.</p>
-                
-                <div class="permissions-authorize">
-                    <h3 style="margin-bottom: 20px; color: var(--texte-sombre);">🔒 Permissions demandées :</h3>
-                    <div class="permission-item">
-                        <i class="fas fa-check-circle"></i>
-                        <span><strong>Accès aux dépôts publics</strong> - Pour importer et synchroniser vos projets</span>
-                    </div>
-                    <div class="permission-item">
-                        <i class="fas fa-check-circle"></i>
-                        <span><strong>Lecture des informations de profil</strong> - Pour personnaliser votre expérience</span>
-                    </div>
-                    <div class="permission-item">
-                        <i class="fas fa-check-circle"></i>
-                        <span><strong>Accès aux webhooks</strong> - Pour synchroniser automatiquement vos projets</span>
-                    </div>
-                </div>
-                
-                <a href="{{ url_for('github_bp.authorize') }}" class="bouton-authorize">
-                    <i class="fab fa-github"></i>
-                    Autoriser avec GitHub
-                </a>
-                
-                <br>
-                <a href="{{ url_for('admin.skipp_authorize') }}" class="lien-plus-tard">
-                    <i class="fas fa-clock"></i>
-                    Plus tard
-                </a>
+            </a>
+        </div>
+        <div class="user-info">
+            <div class="avatar">{{ session.full_name[0]|upper if session.full_name else 'U' }}</div>
+            <div class="user-details">
+                <h4>{{ session.full_name }}</h4>
+                <p><i class="fas fa-envelope"></i> {{ session.email }}</p>
+                <p><i class="fas fa-user-tag"></i> {{ session.role|title }}</p>
             </div>
         </div>
-    {% else %}
-        <!-- BARRE LATERALE -->
-        <aside class="barre-laterale">
-            <div class="entete-barre-laterale">
-                <a href="{{ url_for('admin.dashboard') }}" class="logo-barre-laterale">
-                    <div class="conteneur-logo">
-                        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo GitFetch" class="image-logo">
-                        <span class="texte-logo">Panel Admin</span>
-                    </div>
-                </a>
-            </div>
-
-            <div class="utilisateur-barre-laterale">
-                <div class="info-utilisateur">
-                    <div class="avatar-utilisateur">
-                        {% if current_user.photo_profil and current_user.photo_profil != 'default-avatar.jpg' %}
-                            {% if current_user.photo_profil.startswith('avatar_') %}
-                                {% set url_avatar = url_for('portfolio.serve_public_media', folder='profiles', filename=current_user.photo_profil) %}
-                                <img src="{{ url_avatar }}" alt="{{ current_user.nom_utilisateur }}"
-                                    onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/avatar.png') }}';">
-                            {% else %}
-                                {% set url_avatar = url_for('static', filename='uploads/' + current_user.photo_profil) %}
-                                <img src="{{ url_avatar }}" alt="{{ current_user.nom_utilisateur }}"
-                                    onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/avatar.png') }}';">
-                            {% endif %}
-                        {% else %}
-                            <img src="{{ url_for('static', filename='img/avatar.png') }}" alt="{{ current_user.nom_utilisateur }}">
-                        {% endif %}
-                    </div>
-                    <div class="details-utilisateur">
-                        <h3>{{ current_user.nom_utilisateur }}</h3>
-                        <div class="role-utilisateur {% if current_user.role == 'admin' %}admin{% endif %}">
-                            <i class="fas fa-circle" style="font-size: 8px;"></i>
-                            <span>{{ current_user.role|title if current_user.role else 'Développeur' }}</span>
-                        </div>
-                        
-                        {% if github_connecte %}
-                            <div class="status-github connecte">
-                                <i class="fab fa-github"></i>
-                                <span>GitHub connecté</span>
-                                {% if github_utilisateur %}
-                                    <span style="margin-left: auto; font-weight: 600;">@{{ github_utilisateur.login }}</span>
-                                {% endif %}
-                            </div>
-                        {% else %}
-                            <div class="status-github non-connecte">
-                                <i class="fab fa-github"></i>
-                                <span>GitHub non connecté</span>
-                                <a href="{{ url_for('admin.authorize_page') }}" style="margin-left: auto; color: #cf222e; text-decoration: none; font-weight: 600;">
-                                    Connecter
-                                </a>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-
-            <nav class="navigation-barre-laterale">
-                <div class="titre-section-navigation">Menu Principal</div>
-                <a href="{{ url_for('admin.dashboard') }}" class="lien-navigation {% if request.endpoint == 'admin.dashboard' %}actif{% endif %}">
-                    <i class="fas fa-th-large"></i>
-                    <span>Tableau de bord</span>
-                </a>
-                <a href="{{ url_for('admin.list_repos') }}" class="lien-navigation {% if request.endpoint == 'admin.list_repos' %}actif{% endif %}">
-                    <i class="fas fa-folder-open"></i>
-                    <span>Mes Projets</span>
-                    {% if not github_connecte %}
-                        <span class="badge-github" style="background: #cf222e;">! Action requise</span>
-                    {% endif %}
-                </a>
-                <a href="{{ url_for('admin.import_view') }}" class="lien-navigation {% if request.endpoint == 'admin.import_view' %}actif{% endif %}">
-                    <i class="fab fa-github"></i>
-                    <span>Importer GitHub</span>
-                    {% if not github_connecte %}
-                        <span class="badge-github" style="background: #cf222e;">! Connecter</span>
-                    {% endif %}
-                </a>
-                <a href="{{ url_for('admin.edit_portfolio_content') }}" class="lien-navigation portfolio {% if request.endpoint == 'admin.edit_portfolio_content' %}actif{% endif %}">
-                    <i class="fas fa-briefcase"></i>
-                    <span>Éditer Portfolio</span>
-                    <span class="badge-portfolio">PORTFOLIO</span>
-                </a>
-                <a href="{{ url_for('admin.about_edit') }}" class="lien-navigation me-connaitre {% if request.endpoint == 'admin.about_edit' %}actif{% endif %}">
-                    <i class="fas fa-user-tie"></i>
-                    <span>Éditer Me Connaître</span>
-                    <span class="badge-me-connaitre">À PROPOS</span>
-                </a>
-                <a href="{{ url_for('admin.edit_profile') }}" class="lien-navigation {% if request.endpoint == 'admin.edit_profile' %}actif{% endif %}">
-                    <i class="fas fa-user-cog"></i>
-                    <span>Mon Profil</span>
-                </a>
-
-                {% if current_user.role == 'admin' %}
-                <div class="titre-section-navigation admin">
-                    <i class="fas fa-crown"></i>
-                    <span>Administration</span>
-                </div>
-                <a href="#" class="lien-navigation admin {% if request.endpoint == '' %}actif{% endif %}">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Gestion des Statistiques</span>
-                    <span class="badge-admin">ADMIN</span>
-                </a>
-                {% endif %}
-            </nav>
-
-            <div class="pied-barre-laterale">
-                <a href="{{ url_for('auth.logout') }}" class="bouton-deconnexion">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Déconnexion</span>
-                </a>
-            </div>
-        </aside>
-
-        <!-- CONTENU PRINCIPAL -->
-        <div class="contenu-principal">
-            <header class="en-tete-superieur">
-                <div class="contenu-en-tete">
-                    <div class="gauche-en-tete">
-                        <h2>Bienvenue, {{ current_user.nom_utilisateur }} 👋</h2>
-                        <div class="metadonnees-en-tete">
-                            <div class="element-metadonnee">
-                                <i class="fas fa-clock"></i>
-                                <span>Dernière connexion : {{ current_user.derniere_connexion or 'Jamais' }}</span>
-                            </div>
-                            {% if current_user.role == 'admin' %}
-                            <div class="element-metadonnee">
-                                <i class="fas fa-shield-alt" style="color: var(--couleur-admin);"></i>
-                                <span style="color: var(--couleur-admin); font-weight: 600;">Administrateur</span>
-                            </div>
-                            {% endif %}
-                            <div class="element-metadonnee">
-                                {% if github_connecte %}
-                                    <i class="fab fa-github" style="color: #2ea44f;"></i>
-                                    <span style="color: #2ea44f;">GitHub: {% if github_utilisateur %}{{ github_utilisateur.login }}{% else %}Connecté{% endif %}</span>
-                                {% else %}
-                                    <i class="fab fa-github" style="color: #cf222e;"></i>
-                                    <span style="color: #cf222e;">GitHub non connecté</span>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="droite-en-tete">
-                        <div class="boutons-partage">
-                            <button class="bouton-partage whatsapp infobulle" data-infobulle="WhatsApp" onclick="ouvrirModalPartage()">
-                                <i class="fab fa-whatsapp"></i>
-                            </button>
-                            <button class="bouton-partage linkedin infobulle" data-infobulle="LinkedIn" onclick="ouvrirModalPartage()">
-                                <i class="fab fa-linkedin-in"></i>
-                            </button>
-                            <button class="bouton-partage facebook infobulle" data-infobulle="Facebook" onclick="ouvrirModalPartage()">
-                                <i class="fab fa-facebook-f"></i>
-                            </button>
-                            <button class="bouton-partage copier infobulle" data-infobulle="Copier le lien" onclick="ouvrirModalPartage()">
-                                <i class="fas fa-link"></i>
-                            </button>
-                        </div>
-                        
-                        {% if not github_connecte %}
-                            <a href="{{ url_for('admin.authorize_page') }}" class="bouton-github-header">
-                                <i class="fab fa-github"></i>
-                                Connecter GitHub
-                            </a>
-                        {% endif %}
-                        
-                        <a href="{{ url_for('portfolio.home') }}" class="bouton-primaire" target="_blank" id="btnVoirPortfolio">
-                            <i class="fas fa-briefcase"></i>
-                            Voir mon Portfolio
-                        </a>
-                    </div>
-                </div>
-            </header>
-
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <section class="messages-flash">
-                        {% for category, message in messages %}
-                            <div class="alerte {{ category }}">
-                                {% if category == 'success' %}
-                                    <i class="fas fa-check-circle"></i>
-                                {% elif category == 'error' %}
-                                    <i class="fas fa-exclamation-circle"></i>
-                                {% elif category == 'github-warning' %}
-                                    <i class="fab fa-github"></i>
-                                {% else %}
-                                    <i class="fas fa-info-circle"></i>
-                                {% endif %}
-                                <span>{{ message }}</span>
-                            </div>
-                        {% endfor %}
-                    </section>
-                {% endif %}
-            {% endwith %}
-
-            {% if not github_connecte and request.endpoint not in ['admin.authorize_page', 'github_bp.callback', 'admin.skipp_authorize'] and not session.get('skip_github') %}
-                <section class="messages-flash">
-                    <div class="alerte github-warning">
-                        <i class="fab fa-github"></i>
-                        <span><strong>Action requise :</strong> Connectez votre compte GitHub pour importer et synchroniser vos projets.</span>
-                        <a href="{{ url_for('admin.authorize_page') }}" style="color: #cf222e; font-weight: 600; text-decoration: underline; margin-left: auto;">Se connecter</a>
-                    </div>
-                </section>
+        <nav class="nav-menu">
+            <div class="nav-section">Navigation</div>
+            <a href="{{ url_for('main.dashboard') }}" class="nav-item {% if request.endpoint == 'main.dashboard' %}active{% endif %}">
+                <i class="fas fa-tachometer-alt"></i> Tableau de bord
+            </a>
+            {% if session.role == 'patient' %}
+                <a href="#" class="nav-item"><i class="fas fa-search"></i> Rechercher</a>
+                <a href="#" class="nav-item"><i class="fas fa-qrcode"></i> Scanner</a>
+                <a href="#" class="nav-item"><i class="fas fa-map-marker-alt"></i> Pharmacies proches</a>
+            {% elif session.role == 'pharmacien' %}
+                <a href="#" class="nav-item"><i class="fas fa-boxes"></i> Stocks</a>
+                <a href="#" class="nav-item"><i class="fas fa-truck"></i> Commandes</a>
+                <a href="#" class="nav-item"><i class="fas fa-qrcode"></i> QR codes</a>
+            {% elif session.role == 'admin' %}
+                <a href="#" class="nav-item"><i class="fas fa-users"></i> Utilisateurs</a>
+                <a href="#" class="nav-item"><i class="fas fa-store"></i> Pharmacies</a>
+                <a href="#" class="nav-item"><i class="fas fa-chart-pie"></i> Statistiques</a>
+            {% elif session.role == 'grossiste' %}
+                <a href="#" class="nav-item"><i class="fas fa-chart-simple"></i> Approvisionnements</a>
+                <a href="#" class="nav-item"><i class="fas fa-truck-fast"></i> Livraisons</a>
             {% endif %}
-
-            <main>
-                {% block content %}
-                {% endblock %}
-            </main>
-        </div>
-
-        <!-- ===== MODAL DE PARTAGE DU PORTFOLIO ===== -->
-        <div class="modal-partage" id="modalPartage">
-            <div class="conteneur-modal">
-                <div class="modal-titre">
-                    <i class="fas fa-briefcase"></i>
-                    Partager mon Portfolio
-                </div>
-                <div class="modal-sous-titre">
-                    Invitez vos amis, collègues et recruteurs à découvrir votre travail !
-                </div>
-                
-                <div class="modal-options">
-                    <div class="modal-option" onclick="partagerWhatsAppPortfolio()">
-                        <div class="modal-option-icone whatsapp">
-                            <i class="fab fa-whatsapp"></i>
-                        </div>
-                        <span class="modal-option-label">WhatsApp</span>
-                    </div>
-                    <div class="modal-option" onclick="partagerLinkedInPortfolio()">
-                        <div class="modal-option-icone linkedin">
-                            <i class="fab fa-linkedin-in"></i>
-                        </div>
-                        <span class="modal-option-label">LinkedIn</span>
-                    </div>
-                    <div class="modal-option" onclick="partagerFacebookPortfolio()">
-                        <div class="modal-option-icone facebook">
-                            <i class="fab fa-facebook-f"></i>
-                        </div>
-                        <span class="modal-option-label">Facebook</span>
-                    </div>
-                    <div class="modal-option" onclick="copierLienPortfolio()">
-                        <div class="modal-option-icone copier" id="iconeCopierModal">
-                            <i class="fas fa-link"></i>
-                        </div>
-                        <span class="modal-option-label" id="labelCopierModal">Copier le lien</span>
-                    </div>
-                </div>
-                
-                <div class="modal-lien">
-                    <div class="modal-lien-texte" id="lienPortfolio">
-                        {{ url_for('portfolio.home', _external=true) }}
-                    </div>
-                </div>
-                
-                <button class="bouton-fermer-modal" onclick="fermerModalPartage()">
-                    <i class="fas fa-times" style="margin-right: 8px;"></i>
-                    Fermer
-                </button>
-            </div>
-        </div>
-
-        <!-- ===== BULLE FLOTTANTE MOBILE ===== -->
-        <div class="bulle-flottante" id="bulleFlottante" aria-label="Actions rapides">
-            <div class="bulle-overlay" id="bulleOverlay"></div>
-            <div class="bulle-options" id="bulleOptions">
-                <div class="bulle-option" style="position: relative;">
-                    <span class="bulle-option-label">Partager</span>
-                    <button class="bulle-option-icone partage" id="btnPartage" aria-label="Partager" type="button">
-                        <i class="fas fa-share-alt"></i>
-                    </button>
-                    <div class="bulle-sous-menu-partage" id="sousMenuPartage">
-                        <button class="sous-menu-item" onclick="ouvrirModalPartage()" type="button">
-                            <span class="sous-menu-label">Partager le Portfolio</span>
-                            <span class="sous-menu-icone partage"><i class="fas fa-briefcase"></i></span>
-                        </button>
-                        <button class="sous-menu-item" id="btnTraductionMobile" type="button">
-                            <span class="sous-menu-label">Traduire</span>
-                            <span class="sous-menu-icone traduction"><i class="fas fa-language"></i></span>
-                        </button>
-                    </div>
-                </div>
-                <button class="bulle-option" id="btnTraduction" type="button" aria-label="Traduire la page">
-                    <span class="bulle-option-label">Traduire</span>
-                    <span class="bulle-option-icone traduction"><i class="fas fa-language"></i></span>
-                </button>
-            </div>
-            <button class="bulle-bouton-principal" id="bulleBtnPrincipal" type="button" aria-label="Actions rapides" aria-expanded="false">
-                <i class="fas fa-plus" id="bulleIconePrincipale"></i>
-            </button>
-        </div>
-
-        <!-- ===== NAVIGATION MOBILE ===== -->
-        <nav class="navigation-mobile" id="navMobile" role="navigation" aria-label="Navigation mobile">
-            <div class="conteneur-navigation-mobile" id="conteneurNavMobile">
-                <a href="{{ url_for('admin.dashboard') }}" class="element-navigation-mobile {% if request.endpoint == 'admin.dashboard' %}actif{% endif %}" aria-label="Tableau de bord">
-                    <i class="fas fa-th-large"></i>
-                    <span>Tableau</span>
-                </a>
-                <a href="{{ url_for('admin.list_repos') }}" class="element-navigation-mobile {% if request.endpoint == 'admin.list_repos' %}actif{% endif %}" aria-label="Mes Projets">
-                    <i class="fas fa-folder-open"></i>
-                    <span>Projets</span>
-                </a>
-                <a href="{{ url_for('admin.import_view') }}" class="element-navigation-mobile {% if request.endpoint == 'admin.import_view' %}actif{% endif %}" aria-label="Importer GitHub">
-                    <i class="fab fa-github"></i>
-                    <span>Importer</span>
-                </a>
-                <a href="{{ url_for('admin.edit_portfolio_content') }}" class="element-navigation-mobile portfolio {% if request.endpoint == 'admin.edit_portfolio_content' %}actif{% endif %}" aria-label="Éditer Portfolio">
-                    <i class="fas fa-briefcase"></i>
-                    <span>Portfolio</span>
-                </a>
-                <a href="{{ url_for('admin.about_edit') }}" class="element-navigation-mobile me-connaitre {% if request.endpoint == 'admin.about_edit' %}actif{% endif %}" aria-label="Me Connaître">
-                    <i class="fas fa-user-tie"></i>
-                    <span>À propos</span>
-                </a>
-                <a href="{{ url_for('admin.edit_profile') }}" class="element-navigation-mobile {% if request.endpoint == 'admin.edit_profile' %}actif{% endif %}" aria-label="Mon Profil">
-                    <i class="fas fa-user-cog"></i>
-                    <span>Profil</span>
-                </a>
-                {% if current_user.role == 'admin' %}
-                <a href="#" class="element-navigation-mobile admin" aria-label="Statistiques">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Stats</span>
-                </a>
-                {% endif %}
-                {% if not github_connecte %}
-                <a href="{{ url_for('admin.authorize_page') }}" class="element-navigation-mobile" style="color: #cf222e;" aria-label="Connecter GitHub">
-                    <i class="fab fa-github"></i>
-                    <span>Connecter</span>
-                </a>
-                {% endif %}
-                <a href="{{ url_for('portfolio.home') }}" class="element-navigation-mobile" target="_blank" aria-label="Voir Portfolio">
-                    <i class="fas fa-external-link-alt"></i>
-                    <span>Site</span>
-                </a>
-                <a href="{{ url_for('auth.logout') }}" class="element-navigation-mobile" id="lienDeconnexion" aria-label="Déconnexion">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Sortir</span>
-                </a>
-            </div>
-            <div class="indicateur-scroll-mobile" id="indicateurScroll">
-                <i class="fas fa-chevron-right"></i>
-            </div>
+            <div class="nav-section">Compte</div>
+            <a href="#" class="nav-item"><i class="fas fa-user-cog"></i> Mon profil</a>
+            <a href="{{ url_for('main.logout') }}" class="nav-item"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
         </nav>
-    {% endif %}
-
+    </aside>
+    <div class="main-content">
+        <header class="top-bar">
+            <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+            <a href="{{ url_for('main.logout') }}" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
+        </header>
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for cat, msg in messages %}
+                    <div class="alert alert-{{ cat if cat in ['success','danger'] else 'info' }}">
+                        <i class="fas fa-{{ 'check-circle' if cat == 'success' else 'exclamation-circle' if cat == 'danger' else 'info-circle' }}"></i>
+                        {{ msg }}
+                    </div>
+                {% endfor %}
+            {% endwith %}
+        </div>
+        <main class="content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    <button id="menu-toggle" class="fixed bottom-4 left-4 z-50 md:hidden bg-white rounded-full p-3 shadow-lg border">
+        <i class="fas fa-bars text-vert-principal"></i>
+    </button>
     <script>
-        // URL du portfolio (la même que celle du bouton "Voir mon Portfolio")
-        const URL_PORTFOLIO = "{{ url_for('portfolio.home', _external=true) }}";
-        const TEXTE_PARTAGE = "✨ Découvrez mon portfolio sur GitFetch ! ✨";
-        
-        // ===== MODAL DE PARTAGE =====
-        const modalPartage = document.getElementById('modalPartage');
-        
-        function ouvrirModalPartage() {
-            if (modalPartage) {
-                modalPartage.classList.add('actif');
-                document.body.style.overflow = 'hidden';
-            }
-        }
-        
-        function fermerModalPartage() {
-            if (modalPartage) {
-                modalPartage.classList.remove('actif');
-                document.body.style.overflow = '';
-            }
-        }
-        
-        if (modalPartage) {
-            modalPartage.addEventListener('click', function(e) {
-                if (e.target === modalPartage) {
-                    fermerModalPartage();
-                }
+        const sidebar = document.getElementById('sidebar');
+        const toggle = document.getElementById('menu-toggle');
+        if (toggle) {
+            toggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+            document.addEventListener('click', (e) => {
+                if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== toggle)
+                    sidebar.classList.remove('open');
             });
         }
-        
-        // ===== FONCTIONS DE PARTAGE AVEC L'URL DU PORTFOLIO =====
-        function partagerWhatsAppPortfolio() {
-            window.open(`https://wa.me/?text=${encodeURIComponent(TEXTE_PARTAGE + ' ' + URL_PORTFOLIO)}`, '_blank');
-            fermerModalPartage();
-        }
-
-        function partagerLinkedInPortfolio() {
-            window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(URL_PORTFOLIO)}`, '_blank', 'width=600,height=600');
-            fermerModalPartage();
-        }
-
-        function partagerFacebookPortfolio() {
-            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(URL_PORTFOLIO)}`, '_blank', 'width=600,height=600');
-            fermerModalPartage();
-        }
-
-        function copierLienPortfolio() {
-            const iconeModal = document.getElementById('iconeCopierModal');
-            const labelModal = document.getElementById('labelCopierModal');
-            
-            navigator.clipboard.writeText(URL_PORTFOLIO).then(() => {
-                if (iconeModal) {
-                    iconeModal.classList.add('copie-modal');
-                    iconeModal.innerHTML = '<i class="fas fa-check"></i>';
-                }
-                if (labelModal) labelModal.textContent = 'Copié !';
-                
-                setTimeout(() => {
-                    if (iconeModal) {
-                        iconeModal.classList.remove('copie-modal');
-                        iconeModal.innerHTML = '<i class="fas fa-link"></i>';
-                    }
-                    if (labelModal) labelModal.textContent = 'Copier le lien';
-                }, 2000);
-            }).catch(() => alert('Impossible de copier le lien'));
-        }
-
-        // ===== BULLE FLOTTANTE =====
-        (function() {
-            const btnPrincipal   = document.getElementById('bulleBtnPrincipal');
-            const bulleOptions   = document.getElementById('bulleOptions');
-            const overlay        = document.getElementById('bulleOverlay');
-            const btnPartage     = document.getElementById('btnPartage');
-            const sousMenuPartage = document.getElementById('sousMenuPartage');
-            const btnTraduction  = document.getElementById('btnTraduction');
-            const btnTraductionMobile = document.getElementById('btnTraductionMobile');
-
-            if (!btnPrincipal) return;
-
-            let bulleOuverte = false;
-            let partageOuvert = false;
-
-            function ouvrirBulle() {
-                bulleOuverte = true;
-                bulleOptions.classList.add('visible');
-                overlay.classList.add('actif');
-                btnPrincipal.classList.add('ouvert');
-                btnPrincipal.setAttribute('aria-expanded', 'true');
-            }
-
-            function fermerBulle() {
-                bulleOuverte = false;
-                bulleOptions.classList.remove('visible');
-                overlay.classList.remove('actif');
-                btnPrincipal.classList.remove('ouvert');
-                btnPrincipal.setAttribute('aria-expanded', 'false');
-                fermerPartage();
-            }
-
-            function fermerPartage() {
-                partageOuvert = false;
-                if (sousMenuPartage) sousMenuPartage.classList.remove('visible');
-            }
-
-            btnPrincipal.addEventListener('click', function(e) {
-                e.stopPropagation();
-                bulleOuverte ? fermerBulle() : ouvrirBulle();
-            });
-
-            overlay.addEventListener('click', fermerBulle);
-
-            if (btnPartage) {
-                btnPartage.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    partageOuvert = !partageOuvert;
-                    sousMenuPartage.classList.toggle('visible', partageOuvert);
-                });
-            }
-
-            if (sousMenuPartage) {
-                sousMenuPartage.querySelectorAll('.sous-menu-item').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        setTimeout(fermerBulle, 300);
-                    });
-                });
-            }
-
-            function declencherTraductionFallback() {
-                const urlActuelle = encodeURIComponent(window.location.href);
-                const langSource = document.documentElement.lang || 'fr';
-                const langCible = langSource === 'fr' ? 'en' : 'fr';
-                const urlGoogleTranslate = `https://translate.google.com/translate?sl=${langSource}&tl=${langCible}&u=${urlActuelle}`;
-                window.open(urlGoogleTranslate, '_blank');
-            }
-
-            if (btnTraduction) {
-                btnTraduction.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    declencherTraductionFallback();
-                    fermerBulle();
-                });
-            }
-
-            if (btnTraductionMobile) {
-                btnTraductionMobile.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    declencherTraductionFallback();
-                    fermerBulle();
-                });
-            }
-        })();
-
-        // ===== NAVIGATION MOBILE =====
-        (function() {
-            const conteneur = document.getElementById('conteneurNavMobile');
-            const indicateur = document.getElementById('indicateurScroll');
-
-            if (!conteneur || !indicateur) return;
-
-            function majIndicateur() {
-                const maxScroll = conteneur.scrollWidth - conteneur.clientWidth;
-                if (maxScroll <= 0 || conteneur.scrollLeft >= maxScroll - 4) {
-                    indicateur.classList.add('masque');
-                } else {
-                    indicateur.classList.remove('masque');
-                }
-            }
-
-            majIndicateur();
-            conteneur.addEventListener('scroll', majIndicateur, { passive: true });
-            window.addEventListener('resize', majIndicateur);
-
-            const elemActif = conteneur.querySelector('.element-navigation-mobile.actif');
-            if (elemActif) {
-                requestAnimationFrame(() => {
-                    const scrollCible = elemActif.offsetLeft - (conteneur.clientWidth / 2) + (elemActif.offsetWidth / 2);
-                    conteneur.scrollTo({ left: Math.max(0, scrollCible), behavior: 'smooth' });
-                });
-            }
-        })();
-
-        // ===== CONFIRMATION DÉCONNEXION =====
-        ['lienDeconnexion'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.addEventListener('click', e => {
-                if (!confirm('Voulez-vous vraiment vous déconnecter ?')) e.preventDefault();
-            });
-        });
-
-        document.querySelectorAll('a.bouton-deconnexion').forEach(lien => {
-            lien.addEventListener('click', e => {
-                if (!confirm('Voulez-vous vraiment vous déconnecter ?')) e.preventDefault();
-            });
-        });
-
-        // ===== LIEN ACTIF =====
-        const cheminActuel = window.location.pathname;
-
-        document.querySelectorAll('.lien-navigation').forEach(lien => {
-            const href = lien.getAttribute('href');
-            if (href && href !== '#' && href === cheminActuel) lien.classList.add('actif');
-        });
-
-        document.querySelectorAll('.element-navigation-mobile').forEach(el => {
-            const href = el.getAttribute('href');
-            if (href && href !== '#' && href === cheminActuel) el.classList.add('actif');
-        });
-
-        document.querySelectorAll('[href="#"]').forEach(el => {
-            el.addEventListener('click', e => e.preventDefault());
-        });
-
-        // Fermer la modal avec la touche Échap
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && modalPartage && modalPartage.classList.contains('actif')) {
-                fermerModalPartage();
-            }
-        });
     </script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

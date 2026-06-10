@@ -4,7 +4,7 @@ import os
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from werkzeug.utils import secure_filename
 from db import db                     # instance unique
-from models import User, Pharmacy
+from models import User, Pharmacy, Medicine, Order   # ajout des modèles manquants
 from email_utils import send_email
 
 main_bp = Blueprint('main', __name__)
@@ -292,15 +292,12 @@ def logout():
 # ------------------------------------------------------------------
 # Dashboards (protégés par rôle)
 # ------------------------------------------------------------------
-@main_bp.route("/dashboard/")
-def dashboard_patient():
+@main_bp.route("/dashboard")
+def dashboardt():
     if 'user_id' not in session or session.get('role') != 'patient':
         flash("Accès non autorisé.", "danger")
         return redirect(url_for("main.login"))
     user = User.query.get(session['user_id'])
     return render_template("admin/dashboard.html", user=user)
-
-
-
 
 
