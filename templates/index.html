@@ -1,5 +1,340 @@
-{% extends "./base.html" %}
+{% extends "base.html" %}
+
+{% block title %}Accueil - PharmaConnect Cameroun{% endblock %}
 
 {% block content %}
- 
+
+<style>
+    /* Police Goodly renforcée pour tout le site */
+    * {
+        font-family: 'Goodly', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+    
+    /* Titres en Goodly */
+    h1, h2, h3, .stat-number, .footer-title, .logo-text {
+        font-family: 'Goodly', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+    
+    /* UNIQUEMENT le H1 de la hero section en majuscule */
+    .hero-title {
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #2C5F8A, #2E8B57);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        display: inline-block;
+    }
+    
+    @media (min-width: 768px) {
+        .stat-number {
+            font-size: 3rem;
+        }
+    }
+</style>
+
+<!-- SECTION HERO -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-20 pb-12 md:pb-16">
+    <div class="flex flex-col lg:flex-row items-center gap-12">
+        <div class="flex-1 text-center lg:text-left">
+            <div class="inline-flex items-center gap-2 bg-white/40 backdrop-blur-sm rounded-full px-4 py-1.5 mb-5">
+                <i class="fas fa-shield-alt text-[#2E8B57] text-xs"></i>
+                <span class="text-xs font-medium text-gray-700">100% médicaments authentiques</span>
+            </div>
+            <!-- Seul ce H1 est en majuscule -->
+            <h1 class="hero-title text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 leading-tight">
+                Santé connectée<br>
+                pour tous au <span class="text-[#2C5F8A]">Cameroun</span>
+            </h1>
+            <p class="text-gray-600 mt-5 text-lg max-w-xl mx-auto lg:mx-0">
+                PharmaConnect connecte pharmacies, grossistes et patients. 
+                Lutte contre les faux médicaments, gestion intelligente des stocks et livraison fiable.
+            </p>
+            <div class="flex flex-wrap gap-4 mt-8 justify-center lg:justify-start">
+                <a href="#" class="bg-gradient-to-r from-[#2E8B57] to-[#1f6e46] inline-flex items-center gap-2 px-6 py-3 rounded-full text-white font-medium shadow-md hover:shadow-lg transition-all hover:translate-y-[-2px]">
+                    Explorer les pharmacies
+                    <i class="fas fa-arrow-right text-xs"></i>
+                </a>
+                <a href="#" class="bg-white/40 backdrop-blur-sm border border-[#2C5F8A]/30 inline-flex items-center gap-2 px-6 py-3 rounded-full text-[#2C5F8A] font-medium hover:bg-white/70 transition-all">
+                    <i class="fas fa-play-circle"></i>
+                    Voir la démo
+                </a>
+            </div>
+            <div class="flex items-center gap-4 mt-8 justify-center lg:justify-start">
+                <div class="flex -space-x-2">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#2C5F8A] to-[#2E8B57] flex items-center justify-center text-white text-xs border-2 border-white">👤</div>
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#2C5F8A] to-[#2E8B57] flex items-center justify-center text-white text-xs border-2 border-white">👩</div>
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#2C5F8A] to-[#2E8B57] flex items-center justify-center text-white text-xs border-2 border-white">🧑</div>
+                </div>
+                <span class="text-sm text-gray-500">+500 pharmaciens et patients nous font confiance</span>
+            </div>
+        </div>
+        <div class="flex-1 flex justify-center">
+            <div class="relative">
+                <div class="w-72 h-72 md:w-96 md:h-96 rounded-3xl bg-gradient-to-br from-[#2C5F8A]/10 to-[#2E8B57]/10 flex items-center justify-center backdrop-blur-sm border border-white/50">
+                    <div class="text-center p-6">
+                        <div class="bg-white/60 rounded-2xl p-5 inline-block backdrop-blur-sm">
+                            <i class="fas fa-qrcode text-6xl text-[#2C5F8A]"></i>
+                        </div>
+                        <p class="mt-4 text-[#2C5F8A] font-semibold text-sm">Scan QR · Authenticité</p>
+                    </div>
+                </div>
+                <div class="absolute -top-4 -right-4 w-12 h-12 bg-[#2E8B57] rounded-full opacity-20 blur-md"></div>
+                <div class="absolute -bottom-3 -left-3 w-16 h-16 bg-[#2C5F8A] rounded-full opacity-10 blur-lg"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION STATISTIQUES AVEC ANIMATION D'INCRÉMENTATION -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+        <div class="bg-white/50 backdrop-blur-sm border border-white/60 rounded-2xl p-5 transition-all hover:bg-white/70 hover:translate-y-[-5px]">
+            <div class="stat-number">
+                <span id="statPharmacies" data-target="50">0</span><span>+</span>
+            </div>
+            <p class="text-gray-600 text-sm mt-1">Pharmacies partenaires</p>
+        </div>
+        <div class="bg-white/50 backdrop-blur-sm border border-white/60 rounded-2xl p-5 transition-all hover:bg-white/70 hover:translate-y-[-5px]">
+            <div class="stat-number">
+                <span id="statMedicaments" data-target="10000">0</span><span>k+</span>
+            </div>
+            <p class="text-gray-600 text-sm mt-1">Médicaments tracés</p>
+        </div>
+        <div class="bg-white/50 backdrop-blur-sm border border-white/60 rounded-2xl p-5 transition-all hover:bg-white/70 hover:translate-y-[-5px]">
+            <div class="stat-number">
+                <span id="statSatisfaction" data-target="98">0</span><span>%</span>
+            </div>
+            <p class="text-gray-600 text-sm mt-1">Satisfaction client</p>
+        </div>
+        <div class="bg-white/50 backdrop-blur-sm border border-white/60 rounded-2xl p-5 transition-all hover:bg-white/70 hover:translate-y-[-5px]">
+            <div class="stat-number">
+                <span id="statSupport" data-target="24">0</span><span>/7</span>
+            </div>
+            <p class="text-gray-600 text-sm mt-1">Support disponible</p>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION FONCTIONNALITÉS -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div class="text-center mb-12">
+        <div class="inline-flex items-center gap-2 bg-white/40 backdrop-blur-sm rounded-full px-4 py-1.5 mb-4">
+            <i class="fas fa-cogs text-[#2E8B57] text-sm"></i>
+            <span class="text-xs font-medium text-gray-600">Pourquoi nous choisir ?</span>
+        </div>
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-800">
+            Une plateforme <span class="text-[#2E8B57]">complète</span> et <span class="text-[#2C5F8A]">innovante</span>
+        </h2>
+        <div class="w-20 h-1 bg-[#2E8B57] mx-auto mt-3 rounded-full"></div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-7">
+        <div class="bg-white/50 backdrop-blur-sm border border-white/60 rounded-2xl p-6 text-center transition-all hover:bg-white/70 hover:translate-y-[-5px] hover:shadow-xl">
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-[#2C5F8A]/20 to-[#2E8B57]/20 flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-qrcode text-2xl text-[#2C5F8A]"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800">Authentification QR</h3>
+            <p class="text-gray-600 text-sm mt-2">Scannez le code unique et vérifiez l'authenticité de vos médicaments en temps réel.</p>
+        </div>
+        <div class="bg-white/50 backdrop-blur-sm border border-white/60 rounded-2xl p-6 text-center transition-all hover:bg-white/70 hover:translate-y-[-5px] hover:shadow-xl">
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-[#2C5F8A]/20 to-[#2E8B57]/20 flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-map-marker-alt text-2xl text-[#2C5F8A]"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800">Géolocalisation</h3>
+            <p class="text-gray-600 text-sm mt-2">Trouvez le médicament près de chez vous et comparez les prix en un clin d'œil.</p>
+        </div>
+        <div class="bg-white/50 backdrop-blur-sm border border-white/60 rounded-2xl p-6 text-center transition-all hover:bg-white/70 hover:translate-y-[-5px] hover:shadow-xl">
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-[#2C5F8A]/20 to-[#2E8B57]/20 flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-chart-line text-2xl text-[#2C5F8A]"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800">IA Prédictive</h3>
+            <p class="text-gray-600 text-sm mt-2">Anticipez les ruptures de stock et optimisez vos réapprovisionnements.</p>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION TÉMOIGNAGES AVEC PHOTOS DE PROFIL ET DATES EN BAS À DROITE -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div class="text-center mb-12">
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-800">
+            Ils nous font <span class="text-[#2E8B57]">confiance</span>
+        </h2>
+        <div class="w-20 h-1 bg-[#2C5F8A] mx-auto mt-3 rounded-full"></div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Témoignage 1 -->
+        <div class="bg-white/45 backdrop-blur-sm border border-white/50 rounded-3xl p-6 transition-all hover:bg-white/60 flex flex-col h-full">
+            <div class="flex items-center gap-3 mb-3">
+                <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Dr. Moungolo" class="w-12 h-12 rounded-full object-cover border-2 border-[#2E8B57]">
+                <div>
+                    <p class="font-semibold text-gray-800">Dr. Moungolo</p>
+                    <div class="flex text-yellow-400 text-xs">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                </div>
+            </div>
+            <p class="text-gray-600 text-sm italic flex-grow">"PharmaConnect a révolutionné la gestion de ma pharmacie. Plus de faux médicaments, mes patients sont rassurés."</p>
+            <!-- Date en bas à droite -->
+            <div class="text-xs text-gray-400 flex items-center justify-end gap-1 mt-4 pt-2 border-t border-white/40">
+                <i class="far fa-calendar-alt"></i>
+                <span>15 mars 2026</span>
+            </div>
+        </div>
+        
+        <!-- Témoignage 2 -->
+        <div class="bg-white/45 backdrop-blur-sm border border-white/50 rounded-3xl p-6 transition-all hover:bg-white/60 flex flex-col h-full">
+            <div class="flex items-center gap-3 mb-3">
+                <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Christelle N." class="w-12 h-12 rounded-full object-cover border-2 border-[#2E8B57]">
+                <div>
+                    <p class="font-semibold text-gray-800">Christelle N.</p>
+                    <div class="flex text-yellow-400 text-xs"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                </div>
+            </div>
+            <p class="text-gray-600 text-sm italic flex-grow">"Je peux enfin localiser les médicaments dont j'ai besoin sans faire 10 pharmacies. Gain de temps énorme !"</p>
+            <!-- Date en bas à droite -->
+            <div class="text-xs text-gray-400 flex items-center justify-end gap-1 mt-4 pt-2 border-t border-white/40">
+                <i class="far fa-calendar-alt"></i>
+                <span>28 avril 2026</span>
+            </div>
+        </div>
+        
+        <!-- Témoignage 3 -->
+        <div class="bg-white/45 backdrop-blur-sm border border-white/50 rounded-3xl p-6 transition-all hover:bg-white/60 flex flex-col h-full">
+            <div class="flex items-center gap-3 mb-3">
+                <img src="https://randomuser.me/api/portraits/men/45.jpg" alt="Pharmacie Centrale" class="w-12 h-12 rounded-full object-cover border-2 border-[#2E8B57]">
+                <div>
+                    <p class="font-semibold text-gray-800">Pharmacie Centrale</p>
+                    <div class="flex text-yellow-400 text-xs"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                </div>
+            </div>
+            <p class="text-gray-600 text-sm italic flex-grow">"L'intégration Mobile Money a boosté nos commandes en ligne. Les patients adorent la simplicité."</p>
+            <!-- Date en bas à droite -->
+            <div class="text-xs text-gray-400 flex items-center justify-end gap-1 mt-4 pt-2 border-t border-white/40">
+                <i class="far fa-calendar-alt"></i>
+                <span>02 juin 2026</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION CTA FINALE - IMAGE LOCALE AVEC LOGO REDIMENSIONNABLE -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 mb-8">
+    <div class="bg-white/50 backdrop-blur-sm border border-white/60 rounded-3xl p-6 md:p-8 lg:p-10">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+            
+            <!-- COLONNE GAUCHE : IMAGE AVEC LOGO EN BAS À DROITE -->
+            <div class="relative group flex justify-center">
+                <div class="relative w-64 h-64 md:w-80 md:h-80 rounded-2xl overflow-hidden shadow-xl transform transition-all duration-300 hover:scale-105">
+                    <!-- Image locale (femme au téléphone) -->
+                    <img src="{{ url_for('static', filename='images/happy-woman-phone.jpg') }}" 
+                         alt="Femme utilisant son téléphone" 
+                         class="w-full h-full object-cover">
+                    
+                    <!-- Logo en bas à droite - VOUS POUVEZ MODIFIER LA TAILLE ICI -->
+                    <!-- Modifiez les classes w-* et h-* pour redimensionner le logo -->
+                    <div class="absolute bottom-3 right-3 ">
+                        <img src="{{ url_for('static', filename='images/Group 2.svg') }}" 
+                             alt="PharmaConnect Logo" 
+                             class="object-contain"
+                             style="width: 60px; height: 60px;">
+                        <!-- 
+                            POUR REDIMENSIONNER LE LOGO, MODIFIEZ LE STYLE CI-DESSUS :
+                            - width: 30px; height: 30px;  (très petit)
+                            - width: 40px; height: 40px;  (petit - actuel)
+                            - width: 50px; height: 50px;  (moyen)
+                            - width: 60px; height: 60px;  (grand)
+                            - width: 80px; height: 80px;  (très grand)
+                        -->
+                    </div>
+                </div>
+        
+            </div>
+            
+            <!-- COLONNE DROITE : TEXTE CTA -->
+            <div class="text-center lg:text-left">
+                <i class="fas fa-hand-holding-heart text-4xl text-[#2E8B57] mb-4"></i>
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-800">Prêt à rejoindre l'aventure PharmaConnect ?</h2>
+                <p class="text-gray-600 mt-3 max-w-lg mx-auto lg:mx-0">
+                    Inscrivez votre pharmacie ou commandez vos médicaments en toute confiance.
+                    Ensemble pour un Cameroun sans faux médicaments.
+                </p>
+                <div class="flex flex-wrap gap-4 justify-center lg:justify-start mt-8">
+                    <a href="#" class="bg-gradient-to-r from-[#2E8B57] to-[#1f6e46] px-6 py-3 rounded-full text-white font-medium shadow-md hover:shadow-lg transition-all hover:translate-y-[-2px]">
+                        Devenir partenaire
+                    </a>
+                    <a href="#" class="bg-white/40 backdrop-blur-sm border border-[#2C5F8A]/30 px-6 py-3 rounded-full text-[#2C5F8A] font-medium hover:bg-white/70 transition-all">
+                        Télécharger l'application
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    // Animation d'incrémentation des statistiques au chargement
+    document.addEventListener('DOMContentLoaded', function() {
+        const statElements = [
+            { element: document.getElementById('statPharmacies'), target: 50, suffix: '', isK: false },
+            { element: document.getElementById('statMedicaments'), target: 10000, suffix: '', isK: true },
+            { element: document.getElementById('statSatisfaction'), target: 98, suffix: '', isK: false },
+            { element: document.getElementById('statSupport'), target: 24, suffix: '', isK: false }
+        ];
+        
+        function animateNumber(element, target, isK) {
+            let current = 0;
+            const duration = 2000;
+            const stepTime = 20;
+            const steps = duration / stepTime;
+            const increment = target / steps;
+            
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    current = target;
+                    if (isK && target >= 1000) {
+                        element.textContent = Math.floor(current / 1000) + '.' + Math.floor((current % 1000) / 100);
+                    } else {
+                        element.textContent = Math.floor(current);
+                    }
+                    clearInterval(timer);
+                } else {
+                    if (isK && target >= 1000) {
+                        element.textContent = Math.floor(current / 1000) + '.' + Math.floor((current % 1000) / 100);
+                    } else {
+                        element.textContent = Math.floor(current);
+                    }
+                }
+            }, stepTime);
+        }
+        
+        const observerOptions = {
+            threshold: 0.3,
+            rootMargin: "0px"
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    animateNumber(statElements[0].element, statElements[0].target, false);
+                    animateNumber(statElements[1].element, statElements[1].target, true);
+                    animateNumber(statElements[2].element, statElements[2].target, false);
+                    animateNumber(statElements[3].element, statElements[3].target, false);
+                    observer.disconnect();
+                }
+            });
+        }, observerOptions);
+        
+        const statsSection = document.querySelector('.grid-cols-2.md\\:grid-cols-4');
+        if (statsSection) {
+            observer.observe(statsSection);
+        }
+    });
+</script>
+
 {% endblock %}

@@ -12,12 +12,20 @@
      <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
 
-<body>
-
+<body class="bg-gradient-to-br from-blue-50 via-white to-emerald-50 min-h-screen flex flex-col">
+    
+    <!-- Navbar -->
     {% include 'layout/menu.html' %}
+    
+    <!-- Contenu principal -->
+    <main class="flex-1">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
     {% include 'layout/footer.html' %}
-    {% block content %}
-    {% endblock %}
+    
+    {% block scripts %}{% endblock %}
 </body>
 
 </html>
