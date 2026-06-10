@@ -39,7 +39,6 @@
       padding: 2rem;
     }
 
-    /* conteneur principal deux colonnes */
     .register-wrapper {
       max-width: 1280px;
       width: 100%;
@@ -54,7 +53,6 @@
       flex-wrap: wrap;
     }
 
-    /* bordures décoratives */
     .register-wrapper::before {
       content: '';
       position: absolute;
@@ -359,7 +357,7 @@
       margin-top: 5px;
     }
 
-    /* Bouton de géolocalisation explicite */
+    /* Bouton de géolocalisation */
     .btn-geo {
       background: var(--green-pharma);
       border: none;
@@ -549,7 +547,7 @@
       </div>
     </div>
 
-    <!-- ÉTAPE 1 : identité dynamique -->
+    <!-- ÉTAPE 1 : identité dynamique (avec géolocalisation pour les deux rôles) -->
     <div class="step-panel" id="step1">
       <div class="form-grid" id="identityForm"></div>
       <div class="btn-group">
@@ -630,52 +628,23 @@
   }
   function goToStep(step) { if (step>=0 && step<=4) { currentStep = step; updateStepUI(); } }
 
-  // Rendu formulaire identité (avec bouton explicite pour la pharmacie)
-  function renderIdentityForm() {
-    const container = document.getElementById('identityForm');
-    if (selectedRole === 'patient') {
-      container.innerHTML = `
-        <div class="row-2"><div class="field"><label>Prénom</label><div class="input-wrapper"><i class="input-icon fas fa-user"></i><input class="form-control" id="prenom" value="${profileData.prenom || ''}"></div><div class="error-message" id="prenomErr"></div></div>
-        <div class="field"><label>Nom</label><div class="input-wrapper"><i class="input-icon fas fa-user"></i><input class="form-control" id="nom" value="${profileData.nom || ''}"></div><div class="error-message" id="nomErr"></div></div></div>
-        <div class="field"><label>Région / Ville</label><div class="input-wrapper"><i class="input-icon fas fa-map-marker-alt"></i><input class="form-control" id="region" value="${profileData.region || ''}"></div><div class="error-message" id="regionErr"></div></div>
-      `;
-    } else {
-      container.innerHTML = `
-        <div class="field"><label>Nom de la pharmacie</label><div class="input-wrapper"><i class="input-icon fas fa-store"></i><input class="form-control" id="nomPharmacie" value="${profileData.nomPharmacie || ''}"></div><div class="error-message" id="nomPharmErr"></div></div>
-        <div class="row-2"><div class="field"><label>N° Ordre ONPC</label><div class="input-wrapper"><i class="input-icon fas fa-qrcode"></i><input class="form-control" id="ordreOnpc" value="${profileData.ordreOnpc || ''}"></div><div class="error-message" id="ordreErr"></div></div>
-        <div class="field"><label>Pharmacien titulaire</label><div class="input-wrapper"><i class="input-icon fas fa-user-graduate"></i><input class="form-control" id="pharmacien" value="${profileData.pharmacien || ''}"></div><div class="error-message" id="pharmErr"></div></div></div>
-        <div class="field">
-          <label>Adresse précise</label>
-          <div class="input-wrapper"><i class="input-icon fas fa-location-dot"></i><input class="form-control" id="geoInput" readonly placeholder="Cliquez sur le bouton ci-dessous" value="${profileData.geoInput || ''}"></div>
-          <button type="button" class="btn-geo" id="geoLocateBtn"><i class="fas fa-map-marker-alt"></i> Récupérer ma localisation</button>
-          <div id="geoStatus" class="geo-status"></div>
-          <div class="error-message" id="addressErr"></div>
-        </div>
-        <div class="field"><label>Région</label><div class="input-wrapper"><i class="input-icon fas fa-globe"></i><input class="form-control" id="region" value="${profileData.region || ''}"></div><div class="error-message" id="regionErr"></div></div>
-      `;
-      const geoBtn = document.getElementById('geoLocateBtn');
-      if (geoBtn) geoBtn.addEventListener('click', getGeolocation);
-    }
-  }
-
-  // Fonction de géolocalisation avec le bouton "Récupérer ma localisation"
-  async function getGeolocation() {
-    const btn = document.getElementById('geoLocateBtn');
-    const statusDiv = document.getElementById('geoStatus');
-    const inputAddr = document.getElementById('geoInput');
+  // Fonction de géolocalisation partagée (pour patient et pharmacie)
+  async function getGeolocation(targetInputId, statusDivId, buttonId) {
+    const btn = document.getElementById(buttonId);
+    const statusDiv = document.getElementById(statusDivId);
+    const inputAddr = document.getElementById(targetInputId);
     if (!navigator.geolocation) {
       statusDiv.innerText = '❌ Votre navigateur ne supporte pas la géolocalisation.';
       statusDiv.className = 'geo-status error';
       return;
     }
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Localisation en cours...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Localisation...';
     statusDiv.innerText = 'Recherche de votre position...';
     statusDiv.className = 'geo-status';
     navigator.geolocation.getCurrentPosition(async (pos) => {
       const { latitude, longitude } = pos.coords;
       try {
-        // Appel à Nominatim pour obtenir l'adresse complète
         const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=fr`);
         const data = await resp.json();
         const ad = data.address || {};
@@ -688,34 +657,78 @@
         inputAddr.value = fullAddress;
         statusDiv.innerText = '✓ Adresse récupérée avec succès';
         statusDiv.className = 'geo-status success';
-        profileData.geoInput = fullAddress;
-        // Option : pré-remplir la région si vide
+        // Mettre à jour profileData en fonction du rôle
+        if (selectedRole === 'patient') profileData.adresse = fullAddress;
+        else profileData.geoInput = fullAddress;
+        // Si le champ région est vide, on peut le pré-remplir
         const regionField = document.getElementById('region');
         if (regionField && !regionField.value && ville) regionField.value = ville;
       } catch (error) {
         inputAddr.value = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
         statusDiv.innerText = '✓ Coordonnées approximatives enregistrées';
         statusDiv.className = 'geo-status success';
-        profileData.geoInput = inputAddr.value;
+        if (selectedRole === 'patient') profileData.adresse = inputAddr.value;
+        else profileData.geoInput = inputAddr.value;
       }
       btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-check-circle"></i> Localisation récupérée';
+      btn.innerHTML = '<i class="fas fa-check-circle"></i> Localisation OK';
       btn.style.background = 'var(--green-dark)';
     }, (err) => {
       btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-map-marker-alt"></i> Récupérer ma localisation';
+      btn.innerHTML = '<i class="fas fa-map-marker-alt"></i> Me localiser';
       let msg = '';
       switch(err.code) {
-        case 1: msg = 'Permission refusée. Activez la localisation dans votre navigateur.'; break;
+        case 1: msg = 'Permission refusée. Activez la localisation.';
+          break;
         case 2: msg = 'Position indisponible. Vérifiez votre connexion.';
-        break;
+          break;
         case 3: msg = 'Délai dépassé. Réessayez.';
-        break;
+          break;
         default: msg = 'Erreur de géolocalisation.';
       }
       statusDiv.innerText = '❌ ' + msg;
       statusDiv.className = 'geo-status error';
     }, { timeout: 10000, enableHighAccuracy: true });
+  }
+
+  // Rendu formulaire identité (avec géolocalisation pour les deux profils)
+  function renderIdentityForm() {
+    const container = document.getElementById('identityForm');
+    if (selectedRole === 'patient') {
+      container.innerHTML = `
+        <div class="row-2">
+          <div class="field"><label>Prénom</label><div class="input-wrapper"><i class="input-icon fas fa-user"></i><input class="form-control" id="prenom" value="${profileData.prenom || ''}"></div><div class="error-message" id="prenomErr"></div></div>
+          <div class="field"><label>Nom</label><div class="input-wrapper"><i class="input-icon fas fa-user"></i><input class="form-control" id="nom" value="${profileData.nom || ''}"></div><div class="error-message" id="nomErr"></div></div>
+        </div>
+        <div class="field">
+          <label>Adresse / Localisation (optionnel)</label>
+          <div class="input-wrapper"><i class="input-icon fas fa-location-dot"></i><input class="form-control" id="adressePatient" placeholder="Votre adresse" value="${profileData.adresse || ''}"></div>
+          <button type="button" class="btn-geo" id="geoPatientBtn"><i class="fas fa-map-marker-alt"></i> Me localiser</button>
+          <div id="geoPatientStatus" class="geo-status"></div>
+        </div>
+        <div class="field"><label>Région / Ville</label><div class="input-wrapper"><i class="input-icon fas fa-map-marker-alt"></i><input class="form-control" id="region" value="${profileData.region || ''}"></div><div class="error-message" id="regionErr"></div></div>
+      `;
+      const btn = document.getElementById('geoPatientBtn');
+      if (btn) btn.addEventListener('click', () => getGeolocation('adressePatient', 'geoPatientStatus', 'geoPatientBtn'));
+    } else {
+      container.innerHTML = `
+        <div class="field"><label>Nom de la pharmacie</label><div class="input-wrapper"><i class="input-icon fas fa-store"></i><input class="form-control" id="nomPharmacie" value="${profileData.nomPharmacie || ''}"></div><div class="error-message" id="nomPharmErr"></div></div>
+        <div class="row-2">
+          <div class="field"><label>N° Ordre ONPC</label><div class="input-wrapper"><i class="input-icon fas fa-qrcode"></i><input class="form-control" id="ordreOnpc" value="${profileData.ordreOnpc || ''}"></div><div class="error-message" id="ordreErr"></div></div>
+          <div class="field"><label>Pharmacien titulaire</label><div class="input-wrapper"><i class="input-icon fas fa-user-graduate"></i><input class="form-control" id="pharmacien" value="${profileData.pharmacien || ''}"></div><div class="error-message" id="pharmErr"></div></div>
+        </div>
+        <div class="field">
+          <label>Adresse précise de la pharmacie</label>
+          <div class="input-wrapper"><i class="input-icon fas fa-location-dot"></i><input class="form-control" id="geoInput" readonly placeholder="Cliquez sur le bouton" value="${profileData.geoInput || ''}"></div>
+          <button type="button" class="btn-geo" id="geoPharmacyBtn"><i class="fas fa-map-marker-alt"></i> Récupérer ma localisation</button>
+          <div id="geoPharmacyStatus" class="geo-status"></div>
+          <div class="error-message" id="addressErr"></div>
+        </div>
+        <div class="field"><label>Région</label><div class="input-wrapper"><i class="input-icon fas fa-globe"></i><input class="form-control" id="region" value="${profileData.region || ''}"></div><div class="error-message" id="regionErr"></div></div>
+      `;
+      const btn = document.getElementById('geoPharmacyBtn');
+      if (btn) btn.addEventListener('click', () => getGeolocation('geoInput', 'geoPharmacyStatus', 'geoPharmacyBtn'));
+    }
   }
 
   // Validation identité
@@ -725,10 +738,16 @@
       const prenom = document.getElementById('prenom')?.value.trim();
       const nom = document.getElementById('nom')?.value.trim();
       const region = document.getElementById('region')?.value.trim();
+      const adresse = document.getElementById('adressePatient')?.value.trim();
       if (!prenom) { document.getElementById('prenomErr').innerText = 'Prénom requis'; ok = false; }
       if (!nom) { document.getElementById('nomErr').innerText = 'Nom requis'; ok = false; }
       if (!region) { document.getElementById('regionErr').innerText = 'Région requise'; ok = false; }
-      if (ok) { profileData.prenom = prenom; profileData.nom = nom; profileData.region = region; }
+      if (ok) {
+        profileData.prenom = prenom;
+        profileData.nom = nom;
+        profileData.region = region;
+        if (adresse) profileData.adresse = adresse;
+      }
     } else {
       const nomPh = document.getElementById('nomPharmacie')?.value.trim();
       const ordre = document.getElementById('ordreOnpc')?.value.trim();
@@ -751,7 +770,7 @@
     return ok;
   }
 
-  // Validation accès
+  // Validation accès (inchangée)
   function validateAccess() {
     let ok = true;
     const email = document.getElementById('email').value.trim();
@@ -766,15 +785,15 @@
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { document.getElementById('emailError').innerText = 'Email invalide'; ok = false; }
     if (!pwd) { document.getElementById('pwdError').innerText = 'Mot de passe requis'; ok = false; }
     else if (pwd.length < 8) { document.getElementById('pwdError').innerText = '8 caractères minimum'; ok = false; }
-    else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])/.test(pwd)) { document.getElementById('pwdError').innerText = 'Doit contenir majuscule, minuscule et chiffre'; ok = false; }
-    if (pwd !== cpwd) { document.getElementById('confirmError').innerText = 'Les mots de passe ne correspondent pas'; ok = false; }
+    else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])/.test(pwd)) { document.getElementById('pwdError').innerText = 'Majuscule, minuscule, chiffre'; ok = false; }
+    if (pwd !== cpwd) { document.getElementById('confirmError').innerText = 'Mots de passe différents'; ok = false; }
     if (!tel) { document.getElementById('phoneError').innerText = 'Téléphone requis'; ok = false; }
     else if (!/^(\+237|0)[6][0-9]{8}$/.test(tel.replace(/\s/g, ''))) { document.getElementById('phoneError').innerText = 'Format: +237 6XXXXXXXX'; ok = false; }
     if (ok) { profileData.email = email; profileData.telephone = tel; profileData.password = pwd; }
     return ok;
   }
 
-  // Documents
+  // Documents (inchangé)
   function renderDocumentsForm() {
     const container = document.getElementById('documentsForm');
     if (selectedRole === 'patient') {
@@ -857,7 +876,7 @@
     } catch(e) { alert('Erreur de connexion au serveur'); btn.disabled = false; btn.innerHTML = 'Soumettre'; }
   }
 
-  // Navigation entre étapes
+  // Navigation
   document.querySelectorAll('.nextStep').forEach(btn => {
     btn.addEventListener('click', () => {
       if (currentStep === 1 && !validateIdentity()) return;
@@ -866,10 +885,7 @@
     });
   });
   document.querySelectorAll('.prevStep').forEach(btn => btn.addEventListener('click', () => goToStep(currentStep-1)));
-  document.getElementById('nextStep0').addEventListener('click', () => {
-    // selectedRole déjà mis à jour par la carte
-    goToStep(1);
-  });
+  document.getElementById('nextStep0').addEventListener('click', () => { goToStep(1); });
   document.getElementById('submitFinalBtn').addEventListener('click', submitFinal);
 
   // Initialisation

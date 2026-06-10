@@ -33,7 +33,7 @@ def send_otp_email(user):
     return send_email(user.email, subject, body)
 
 # ------------------------------------------------------------------
-# Routes
+# Routes publiques
 # ------------------------------------------------------------------
 @main_bp.route("/")
 def home():
@@ -238,6 +238,69 @@ def verify_email(token):
         flash("Lien de vérification invalide ou expiré.", "danger")
         return redirect(url_for("main.register"))
 
-@main_bp.route("/login")
+# ------------------------------------------------------------------
+# Routes d'authentification (connexion / déconnexion)
+# ------------------------------------------------------------------
+@main_bp.route("/login", methods=["GET", "POST"])
 def login():
-    return "Page de connexion (à implémenter)"
+    if request.method == "GET":
+        return render_template("auth/login.html")
+    
+    email = request.form.get("email")
+    password = request.form.get("password")
+    remember = request.form.get("remember") == "on"
+    
+    if not email or not password:
+        flash("Veuillez remplir tous les champs.", "danger")
+        return redirect(url_for("main.login"))
+    
+    user = User.query.filter_by(email=email).first()
+    
+    if not user or not user.check_password(password):
+        flash("Email ou mot de passe incorrect.", "danger")
+        return redirect(url_for("main.login"))
+    
+    if not user.is_verified:
+        flash("Votre compte n'est pas encore vérifié. Vérifiez votre boîte email.", "warning")
+        return redirect(url_for("main.login"))
+    
+    if not user.is_active:
+        flash("Votre compte est désactivé. Contactez l'administrateur.", "danger")
+        return redirect(url_for("main.login"))
+    
+    session.permanent = remember
+    session['user_id'] = user.id
+    session['role'] = user.role
+    session['full_name'] = user.full_name
+    
+    role_dashboards = {
+        'patient': 'main.dashboard_patient',
+        'pharmacien': 'main.dashboard_pharmacien',
+        'admin': 'main.dashboard_admin',
+        'grossiste': 'main.dashboard_grossiste'
+    }
+    dashboard = role_dashboards.get(user.role, 'main.home')
+    flash(f"Bienvenue {user.full_name} !", "success")
+    return redirect(url_for(dashboard))
+
+@main_bp.route("/logout")
+def logout():
+    session.clear()
+    flash("Vous avez été déconnecté avec succès.", "info")
+    return redirect(url_for("main.home"))
+
+# ------------------------------------------------------------------
+# Dashboards (protégés par rôle)
+# ------------------------------------------------------------------
+@main_bp.route("/dashboard/")
+def dashboard_patient():
+    if 'user_id' not in session or session.get('role') != 'patient':
+        flash("Accès non autorisé.", "danger")
+        return redirect(url_for("main.login"))
+    user = User.query.get(session['user_id'])
+    return render_template("admin/dashboard.html", user=user)
+
+
+
+
+
