@@ -1,0 +1,194 @@
+    <!-- Font Awesome 6 (CDN officiel) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Police Goodly UNIQUEMENT -->
+    <style>
+        /* Définition de la police Goodly */
+        @font-face {
+            font-family: 'Goodly';
+            src: local('Goodly'), local('SF Pro Text'), local('Segoe UI'), local('Helvetica Neue');
+            font-display: swap;
+            font-weight: 300 800;
+        }
+        
+        /* Application STRICTE de Goodly sur TOUS les éléments de la navbar */
+        nav, nav *, .nav-link, button, a, span, div, .navbar-text, .mobile-menu * {
+            font-family: 'Goodly', system-ui, -apple-system, 'Segoe UI', sans-serif !important;
+        }
+        
+        /* Palette personnalisée Bleu, Vert, Blanc */
+        :root {
+            --pharma-blue: #2C5F8A;
+            --pharma-vert: #2E8B57;
+            --pharma-white: #FFFFFF;
+            --pharma-softblue: #EFF6FF;
+            --pharma-softgreen: #E6F4EA;
+        }
+        
+        .bg-pharma-blue { background-color: #2C5F8A; }
+        .bg-pharma-vert { background-color: #2E8B57; }
+        .bg-pharma-softblue { background-color: #EFF6FF; }
+        .bg-pharma-softgreen { background-color: #E6F4EA; }
+        .text-pharma-blue { color: #2C5F8A; }
+        .text-pharma-vert { color: #2E8B57; }
+        .border-pharma-blue { border-color: #2C5F8A; }
+        .border-pharma-softgreen { border-color: #E6F4EA; }
+        .hover\:bg-pharma-softgreen:hover { background-color: #E6F4EA; }
+        .hover\:text-pharma-vert:hover { color: #2E8B57; }
+        .hover\:bg-pharma-softblue:hover { background-color: #EFF6FF; }
+        
+        /* Animation subtile sur les liens */
+        .nav-link {
+            transition: all 0.2s ease;
+            font-family: 'Goodly', sans-serif !important;
+        }
+        
+        /* Ajustement spécifique pour que les icônes ne cassent pas la police */
+        i, .fas, .far {
+            font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+        }
+        
+        /* Police légèrement augmentée */
+        .logo-text {
+            font-size: 1.1rem;
+            letter-spacing: -0.01em;
+        }
+        
+        .slogan-text {
+            font-size: 0.7rem;
+            letter-spacing: 0.02em;
+        }
+        
+        @media (min-width: 768px) {
+            .logo-text {
+                font-size: 1.3rem;
+            }
+            .slogan-text {
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 antialiased">
+
+    <!-- ========================================== -->
+    <!-- NAVBAR PHARMACONNECT - 100% Police GOODLY -->
+    <!-- Slogan "Cameroun · Santé connectée" EN DESSOUS du logo -->
+    <!-- Onglets : Pharmacies | Anti-contrefaçon | Commandes -->
+    <!-- Police légèrement augmentée -->
+    <!-- ========================================== -->
+    <nav class="bg-white/98 backdrop-blur-sm sticky top-0 z-50 border-b border-pharma-softgreen shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-14 md:h-16">
+                
+                <!-- Logo + identité PharmaConnect avec slogan EN DESSOUS -->
+                <div class="flex items-center space-x-2.5">
+                    <div class="flex-shrink-0">
+                        <div class="bg-gradient-to-br from-pharma-blue to-pharma-vert rounded-xl w-8 h-8 md:w-9 md:h-9 flex items-center justify-center shadow-sm">
+                            <i class="fas fa-prescription-bottle-medical text-white text-sm md:text-base"></i>
+                        </div>
+                    </div>
+                    <div class="flex flex-col leading-tight">
+                        <!-- Nom PharmaConnect - police légèrement augmentée -->
+                        <span class="logo-text font-bold tracking-tight bg-gradient-to-r from-pharma-blue to-pharma-vert bg-clip-text text-transparent" style="font-family: 'Goodly', sans-serif !important; line-height: 1.2;">
+                            PharmaConnect
+                        </span>
+                        <!-- Slogan EN DESSOUS du logo - légèrement plus grand -->
+                        <span class="slogan-text text-gray-500 mt-0.5 flex items-center gap-1" style="font-family: 'Goodly', sans-serif !important;">
+                            <i class="fas fa-map-marker-alt text-[9px] md:text-[10px] text-pharma-vert"></i>
+                            Cameroun · Santé connectée
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Liens de navigation : 3 onglets (Pharmacies, Anti-contrefaçon, Commandes) avec Goodly -->
+                <div class="hidden md:flex items-center space-x-1 lg:space-x-2">
+                    <a href="#" class="nav-link flex items-center gap-2 px-3 py-1.5 rounded-full text-gray-700 text-sm font-medium hover:bg-pharma-softgreen hover:text-pharma-vert transition-all duration-200" style="font-family: 'Goodly', sans-serif !important;">
+                        <i class="fas fa-store text-xs"></i>
+                        <span>Pharmacies</span>
+                    </a>
+                    <a href="#" class="nav-link flex items-center gap-2 px-3 py-1.5 rounded-full text-gray-700 text-sm font-medium hover:bg-pharma-softgreen hover:text-pharma-vert transition-all duration-200" style="font-family: 'Goodly', sans-serif !important;">
+                        <i class="fas fa-qrcode text-xs"></i>
+                        <span>Anti-contrefaçon</span>
+                    </a>
+                    <a href="#" class="nav-link flex items-center gap-2 px-3 py-1.5 rounded-full text-gray-700 text-sm font-medium hover:bg-pharma-softgreen hover:text-pharma-vert transition-all duration-200" style="font-family: 'Goodly', sans-serif !important;">
+                        <i class="fas fa-truck text-xs"></i>
+                        <span>Commandes</span>
+                    </a>
+                </div>
+                
+                <!-- Boutons d'action droite (connexion + essai gratuit) avec Goodly -->
+                <div class="flex items-center gap-2">
+                    <a href="#" class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-pharma-blue text-sm border border-pharma-blue bg-transparent hover:bg-pharma-softblue transition-all duration-200 font-medium" style="font-family: 'Goodly', sans-serif !important;">
+                        <i class="fas fa-user-circle text-xs"></i>
+                        <span>Connexion</span>
+                    </a>
+                    <a href="#" class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-pharma-vert text-white text-sm shadow-sm hover:bg-[#267349] transition-all duration-200 font-medium" style="font-family: 'Goodly', sans-serif !important;">
+                        <i class="fas fa-gem text-xs"></i>
+                        <span>Essai gratuit</span>
+                        <i class="fas fa-arrow-right text-[10px] ml-0.5"></i>
+                    </a>
+                    <!-- Bouton burger pour mobile -->
+                    <button id="mobile-menu-button" class="md:hidden inline-flex items-center justify-center p-1.5 rounded-md text-pharma-blue hover:bg-pharma-softgreen focus:outline-none transition">
+                        <i class="fas fa-bars text-base"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Menu mobile (Goodly appliqué + 3 onglets) -->
+        <div id="mobile-menu" class="md:hidden hidden bg-white/95 backdrop-blur-sm border-t border-pharma-softgreen px-4 pt-2 pb-4 space-y-1 shadow-inner">
+            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 text-sm font-medium hover:bg-pharma-softgreen hover:text-pharma-vert transition" style="font-family: 'Goodly', sans-serif !important;">
+                <i class="fas fa-store w-4 text-pharma-blue"></i>
+                <span>Pharmacies</span>
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 text-sm font-medium hover:bg-pharma-softgreen hover:text-pharma-vert transition" style="font-family: 'Goodly', sans-serif !important;">
+                <i class="fas fa-qrcode w-4 text-pharma-blue"></i>
+                <span>Anti-contrefaçon</span>
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 text-sm font-medium hover:bg-pharma-softgreen hover:text-pharma-vert transition" style="font-family: 'Goodly', sans-serif !important;">
+                <i class="fas fa-truck w-4 text-pharma-blue"></i>
+                <span>Commandes</span>
+            </a>
+            <div class="pt-3 flex flex-col gap-2 mt-1 border-t border-pharma-softgreen">
+                <a href="#" class="flex items-center justify-center gap-2 px-3 py-2 rounded-full border border-pharma-blue text-pharma-blue text-sm font-medium hover:bg-pharma-softblue transition" style="font-family: 'Goodly', sans-serif !important;">
+                    <i class="fas fa-user-circle text-xs"></i>
+                    <span>Connexion</span>
+                </a>
+                <a href="#" class="flex items-center justify-center gap-2 px-3 py-2 rounded-full bg-pharma-vert text-white text-sm font-medium hover:bg-[#267349] transition" style="font-family: 'Goodly', sans-serif !important;">
+                    <i class="fas fa-gem text-xs"></i>
+                    <span>Essai gratuit</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Script pour le toggle du menu mobile -->
+    <script>
+        const menuBtn = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (menuBtn && mobileMenu) {
+            menuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            // Fermeture du menu après clic sur un lien (meilleure UX)
+            const mobileLinks = mobileMenu.querySelectorAll('a');
+            mobileLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenu.classList.add('hidden');
+                });
+            });
+        }
+    </script>
+    
+    <!-- Petit espace de visualisation (uniquement pour démonstration) -->
+    <div class="max-w-7xl mx-auto px-4 py-12 text-center">
+        <div class="bg-white rounded-2xl shadow-sm p-8 border border-pharma-softgreen">
+            <i class="fas fa-heartbeat text-4xl text-pharma-vert mb-3"></i>
+            <h2 class="text-xl font-semibold text-gray-700" style="font-family: 'Goodly', sans-serif !important;">Navbar avec police Goodly</h2>
+            <p class="text-gray-500 mt-2" style="font-family: 'Goodly', sans-serif !important;">Design simple, chaleureux & accueillant — Icônes Font Awesome intégrées</p>
+            <p class="text-xs text-pharma-blue mt-3" style="font-family: 'Goodly', sans-serif !important;">
+                <i class="fas fa-check-circle"></i> Slogan "Cameroun · Santé connectée" placé EN DESSOUS du logo
+            </p>
+        </div>
+    </div>
