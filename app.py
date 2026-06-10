@@ -1,10 +1,11 @@
 import os
-from flask import Flask
+from flask import Flask, session
 from flask_migrate import Migrate
 from dotenv import load_dotenv
-from db import db
+from db import db            # import de l'instance unique
 from models import bcrypt
 from routes import main_bp
+import secrets
 
 load_dotenv()
 
@@ -17,8 +18,13 @@ def create_app():
     db.init_app(app)
     bcrypt.init_app(app)
 
-    # Initialisation de Flask-Migrate
     migrate = Migrate(app, db)
+
+    @app.context_processor
+    def inject_csrf_token():
+        if 'csrf_token' not in session:
+            session['csrf_token'] = secrets.token_hex(16)
+        return dict(csrf_token=lambda: session['csrf_token'])
 
     app.register_blueprint(main_bp)
 

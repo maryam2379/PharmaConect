@@ -3,13 +3,12 @@ import random
 import os
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from werkzeug.utils import secure_filename
-from db import db
+from db import db                     # instance unique
 from models import User, Pharmacy
 from email_utils import send_email
 
 main_bp = Blueprint('main', __name__)
 
-# Configuration upload
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -45,7 +44,6 @@ def register():
     if request.method == "GET":
         return render_template("auth/register.html")
 
-    # Traitement POST : soit formulaire classique, soit JSON
     if request.is_json:
         data = request.get_json()
         role = data.get('role')
@@ -54,7 +52,6 @@ def register():
         profile_data = data.get('profile_data', {})
         uploaded_docs = data.get('documents', {})
 
-        # Validation basique
         if not email or not password or not role:
             return jsonify({'success': False, 'message': 'Champs obligatoires manquants'}), 400
 
@@ -62,7 +59,6 @@ def register():
         if existing:
             return jsonify({'success': False, 'message': 'Email déjà utilisé'}), 400
 
-        # Construction du nom complet
         prenom = profile_data.get('prenom', '')
         nom = profile_data.get('nom', '')
         full_name = f"{prenom} {nom}".strip()
@@ -83,7 +79,6 @@ def register():
         db.session.add(new_user)
         db.session.flush()
 
-        # Si pharmacien, création d'une pharmacie
         if role == 'pharmacien':
             pharmacy = Pharmacy(
                 name=profile_data.get('nomPharmacie', ''),
@@ -98,13 +93,9 @@ def register():
             db.session.add(pharmacy)
 
         db.session.commit()
-
-        # Envoi email de vérification
         send_verification_email(new_user)
 
-        # Génération d'un identifiant style UPGRADE
         upgrade_id = f"UPGRADE-CM-{new_user.id:06d}"
-
         return jsonify({
             'success': True,
             'upgrade_id': upgrade_id,
@@ -113,7 +104,7 @@ def register():
         })
 
     else:
-        # Ancien traitement formulaire classique (pour compatibilité éventuelle)
+        # Formulaire classique (compatibilité)
         email = request.form.get("email")
         phone = request.form.get("phone")
         full_name = request.form.get("full_name")

@@ -1,11 +1,8 @@
 # models.py
-# Modèles Flask-SQLAlchemy pour MediTrack Cameroun
-
-from flask_sqlalchemy import SQLAlchemy
-from flask_bcrypt import Bcrypt
 from datetime import datetime
+from flask_bcrypt import Bcrypt
+from db import db   # instance unique
 
-db = SQLAlchemy()
 bcrypt = Bcrypt()
 
 
@@ -19,13 +16,12 @@ class User(db.Model):
     role = db.Column(db.String(20), nullable=False)  # patient, pharmacien, admin, grossiste
     full_name = db.Column(db.String(100))
     is_active = db.Column(db.Boolean, default=True)
-    is_verified = db.Column(db.Boolean, default=False)          # email vérifié ?
+    is_verified = db.Column(db.Boolean, default=False)
     verification_token = db.Column(db.String(200), nullable=True)
     otp_code = db.Column(db.String(10), nullable=True)
-    documents = db.Column(db.JSON, default=dict)                # stockage des chemins des documents
+    documents = db.Column(db.JSON, default=dict)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # Relations
     pharmacy = db.relationship('Pharmacy', back_populates='manager', uselist=False)
     orders = db.relationship('Order', back_populates='user')
     searches = db.relationship('PatientSearchHistory', back_populates='patient')
@@ -56,7 +52,6 @@ class Pharmacy(db.Model):
 
     manager_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
-    # Relations
     manager = db.relationship('User', back_populates='pharmacy')
     stocks = db.relationship('Stock', back_populates='pharmacy', cascade='all, delete-orphan')
     orders = db.relationship('Order', back_populates='pharmacy')
