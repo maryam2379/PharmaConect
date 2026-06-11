@@ -1,0 +1,417 @@
+{% extends "admin/master.html" %}
+
+{% block title %}Modifier un médicament - PharmaConnect Cameroun{% endblock %}
+{% block page_title %}Modifier un médicament{% endblock %}
+
+{% block content %}
+<style>
+    .glass-card {
+        background: rgba(255,255,255,0.5);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,0.6);
+        border-radius: 24px;
+        transition: all 0.3s ease;
+    }
+    .form-input {
+        background: rgba(255,255,255,0.55);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,0.6);
+        border-radius: 16px;
+        transition: all 0.2s;
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+    .form-input:focus {
+        outline: none;
+        border-color: #2E8B57;
+        background: rgba(255,255,255,0.85);
+        box-shadow: 0 0 0 3px rgba(46,139,87,0.15);
+    }
+    .form-label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #1f4a6e;
+        margin-bottom: 0.4rem;
+        margin-left: 0.25rem;
+    }
+    .preview-image {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 20px;
+        border: 2px solid rgba(255,255,255,0.8);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        background: #f8f9fa;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #2E8B57, #1f6e46);
+        transition: all 0.2s;
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(46,139,87,0.3);
+    }
+    .btn-secondary {
+        background: rgba(255,255,255,0.6);
+        backdrop-filter: blur(4px);
+        border: 1px solid rgba(255,255,255,0.8);
+        transition: all 0.2s;
+    }
+    .btn-secondary:hover {
+        background: rgba(255,255,255,0.9);
+        transform: translateY(-2px);
+    }
+    .error-message {
+        color: #dc3545;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+        margin-left: 0.25rem;
+    }
+    .success-toast {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        background: #2E8B57;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 60px;
+        backdrop-filter: blur(8px);
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        transform: translateX(120%);
+        transition: transform 0.3s ease;
+    }
+    .success-toast.show {
+        transform: translateX(0);
+    }
+</style>
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Fil d'Ariane -->
+    <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
+        <a href="/admin/dashboard" class="hover:text-[#2E8B57]">Tableau de bord</a>
+        <i class="fas fa-chevron-right text-xs"></i>
+        <a href="/admin/stocks" class="hover:text-[#2E8B57]">Gestion des stocks</a>
+        <i class="fas fa-chevron-right text-xs"></i>
+        <span class="text-[#2E8B57] font-medium">Modifier le médicament</span>
+    </div>
+
+    <!-- Carte principale -->
+    <div class="glass-card p-6 md:p-8">
+        <div class="flex items-center gap-3 mb-6 pb-3 border-b border-white/40">
+            <div class="bg-white/40 p-3 rounded-2xl">
+                <i class="fas fa-pills text-2xl text-[#2C5F8A]"></i>
+            </div>
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">Modifier les informations</h2>
+                <p class="text-sm text-gray-500 mt-1">Mettez à jour les détails du médicament</p>
+            </div>
+        </div>
+
+        <form id="editMedicineForm" onsubmit="return false;">
+            <input type="hidden" id="medicineId" value="">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Colonne gauche -->
+                <div class="space-y-5">
+                    <div>
+                        <label class="form-label" for="name">Nom du médicament *</label>
+                        <input type="text" id="name" class="form-input" placeholder="Ex: Doliprane 1000mg" required>
+                        <div class="error-message hidden" id="nameError"></div>
+                    </div>
+
+                    <div>
+                        <label class="form-label" for="genericName">Dénomination commune (DCI)</label>
+                        <input type="text" id="genericName" class="form-input" placeholder="Paracétamol">
+                        <div class="error-message hidden" id="genericNameError"></div>
+                    </div>
+
+                    <div>
+                        <label class="form-label" for="manufacturer">Fabricant / Laboratoire</label>
+                        <input type="text" id="manufacturer" class="form-input" placeholder="Ex: Sanofi, Pfizer">
+                        <div class="error-message hidden" id="manufacturerError"></div>
+                    </div>
+
+                    <div>
+                        <label class="form-label" for="category">Catégorie</label>
+                        <select id="category" class="form-input">
+                            <option value="">Sélectionner une catégorie</option>
+                            <option value="Antibiotique">Antibiotique</option>
+                            <option value="Antalgique">Antalgique</option>
+                            <option value="Anti-inflammatoire">Anti-inflammatoire</option>
+                            <option value="Antiviral">Antiviral</option>
+                            <option value="Antihypertenseur">Antihypertenseur</option>
+                            <option value="Vitamines">Vitamines</option>
+                            <option value="Autre">Autre</option>
+                        </select>
+                        <div class="error-message hidden" id="categoryError"></div>
+                    </div>
+                </div>
+
+                <!-- Colonne droite -->
+                <div class="space-y-5">
+                    <div>
+                        <label class="form-label" for="prescriptionRequired">Type de délivrance</label>
+                        <select id="prescriptionRequired" class="form-input">
+                            <option value="0">Médicament en vente libre (OTC)</option>
+                            <option value="1">Sur ordonnance uniquement</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="form-label" for="imageUrl">URL de l'image (optionnel)</label>
+                        <input type="url" id="imageUrl" class="form-input" placeholder="https://exemple.com/medicament.jpg">
+                        <div class="error-message hidden" id="imageUrlError"></div>
+                    </div>
+
+                    <div class="flex justify-center mt-2">
+                        <img id="imagePreview" class="preview-image" src="/static/images/default-medicine.png" alt="Aperçu">
+                    </div>
+
+                    <div>
+                        <label class="form-label" for="description">Description / Indications</label>
+                        <textarea id="description" rows="4" class="form-input" placeholder="Indications, posologie, contre-indications..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8 pt-4 border-t border-white/40">
+                <div>
+                    <label class="form-label" for="reorderLevel">Seuil d'alerte de réapprovisionnement</label>
+                    <input type="number" id="reorderLevel" class="form-input" min="0" value="10">
+                    <p class="text-xs text-gray-400 mt-1">Stock minimum avant alerte (par défaut 10)</p>
+                </div>
+                <div>
+                    <label class="form-label" for="unit">Unité de conditionnement</label>
+                    <input type="text" id="unit" class="form-input" placeholder="Ex: boîte, comprimé, flacon" value="boîte">
+                </div>
+            </div>
+
+            <!-- Boutons d'action -->
+            <div class="flex flex-col sm:flex-row gap-4 mt-8">
+                <button type="submit" class="btn-primary flex-1 py-3 rounded-xl text-white font-semibold flex items-center justify-center gap-2">
+                    <i class="fas fa-save"></i> Enregistrer les modifications
+                </button>
+                <button type="button" id="cancelBtn" class="btn-secondary flex-1 py-3 rounded-xl text-gray-700 font-semibold flex items-center justify-center gap-2">
+                    <i class="fas fa-times"></i> Annuler
+                </button>
+                <button type="button" id="deleteMedicineBtn" class="bg-red-500/20 backdrop-blur-sm border border-red-300 flex-1 py-3 rounded-xl text-red-700 font-semibold flex items-center justify-center gap-2 hover:bg-red-500/40 transition">
+                    <i class="fas fa-trash-alt"></i> Supprimer ce médicament
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Informations de stock associées (consultation) -->
+    <div class="glass-card p-6 mt-8">
+        <div class="flex items-center gap-2 mb-4">
+            <i class="fas fa-boxes text-[#2E8B57] text-xl"></i>
+            <h3 class="text-lg font-semibold text-gray-800">Lignes de stock associées</h3>
+        </div>
+        <div id="stockInfoContainer" class="text-sm text-gray-600">
+            <div class="flex justify-center py-6">
+                <i class="fas fa-spinner fa-pulse text-[#2E8B57] text-2xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast de succès -->
+<div id="successToast" class="success-toast">
+    <i class="fas fa-check-circle"></i>
+    <span>Médicament mis à jour avec succès</span>
+</div>
+
+<script>
+    // Récupération de l'ID depuis l'URL (?id=xxx)
+    const urlParams = new URLSearchParams(window.location.search);
+    const medicineId = urlParams.get('id');
+    let currentMedicineData = null;
+
+    // Fonction d'appel API générique
+    async function apiCall(url, method = 'GET', data = null) {
+        const options = { method, headers: { 'Content-Type': 'application/json' } };
+        if (data) options.body = JSON.stringify(data);
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ message: 'Erreur serveur' }));
+            throw new Error(error.message || `Erreur ${response.status}`);
+        }
+        return response.json();
+    }
+
+    // Charger les informations du médicament
+    async function loadMedicine() {
+        if (!medicineId) {
+            alert("Aucun identifiant de médicament spécifié.");
+            window.location.href = "/admin/stocks";
+            return;
+        }
+        try {
+            const data = await apiCall(`/api/medicines/${medicineId}`);
+            currentMedicineData = data.medicine;
+            fillForm(currentMedicineData);
+            loadAssociatedStocks();
+        } catch (err) {
+            console.error(err);
+            alert("Erreur lors du chargement du médicament : " + err.message);
+            window.location.href = "/admin/stocks";
+        }
+    }
+
+    // Remplir le formulaire avec les données actuelles
+    function fillForm(medicine) {
+        document.getElementById('medicineId').value = medicine.id;
+        document.getElementById('name').value = medicine.name || '';
+        document.getElementById('genericName').value = medicine.generic_name || '';
+        document.getElementById('manufacturer').value = medicine.manufacturer || '';
+        document.getElementById('category').value = medicine.category || '';
+        document.getElementById('prescriptionRequired').value = medicine.prescription_required ? '1' : '0';
+        document.getElementById('imageUrl').value = medicine.image_url || '';
+        document.getElementById('description').value = medicine.description || '';
+        document.getElementById('reorderLevel').value = medicine.reorder_level !== undefined ? medicine.reorder_level : 10;
+        document.getElementById('unit').value = medicine.unit || 'boîte';
+        updateImagePreview(medicine.image_url);
+    }
+
+    function updateImagePreview(url) {
+        const preview = document.getElementById('imagePreview');
+        if (url && url.trim() !== '') {
+            preview.src = url;
+            preview.onerror = () => { preview.src = '/static/images/default-medicine.png'; };
+        } else {
+            preview.src = '/static/images/default-medicine.png';
+        }
+    }
+
+    // Charger les stocks associés pour affichage informatif
+    async function loadAssociatedStocks() {
+        try {
+            const data = await apiCall(`/api/medicines/${medicineId}/stocks`);
+            const stocks = data.stocks || [];
+            const container = document.getElementById('stockInfoContainer');
+            if (stocks.length === 0) {
+                container.innerHTML = `<div class="text-center py-4 text-gray-400"><i class="fas fa-database"></i> Aucune ligne de stock pour ce médicament.</div>`;
+                return;
+            }
+            let totalQty = 0;
+            let totalValue = 0;
+            stocks.forEach(s => {
+                totalQty += s.quantity;
+                totalValue += s.quantity * parseFloat(s.price);
+            });
+            container.innerHTML = `
+                <div class="bg-white/30 rounded-xl p-4">
+                    <div class="grid grid-cols-2 gap-4 mb-3">
+                        <div><span class="font-semibold">Quantité totale en stock :</span> ${totalQty} ${document.getElementById('unit').value || 'unités'}</div>
+                        <div><span class="font-semibold">Valeur totale :</span> ${totalValue.toLocaleString()} FCFA</div>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-2">
+                        <i class="fas fa-info-circle"></i> La modification des informations ci-dessus n'affecte pas les lignes de stock existantes.
+                    </div>
+                </div>
+            `;
+        } catch (err) {
+            console.error(err);
+            document.getElementById('stockInfoContainer').innerHTML = `<div class="text-red-500 text-center py-4">Impossible de charger les stocks associés.</div>`;
+        }
+    }
+
+    // Validation et soumission du formulaire
+    async function submitUpdate() {
+        // Nettoyer les erreurs
+        document.querySelectorAll('.error-message').forEach(el => el.classList.add('hidden'));
+        
+        const name = document.getElementById('name').value.trim();
+        if (!name) {
+            showFieldError('name', 'Le nom du médicament est obligatoire');
+            return;
+        }
+
+        const updatedMedicine = {
+            name: name,
+            generic_name: document.getElementById('genericName').value.trim(),
+            manufacturer: document.getElementById('manufacturer').value.trim(),
+            category: document.getElementById('category').value,
+            prescription_required: document.getElementById('prescriptionRequired').value === '1',
+            image_url: document.getElementById('imageUrl').value.trim(),
+            description: document.getElementById('description').value.trim(),
+            reorder_level: parseInt(document.getElementById('reorderLevel').value) || 10,
+            unit: document.getElementById('unit').value.trim() || 'boîte'
+        };
+
+        try {
+            await apiCall(`/api/medicines/${medicineId}`, 'PUT', updatedMedicine);
+            showSuccessToast();
+            // Recharger les données pour afficher les mises à jour
+            await loadMedicine();
+            // Option: redirection après 1.5s
+            setTimeout(() => {
+                window.location.href = "/admin/stocks";
+            }, 1500);
+        } catch (err) {
+            alert("Erreur lors de la mise à jour : " + err.message);
+        }
+    }
+
+    function showFieldError(fieldId, message) {
+        const errorDiv = document.getElementById(`${fieldId}Error`);
+        if (errorDiv) {
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+        } else {
+            alert(message);
+        }
+    }
+
+    function showSuccessToast() {
+        const toast = document.getElementById('successToast');
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    // Suppression du médicament (avec vérification des stocks)
+    async function deleteMedicine() {
+        if (!confirm("⚠️ ATTENTION : Supprimer ce médicament entraînera la suppression de TOUTES ses lignes de stock associées. Cette action est irréversible. Confirmer ?")) {
+            return;
+        }
+        try {
+            await apiCall(`/api/medicines/${medicineId}`, 'DELETE');
+            alert("Médicament et ses stocks supprimés avec succès.");
+            window.location.href = "/admin/stocks";
+        } catch (err) {
+            alert("Erreur lors de la suppression : " + err.message);
+        }
+    }
+
+    // Aperçu dynamique de l'image
+    document.getElementById('imageUrl').addEventListener('input', (e) => {
+        updateImagePreview(e.target.value);
+    });
+
+    // Événements
+    document.getElementById('editMedicineForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        submitUpdate();
+    });
+    document.getElementById('cancelBtn').addEventListener('click', () => {
+        if (confirm("Annuler les modifications ? Les données non enregistrées seront perdues.")) {
+            window.location.href = "/admin/stocks";
+        }
+    });
+    document.getElementById('deleteMedicineBtn').addEventListener('click', deleteMedicine);
+
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', () => {
+        loadMedicine();
+    });
+</script>
+{% endblock %}

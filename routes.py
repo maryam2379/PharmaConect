@@ -1178,3 +1178,181 @@ def stocks():
         flash("Accès réservé aux pharmaciens.", "danger")
         return redirect(url_for("main.dashboard"))
     return render_template("admin/stocks.html")
+
+
+    # ------------------------------------------------------------------
+# API Gestion des médicaments (admin & pharmacien)
+# ------------------------------------------------------------------
+@main_bp.route("/api/medicines/<int:medicine_id>", methods=["GET"])
+def api_get_medicine(medicine_id):
+    """Récupère un médicament par son ID."""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Non authentifié'}), 401
+    
+    user = User.query.get(session['user_id'])
+    if user.role not in ['admin', 'pharmacien']:
+        return jsonify({'success': False, 'message': 'Permission refusée'}), 403
+    
+    medicine = Medicine.query.get(medicine_id)
+    if not medicine:
+        return jsonify({'success': False, 'message': 'Médicament introuvable'}), 404
+    
+    return jsonify({
+        'success': True,
+        'medicine': {
+            'id': medicine.id,
+            'name': medicine.name,
+            'generic_name': medicine.generic_name,
+            'manufacturer': medicine.manufacturer,
+            'category': getattr(medicine, 'category', ''),
+            'prescription_required': medicine.prescription_required,
+            'image_url': medicine.image_url or '',
+            'description': getattr(medicine, 'description', ''),
+            'reorder_level': getattr(medicine, 'reorder_level', 10),
+            'unit': getattr(medicine, 'unit', 'boîte'),
+            'dosage': medicine.dosage or '',
+            'form': medicine.form or ''
+        }
+    })
+
+
+@main_bp.route("/api/medicines/<int:medicine_id>", methods=["PUT"])
+def api_update_medicine(medicine_id):
+    """Met à jour les informations d'un médicament."""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Non authentifié'}), 401
+    
+    user = User.query.get(session['user_id'])
+    if user.role not in ['admin', 'pharmacien']:
+        return jsonify({'success': False, 'message': 'Permission refusée'}), 403
+    
+    medicine = Medicine.query.get(medicine_id)
+    if not medicine:
+        return jsonify({'success': False, 'message': 'Médicament introuvable'}), 404
+    
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'message': 'Données JSON invalides'}), 400
+    
+    # Champs autorisés (ceux du formulaire)
+    allowed_fields = ['name', 'generic_name', 'manufacturer', 'category',
+                      'prescription_required', 'image_url', 'description',
+                      'reorder_level', 'unit', 'dosage', 'form']
+    for field in allowed_fields:
+        if field in data:
+            if field == 'prescription_required':
+                setattr(medicine, field, bool(data[field]))
+            elif field in ['reorder_level']:
+                setattr(medicine, field, int(data[field]) if data[field] else None)
+            else:
+                setattr(medicine, field, data[field] if data[field] else '')
+    
+    # Validation minimale
+    if not medicine.name:
+        return jsonify({'success': False, 'message': 'Le nom du médicament est obligatoire'}), 400
+    
+    try:
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Médicament mis à jour avec succès'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Erreur lors de la mise à jour : {str(e)}'}), 500
+
+
+@main_bp.route("/api/medicines/<int:medicine_id>", methods=["DELETE"])
+def api_delete_medicine(medicine_id):
+    """
+    Supprime un médicament et toutes ses lignes de stock associées.
+    (Cascade: les QR codes liés sont également supprimés via relationship)
+    """
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Non authentifié'}), 401
+    
+    user = User.query.get(session['user_id'])
+    if user.role not in ['admin', 'pharmacien']:
+        return jsonify({'success': False, 'message': 'Permission refusée'}), 403
+    
+    medicine = Medicine.query.get(medicine_id)
+    if not medicine:
+        return jsonify({'success': False, 'message': 'Médicament introuvable'}), 404
+    
+    try:
+        # Supprimer les stocks (nécessaire si cascade non configurée)
+        Stock.query.filter_by(medicine_id=medicine_id).delete()
+        # Supprimer les QR codes liés
+        QRCode.query.filter_by(medicine_id=medicine_id).delete()
+        # Supprimer le médicament
+        db.session.delete(medicine)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Médicament et ses stocks supprimés'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Erreur lors de la suppression : {str(e)}'}), 500
+
+
+@main_bp.route("/api/medicines/<int:medicine_id>/stocks", methods=["GET"])
+def api_get_medicine_stocks(medicine_id):
+    """Liste toutes les lignes de stock (batchs) pour un médicament donné."""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Non authentifié'}), 401
+    
+    user = User.query.get(session['user_id'])
+    if user.role not in ['admin', 'pharmacien']:
+        return jsonify({'success': False, 'message': 'Permission refusée'}), 403
+    
+    medicine = Medicine.query.get(medicine_id)
+    if not medicine:
+        return jsonify({'success': False, 'message': 'Médicament introuvable'}), 404
+    
+    stocks = Stock.query.filter_by(medicine_id=medicine_id).all()
+    stocks_data = []
+    for s in stocks:
+        stocks_data.append({
+            'id': s.id,
+            'batch_number': s.batch_number or '',
+            'quantity': s.quantity,
+            'price': float(s.price) if s.price else 0,
+            'expiry_date': s.expiry_date.isoformat() if s.expiry_date else None,
+            'pharmacy_id': s.pharmacy_id,
+            'pharmacy_name': s.pharmacy.name if s.pharmacy else ''
+        })
+    return jsonify({'success': True, 'stocks': stocks_data})
+
+@main_bp.route("/medicines/edit")
+def edit_medicine_page():
+    """Affiche le formulaire de modification d'un médicament."""
+    if 'user_id' not in session:
+        flash("Veuillez vous connecter.", "warning")
+        return redirect(url_for("main.login"))
+    
+    user = User.query.get(session['user_id'])
+    if user.role not in ['admin', 'pharmacien']:
+        flash("Accès réservé aux pharmaciens et administrateurs.", "danger")
+        return redirect(url_for("main.dashboard"))
+    
+    medicine_id = request.args.get('id')
+    if not medicine_id:
+        flash("Aucun médicament spécifié.", "danger")
+        return redirect(url_for("main.stocks"))
+    
+    medicine = Medicine.query.get(medicine_id)
+    if not medicine:
+        flash("Médicament introuvable.", "danger")
+        return redirect(url_for("main.stocks"))
+    
+    return render_template("admin/medicine_edit.html", medicine=medicine)
+
+# ------------------------------------------------------------------
+# Scan patient (vérification authentification sans insertion)
+# ------------------------------------------------------------------
+@main_bp.route("/patient/scan")
+def patient_scan():
+    """Page de vérification anti-contrefaçon pour les patients."""
+    if 'user_id' not in session:
+        flash("Veuillez vous connecter en tant que patient.", "warning")
+        return redirect(url_for("main.login"))
+    user = User.query.get(session['user_id'])
+    if user.role != 'patient':
+        flash("Cette page est réservée aux patients.", "danger")
+        return redirect(url_for("main.dashboard"))
+    return render_template("admin/patient_scan.html")

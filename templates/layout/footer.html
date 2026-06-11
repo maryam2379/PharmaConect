@@ -1,6 +1,7 @@
 <!-- ========================================== -->
 <!-- FOOTER PHARMACONNECT - 3 colonnes : CONTACT | NEWSLETTER | LOGO -->
 <!-- AVEC ICÔNES FAQ & CHATBOT EN POSITION FIXE -->
+<!-- CHATBOT CONNECTÉ À L'API GEMINI -->
 <!-- ========================================== -->
 <footer class="footer-glass rounded-top-footer w-full mt-auto">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
@@ -91,7 +92,7 @@
     </a>
 </div>
 
-<!-- Chatbot (déjà en fixe, conservé) -->
+<!-- Chatbot (position fixe en bas à droite) -->
 <div class="fixed bottom-8 right-8 z-50">
     <button id="chatbotToggle"
         class="chatbot-icon flex items-center justify-center w-14 h-14 bg-gradient-to-r from-[#2C5F8A] to-[#1f6e46] rounded-full shadow-lg hover:shadow-xl transition-all duration-300 robot-animation group">
@@ -128,14 +129,13 @@
                 <i class="fas fa-robot text-white text-[10px]"></i>
             </div>
             <div class="bg-white/80 backdrop-blur-sm rounded-2xl rounded-tl-none px-3 py-2 max-w-[85%]">
-                <p class="text-xs text-gray-700">Bonjour ! Je suis l'assistant de PharmaConnect. Comment puis-je
-                    vous aider ?</p>
+                <p class="text-xs text-gray-700">Bonjour ! Je suis l'assistant intelligent de PharmaConnect. Posez-moi vos questions sur nos produits, commandes, ou services.</p>
                 <span class="text-[9px] text-gray-400 mt-1 block">Aujourd'hui</span>
             </div>
         </div>
     </div>
 
-    <!-- Zone de saisie -->
+    <!-- Zone de saisie avec indicateur de chargement -->
     <div class="p-3 border-t border-white/40 bg-white/50 rounded-b-2xl">
         <div class="flex gap-2">
             <input type="text" id="chatInput" placeholder="Écrivez votre message..."
@@ -145,11 +145,14 @@
                 <i class="fas fa-paper-plane"></i>
             </button>
         </div>
-        <p class="text-[9px] text-gray-400 text-center mt-2">Appuyez sur Entrée pour envoyer</p>
+        <div id="typingIndicator" class="hidden text-[10px] text-gray-400 mt-1 ml-1">
+            <i class="fas fa-circle-notch fa-spin"></i> Assistant réfléchit...
+        </div>
+        <p class="text-[9px] text-gray-400 text-center mt-1">Appuyez sur Entrée pour envoyer</p>
     </div>
 </div>
 
-<!-- Styles CSS -->
+<!-- Styles CSS (inchangés, identiques à ceux fournis) -->
 <style>
     /* Effet Glass pour le footer */
     .footer-glass {
@@ -314,15 +317,179 @@
     }
 </style>
 
-<!-- Script du Chatbot (identique) -->
+<!-- Script du Chatbot avec API Gemini -->
 <script>
+    // ==================================================
+    // CONFIGURATION API GEMINI
+    // Remplacez VOTRE_CLE_API_GEMINI par votre vraie clé
+    // ==================================================
+    const GEMINI_API_KEY = 'AQ.Ab8RN6Jnfdu04g0-fnId7EiiTJE5os7cQI73OPElUDvKp29zfQ';
+    const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+    // Éléments DOM
     const chatbotToggle = document.getElementById('chatbotToggle');
     const chatbotWindow = document.getElementById('chatbotWindow');
     const closeChatbot = document.getElementById('closeChatbot');
     const chatInput = document.getElementById('chatInput');
     const sendButton = document.getElementById('sendMessage');
     const chatMessages = document.getElementById('chatMessages');
+    const typingIndicator = document.getElementById('typingIndicator');
 
+    // Gestion de l'historique de conversation (conserve le contexte)
+    let conversationHistory = [
+        {
+            role: "user",
+            parts: [{ text: "Tu es l'assistant officiel de PharmaConnect Cameroun. Tu réponds de manière professionnelle, amicale et précise sur les produits pharmaceutiques, les commandes, les horaires, les livraisons, et les services de PharmaConnect. Si on te pose une question hors sujet, réponds poliment que tu ne peux aider que pour PharmaConnect." }]
+        },
+        {
+            role: "model",
+            parts: [{ text: "D'accord, je suis l'assistant de PharmaConnect Cameroun. Comment puis-je vous aider aujourd'hui ?" }]
+        }
+    ];
+
+    // Fonction pour envoyer un message à Gemini
+    async function getGeminiResponse(userMessage) {
+        // Ajouter le message de l'utilisateur à l'historique
+        conversationHistory.push({
+            role: "user",
+            parts: [{ text: userMessage }]
+        });
+
+        // Construire le corps de la requête (conversation complète)
+        const requestBody = {
+            contents: conversationHistory,
+            generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 800,
+                topP: 0.95
+            }
+        };
+
+        try {
+            const response = await fetch(GEMINI_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Erreur Gemini:', errorData);
+                throw new Error(`API Gemini a répondu ${response.status}: ${errorData.error?.message || 'Erreur inconnue'}`);
+            }
+
+            const data = await response.json();
+            const geminiText = data.candidates[0]?.content?.parts[0]?.text || "Désolé, je n'ai pas pu générer une réponse. Veuillez réessayer.";
+            
+            // Ajouter la réponse du modèle à l'historique
+            conversationHistory.push({
+                role: "model",
+                parts: [{ text: geminiText }]
+            });
+
+            // Limiter l'historique à 20 échanges maximum pour éviter des tokens trop longs
+            if (conversationHistory.length > 40) {
+                conversationHistory = conversationHistory.slice(-40);
+            }
+
+            return geminiText;
+        } catch (error) {
+            console.error('Erreur lors de l’appel à Gemini:', error);
+            return "Désolé, le service de chat est momentanément indisponible. Veuillez réessayer plus tard ou contacter notre support par téléphone.";
+        }
+    }
+
+    // Afficher un message (utilisateur ou assistant) dans la fenêtre
+    function addMessage(text, isUser = false) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `flex items-start gap-2 ${isUser ? 'justify-end' : ''}`;
+        
+        if (isUser) {
+            messageDiv.innerHTML = `
+                <div class="bg-gradient-to-r from-[#2E8B57] to-[#1f6e46] text-white rounded-2xl rounded-tr-none px-3 py-2 max-w-[85%]">
+                    <p class="text-xs">${escapeHtml(text)}</p>
+                    <span class="text-[9px] text-white/60 mt-1 block text-right">${getCurrentTime()}</span>
+                </div>
+                <div class="w-7 h-7 rounded-full bg-gray-400 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-user text-white text-[10px]"></i>
+                </div>
+            `;
+        } else {
+            messageDiv.innerHTML = `
+                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-[#2C5F8A] to-[#2E8B57] flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-robot text-white text-[10px]"></i>
+                </div>
+                <div class="bg-white/80 backdrop-blur-sm rounded-2xl rounded-tl-none px-3 py-2 max-w-[85%]">
+                    <p class="text-xs text-gray-700">${escapeHtml(text)}</p>
+                    <span class="text-[9px] text-gray-400 mt-1 block">${getCurrentTime()}</span>
+                </div>
+            `;
+        }
+        
+        chatMessages.appendChild(messageDiv);
+        scrollToBottom();
+    }
+
+    // Afficher l'indicateur "l'assistant écrit"
+    function showTyping() {
+        if (typingIndicator) typingIndicator.classList.remove('hidden');
+    }
+
+    function hideTyping() {
+        if (typingIndicator) typingIndicator.classList.add('hidden');
+    }
+
+    // Gestion de l'envoi du message
+    async function sendMessage() {
+        const message = chatInput.value.trim();
+        if (message === '') return;
+
+        // Désactiver l'input pendant le traitement
+        chatInput.disabled = true;
+        sendButton.disabled = true;
+        
+        // Afficher le message utilisateur
+        addMessage(message, true);
+        chatInput.value = '';
+        
+        // Afficher "l'assistant réfléchit"
+        showTyping();
+        
+        try {
+            // Appeler Gemini
+            const reply = await getGeminiResponse(message);
+            hideTyping();
+            addMessage(reply, false);
+        } catch (error) {
+            hideTyping();
+            addMessage("❌ Une erreur technique s'est produite. Veuillez réessayer plus tard.", false);
+            console.error(error);
+        } finally {
+            chatInput.disabled = false;
+            sendButton.disabled = false;
+            chatInput.focus();
+        }
+    }
+
+    // Utilitaires
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function getCurrentTime() {
+        const now = new Date();
+        return now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function scrollToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Événements UI
     chatbotToggle.addEventListener('click', () => {
         if (chatbotWindow.classList.contains('hidden')) {
             chatbotWindow.classList.remove('hidden');
@@ -343,61 +510,6 @@
         chatbotWindow.classList.remove('chat-open');
     });
 
-    function addUserMessage(message) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'flex items-start gap-2 justify-end';
-        messageDiv.innerHTML = `
-            <div class="bg-gradient-to-r from-[#2E8B57] to-[#1f6e46] text-white rounded-2xl rounded-tr-none px-3 py-2 max-w-[85%]">
-                <p class="text-xs">${escapeHtml(message)}</p>
-                <span class="text-[9px] text-white/60 mt-1 block text-right">${getCurrentTime()}</span>
-            </div>
-            <div class="w-7 h-7 rounded-full bg-gray-400 flex items-center justify-center flex-shrink-0">
-                <i class="fas fa-user text-white text-[10px]"></i>
-            </div>
-        `;
-        chatMessages.appendChild(messageDiv);
-        scrollToBottom();
-    }
-
-    function addAssistantMessage() {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'flex items-start gap-2';
-        messageDiv.innerHTML = `
-            <div class="w-7 h-7 rounded-full bg-gradient-to-br from-[#2C5F8A] to-[#2E8B57] flex items-center justify-center flex-shrink-0">
-                <i class="fas fa-robot text-white text-[10px]"></i>
-            </div>
-            <div class="bg-white/80 backdrop-blur-sm rounded-2xl rounded-tl-none px-3 py-2 max-w-[85%]">
-                <p class="text-xs text-gray-700">Merci pour votre message. Un conseiller vous répondra dans les plus brefs délais.</p>
-                <span class="text-[9px] text-gray-400 mt-1 block">${getCurrentTime()}</span>
-            </div>
-        `;
-        chatMessages.appendChild(messageDiv);
-        scrollToBottom();
-    }
-
-    function sendMessage() {
-        const message = chatInput.value.trim();
-        if (message === '') return;
-        addUserMessage(message);
-        chatInput.value = '';
-        setTimeout(() => addAssistantMessage(), 500);
-    }
-
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    function getCurrentTime() {
-        const now = new Date();
-        return now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    }
-
-    function scrollToBottom() {
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-
     sendButton.addEventListener('click', sendMessage);
     chatInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
@@ -406,10 +518,13 @@
         }
     });
 
+    // Fermer la fenêtre si on clique en dehors
     document.addEventListener('click', (e) => {
         if (!chatbotWindow.contains(e.target) && !chatbotToggle.contains(e.target) && !chatbotWindow.classList.contains('hidden')) {
             chatbotWindow.classList.add('hidden');
             chatbotWindow.classList.remove('chat-open');
         }
     });
+
+    // Optionnel : au chargement, on peut réinitialiser l'historique (déjà fait)
 </script>
