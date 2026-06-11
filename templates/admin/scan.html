@@ -4,7 +4,6 @@
 
 {% block content %}
 <style>
-  /* Réutilisation des variables CSS du master */
   :root {
     --vert-principal: #2E8B57;
     --vert-fonce: #267349;
@@ -46,13 +45,6 @@
     border-radius: 24px;
     padding: 1rem;
     text-align: center;
-  }
-  #reader {
-    width: 100%;
-    max-width: 500px;
-    margin: 0 auto;
-    border-radius: 16px;
-    overflow: hidden;
   }
   .result-card {
     background: var(--blanc-carte);
@@ -115,6 +107,23 @@
     font-weight: 500;
     cursor: pointer;
   }
+  .loader {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(0,0,0,0.2);
+    border-radius: 50%;
+    border-top-color: var(--vert-principal);
+    animation: spin 0.6s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .text-green-600 { color: #166534; }
+  .text-red-600 { color: #991b1b; }
+  .bg-yellow-50 { background: #fefce8; }
   @media (max-width: 640px) {
     .info-grid { grid-template-columns: 1fr; }
   }
@@ -131,12 +140,11 @@
     </p>
   </div>
 
-  <!-- 3 méthodes sous forme de cartes -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     <div class="glass-card method-card p-5 text-center" data-method="scan">
       <i class="fas fa-camera text-4xl text-[#2E8B57] mb-3"></i>
       <h3 class="font-bold text-lg">Scanner par caméra</h3>
-      <p class="text-sm text-gray-500 mt-1">Utilisez votre caméra pour lire le QR code ou code-barres</p>
+      <p class="text-sm text-gray-500 mt-1">Cadrez le QR code et prenez une photo</p>
     </div>
     <div class="glass-card method-card p-5 text-center" data-method="manual">
       <i class="fas fa-keyboard text-4xl text-[#2E8B57] mb-3"></i>
@@ -150,20 +158,30 @@
     </div>
   </div>
 
-  <!-- Zone dynamique selon la méthode choisie -->
   <div class="glass-card p-6">
+    <!-- Méthode SCAN -->
     <div id="method-scan" class="method-content" style="display: none;">
       <div class="scanner-area">
-        <div id="reader"></div>
-        <p class="text-sm text-gray-300 mt-2">Placez un QR code ou code-barres devant la caméra</p>
+        <div style="position: relative; max-width: 500px; margin: 0 auto;">
+          <video id="video" autoplay playsinline style="width:100%; border-radius:16px; background:#000;"></video>
+          <canvas id="canvas" style="display:none;"></canvas>
+          <button id="captureBtn" class="btn-primary mt-3">
+            <i class="fas fa-camera"></i> Prendre la photo
+          </button>
+          <button id="restartCameraBtn" class="btn-secondary mt-3" style="display: none;">
+            🔄 Changer de caméra / Réessayer
+          </button>
+        </div>
+        <p class="text-sm text-gray-300 mt-2">Cadrez le QR code puis cliquez sur "Prendre la photo"</p>
       </div>
       <div id="scan-result" class="result-card" style="display: none;">
         <h3 class="font-bold mb-2">Résultat du scan</h3>
         <div id="scan-result-content"></div>
-        <button id="reset-scanner" class="btn-secondary mt-3">🔄 Scanner un autre</button>
+        <button id="reset-scanner" class="btn-secondary mt-3">📷 Scanner un autre</button>
       </div>
     </div>
 
+    <!-- Méthode MANUELLE -->
     <div id="method-manual" class="method-content" style="display: none;">
       <div class="max-w-md mx-auto">
         <label class="block text-sm font-medium mb-1">Code à vérifier</label>
@@ -173,6 +191,7 @@
       </div>
     </div>
 
+    <!-- Méthode UPLOAD -->
     <div id="method-upload" class="method-content" style="display: none;">
       <div class="max-w-md mx-auto text-center">
         <label class="block w-full cursor-pointer">
@@ -188,16 +207,21 @@
   </div>
 </section>
 
-<!-- Librairies -->
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-
 <script>
-  // État
-  let html5QrCode = null;
-  let isScanning = false;
+  // URLs dynamiques Flask
+  const apiScanUrl = "{{ url_for('main.api_scan') }}";
+  const apiUploadUrl = "{{ url_for('main.api_upload_qrcode') }}";
+  const apiAddMedicineUrl = "{{ url_for('main.api_add_medicine') }}";
+  const currentRole = "{{ session.get('role', '') }}";
+
+  let videoStream = null;
   let currentMethod = null;
 
-  // Sélection des cartes méthodes
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  const captureBtn = document.getElementById('captureBtn');
+  const restartCameraBtn = document.getElementById('restartCameraBtn');
+
   const methodCards = document.querySelectorAll('.method-card');
   const methodContents = {
     scan: document.getElementById('method-scan'),
@@ -205,103 +229,87 @@
     upload: document.getElementById('method-upload')
   };
 
-  // Gestion du changement de méthode
-  methodCards.forEach(card => {
-    card.addEventListener('click', () => {
-      const method = card.dataset.method;
-      if (currentMethod === method) return;
-      currentMethod = method;
-      methodCards.forEach(c => c.classList.remove('active'));
-      card.classList.add('active');
-      Object.values(methodContents).forEach(content => content.style.display = 'none');
-      methodContents[method].style.display = 'block';
-      if (html5QrCode && isScanning) {
-        html5QrCode.stop().then(() => { isScanning = false; });
-      }
-      if (method === 'scan') startScanner();
-    });
-  });
-
-  // Scanner (caméra)
-  async function startScanner() {
-    if (!document.getElementById('reader')) return;
-    if (html5QrCode && isScanning) return;
-    html5QrCode = new Html5Qrcode("reader");
-    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+  // ------------------- CAMERA -------------------
+  async function initManualCamera() {
+    if (videoStream) stopCamera();
     try {
-      await html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure);
-      isScanning = true;
-    } catch(e) { console.error(e); }
-  }
-
-  function onScanSuccess(decodedText) {
-    if (html5QrCode && isScanning) {
-      html5QrCode.stop();
-      isScanning = false;
-    }
-    verifyCode(decodedText, 'scan-result-content', 'scan-result');
-  }
-
-  function onScanFailure(error) { /* ignorer */ }
-
-  document.getElementById('reset-scanner')?.addEventListener('click', () => {
-    document.getElementById('scan-result').style.display = 'none';
-    if (html5QrCode && !isScanning) startScanner();
-  });
-
-  // Saisie manuelle
-  document.getElementById('verifyManualBtn')?.addEventListener('click', () => {
-    const code = document.getElementById('manualCode').value.trim();
-    if (!code) { alert('Veuillez entrer un code'); return; }
-    verifyCode(code, 'manual-result', 'manual-result');
-  });
-
-  // Upload image (envoie l'image au serveur pour décodage avec pyzbar)
-  const fileInput = document.getElementById('qrImageInput');
-  fileInput?.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const formData = new FormData();
-    formData.append('image', file);
-    
-    const resultDiv = document.getElementById('upload-result');
-    resultDiv.style.display = 'block';
-    resultDiv.innerHTML = '<div class="text-gray-500">🔍 Décodage en cours...</div>';
-    
-    try {
-      const response = await fetch('/api/upload-qrcode', {
-        method: 'POST',
-        body: formData
-      });
-      const data = await response.json();
-      
-      if (data.success) {
-        verifyCode(data.code, 'upload-result', 'upload-result');
-      } else {
-        resultDiv.innerHTML = `<div class="text-red-600">❌ ${data.message}</div>`;
-      }
+      videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      video.srcObject = videoStream;
+      await video.play();
+      captureBtn.style.display = 'inline-flex';
+      restartCameraBtn.style.display = 'none';
     } catch (err) {
-      resultDiv.innerHTML = '<div class="text-red-600">❌ Erreur de connexion au serveur</div>';
+      console.error(err);
+      const resultDiv = document.getElementById('scan-result');
+      const contentDiv = document.getElementById('scan-result-content');
+      resultDiv.style.display = 'block';
+      contentDiv.innerHTML = '<div class="text-red-600">❌ Impossible d\'accéder à la caméra.</div>';
+      captureBtn.style.display = 'none';
     }
-    
-    fileInput.value = '';
-  });
+  }
 
-  // Fonction centrale de vérification (appelle le backend)
-  function verifyCode(code, resultDivId, containerId) {
-    fetch('/api/scan', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: code })
-    })
-    .then(res => res.json())
-    .then(data => {
+  async function captureAndSend() {
+    if (!video.videoWidth) {
+      alert("La caméra n'est pas prête. Réessayez.");
+      return;
+    }
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    canvas.toBlob(async (blob) => {
+      const formData = new FormData();
+      formData.append('image', blob, 'qrcode_capture.jpg');
+      
+      const resultDiv = document.getElementById('scan-result');
+      const contentDiv = document.getElementById('scan-result-content');
+      resultDiv.style.display = 'block';
+      contentDiv.innerHTML = '<div class="loader"></div> Analyse en cours...';
+      
+      try {
+        const response = await fetch(apiUploadUrl, { method: 'POST', body: formData });
+        const data = await response.json();
+        if (data.success) {
+          verifyCode(data.code, 'scan-result-content', 'scan-result');
+        } else {
+          contentDiv.innerHTML = `<div class="text-red-600">❌ ${data.message || 'Aucun QR code détecté'}</div>`;
+        }
+      } catch (err) {
+        contentDiv.innerHTML = '<div class="text-red-600">❌ Erreur de connexion au serveur</div>';
+      }
+    }, 'image/jpeg', 0.9);
+  }
+
+  function stopCamera() {
+    if (videoStream) {
+      videoStream.getTracks().forEach(track => track.stop());
+      videoStream = null;
+    }
+    video.srcObject = null;
+  }
+
+  // ------------------- VÉRIFICATION + AJOUT AUTO -------------------
+  async function verifyCode(code, resultDivId, containerId) {
+    const contentDiv = document.getElementById(resultDivId);
+    contentDiv.innerHTML = '<div class="loader"></div> Vérification en cours...';
+    
+    try {
+      const scanResponse = await fetch(apiScanUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code })
+      });
+      const data = await scanResponse.json();
+      
       const resultDiv = document.getElementById(containerId);
-      const contentDiv = document.getElementById(resultDivId);
       if (data.success) {
         const med = data.medicine;
-        let authenticHtml = med.authentic ? '<span class="authentic-badge authentic-true">✓ Authentique</span>' : '<span class="authentic-badge authentic-false">✗ Déjà scanné - Risque</span>';
+        const authenticHtml = med.authentic 
+          ? '<span class="authentic-badge authentic-true">✓ Authentique</span>' 
+          : '<span class="authentic-badge authentic-false">✗ Déjà scanné - Risque</span>';
+        
+        // Afficher les infos médicament
         contentDiv.innerHTML = `
           <div class="info-grid">
             <div><span class="info-label">Médicament :</span> ${med.name}</div>
@@ -312,21 +320,110 @@
             <div><span class="info-label">Authenticité :</span> ${authenticHtml}</div>
             <div><span class="info-label">Ordonnance :</span> ${med.prescription_required ? 'Oui' : 'Non'}</div>
           </div>
+          <div id="autoAddMsg"></div>
         `;
+        
+        // AJOUT AUTOMATIQUE pour les pharmaciens (sans bouton)
+        if (currentRole === 'pharmacien') {
+          const msgDiv = document.getElementById('autoAddMsg');
+          msgDiv.innerHTML = '<div class="loader"></div> Ajout automatique au stock...';
+          
+          try {
+            const addResponse = await fetch(apiAddMedicineUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                name: med.name,
+                generic_name: med.generic_name || '',
+                manufacturer: med.manufacturer || '',
+                dosage: med.dosage || '',
+                form: med.form || '',
+                prescription_required: med.prescription_required || false,
+                barcode: code,
+                quantity: 1,
+                expiry_date: null,
+                price: 0
+              })
+            });
+            const addData = await addResponse.json();
+            if (addData.success) {
+              msgDiv.innerHTML = '<div class="text-green-600 mt-2">✅ Médicament ajouté automatiquement à votre stock.</div>';
+            } else {
+              msgDiv.innerHTML = `<div class="text-red-600 mt-2">❌ Ajout automatique échoué : ${addData.message || 'Erreur inconnue'}</div>`;
+            }
+          } catch (err) {
+            console.error("Erreur ajout auto:", err);
+            msgDiv.innerHTML = '<div class="text-red-600 mt-2">❌ Erreur réseau lors de l\'ajout automatique.</div>';
+          }
+        }
       } else if (data.not_found) {
         contentDiv.innerHTML = `<div class="bg-yellow-50 p-3 rounded-xl"><i class="fas fa-exclamation-triangle text-yellow-600"></i> ${data.message}</div>`;
       } else {
         contentDiv.innerHTML = `<div class="text-red-600">${data.message}</div>`;
       }
       resultDiv.style.display = 'block';
-    })
-    .catch(err => {
+    } catch (err) {
       document.getElementById(resultDivId).innerHTML = '<div class="text-red-600">Erreur de connexion</div>';
       document.getElementById(containerId).style.display = 'block';
-    });
+    }
   }
 
-  // Activer la première méthode par défaut (scan)
+  // ------------------- CHANGEMENT DE MÉTHODE -------------------
+  methodCards.forEach(card => {
+    card.addEventListener('click', () => {
+      const method = card.dataset.method;
+      if (currentMethod === method) return;
+      currentMethod = method;
+      methodCards.forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      if (currentMethod !== 'scan') stopCamera();
+      Object.values(methodContents).forEach(content => content.style.display = 'none');
+      methodContents[method].style.display = 'block';
+      if (method === 'scan') initManualCamera();
+    });
+  });
+
+  // Événements pour la méthode scan
+  captureBtn?.addEventListener('click', captureAndSend);
+  restartCameraBtn?.addEventListener('click', () => { stopCamera(); initManualCamera(); });
+  document.getElementById('reset-scanner')?.addEventListener('click', () => {
+    document.getElementById('scan-result').style.display = 'none';
+    stopCamera();
+    initManualCamera();
+  });
+
+  // Événement pour la saisie manuelle
+  document.getElementById('verifyManualBtn')?.addEventListener('click', () => {
+    const code = document.getElementById('manualCode').value.trim();
+    if (!code) { alert('Veuillez entrer un code'); return; }
+    verifyCode(code, 'manual-result', 'manual-result');
+  });
+
+  // Événement pour l'upload d'image
+  const fileInput = document.getElementById('qrImageInput');
+  fileInput?.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('image', file);
+    const resultDiv = document.getElementById('upload-result');
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = '<div class="loader"></div> Décodage en cours...';
+    try {
+      const response = await fetch(apiUploadUrl, { method: 'POST', body: formData });
+      const data = await response.json();
+      if (data.success) {
+        verifyCode(data.code, 'upload-result', 'upload-result');
+      } else {
+        resultDiv.innerHTML = `<div class="text-red-600">❌ ${data.message}</div>`;
+      }
+    } catch (err) {
+      resultDiv.innerHTML = '<div class="text-red-600">❌ Erreur de connexion</div>';
+    }
+    fileInput.value = '';
+  });
+
+  // Démarrer avec la méthode par défaut (scan)
   if (methodCards.length) methodCards[0].click();
 </script>
 {% endblock %}

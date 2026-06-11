@@ -304,9 +304,9 @@
                 <a href="#" class="nav-item"><i class="fas fa-qrcode"></i> Scanner</a>
                 <a href="#" class="nav-item"><i class="fas fa-map-marker-alt"></i> Pharmacies proches</a>
             {% elif session.role == 'pharmacien' %}
-                <a href="#" class="nav-item"><i class="fas fa-boxes"></i> Stocks</a>
+                <a href="{{ url_for('main.stocks') }}" class="nav-item"><i class="fas fa-boxes"></i> Stocks</a>
                 <a href="#" class="nav-item"><i class="fas fa-truck"></i> Commandes</a>
-                <a href="#" class="nav-item"><i class="fas fa-qrcode"></i> QR codes</a>
+                <a href="{{url_for('main.scan_page')}}" class="nav-item"><i class="fas fa-qrcode"></i> QR codes</a>
             {% elif session.role == 'admin' %}
                 <a href="#" class="nav-item"><i class="fas fa-users"></i> Utilisateurs</a>
                 <a href="#" class="nav-item"><i class="fas fa-store"></i> Pharmacies</a>

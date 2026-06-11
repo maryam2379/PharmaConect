@@ -1,49 +1,81 @@
-{% extends "base.html" %}
+{% extends "admin/master.html" %}
 
 {% block title %}Gestion des stocks - PharmaConnect Cameroun{% endblock %}
+{% block page_title %}Gestion des stocks{% endblock %}
 
 {% block content %}
-
 <style>
-    /* Réutilisation des styles glassmorphism existants */
-    .glass-card { background: rgba(255,255,255,0.5); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.6); border-radius: 24px; transition: all 0.3s ease; }
-    .search-input { background: rgba(255,255,255,0.55); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.6); border-radius: 60px; transition: all 0.2s; }
-    .search-input:focus { outline: none; border-color: #2E8B57; background: rgba(255,255,255,0.85); box-shadow: 0 0 0 3px rgba(46,139,87,0.15); }
+    .glass-card {
+        background: rgba(255,255,255,0.5);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,0.6);
+        border-radius: 24px;
+        transition: all 0.3s ease;
+    }
+    .search-input {
+        background: rgba(255,255,255,0.55);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,0.6);
+        border-radius: 60px;
+        transition: all 0.2s;
+    }
+    .search-input:focus {
+        outline: none;
+        border-color: #2E8B57;
+        background: rgba(255,255,255,0.85);
+        box-shadow: 0 0 0 3px rgba(46,139,87,0.15);
+    }
     .badge-stock-low { background: rgba(220,53,69,0.12); color: #dc3545; border-radius: 40px; padding: 0.2rem 0.75rem; font-size: 0.7rem; font-weight: 600; }
     .badge-stock-ok { background: rgba(46,139,87,0.12); color: #2E8B57; border-radius: 40px; padding: 0.2rem 0.75rem; font-size: 0.7rem; font-weight: 600; }
     .badge-expired { background: rgba(108,117,125,0.12); color: #6c757d; border-radius: 40px; padding: 0.2rem 0.75rem; font-size: 0.7rem; font-weight: 600; }
-    .action-btn { background: rgba(255,255,255,0.5); border: none; border-radius: 30px; padding: 0.3rem 0.7rem; font-size: 0.7rem; cursor: pointer; }
+    .action-btn {
+        background: rgba(255,255,255,0.5);
+        border: none;
+        border-radius: 30px;
+        padding: 0.3rem 0.7rem;
+        font-size: 0.7rem;
+        cursor: pointer;
+        transition: 0.2s;
+    }
     .action-btn:hover { background: rgba(46,139,87,0.2); }
-    .modal-glass { background: rgba(255,255,255,0.98); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.8); }
-    .stock-stat-card { background: rgba(255,255,255,0.45); backdrop-filter: blur(8px); border-radius: 20px; padding: 1rem; text-align: center; transition: all 0.2s; }
+    .modal-glass {
+        background: rgba(255,255,255,0.98);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255,255,255,0.8);
+    }
+    .stock-stat-card {
+        background: rgba(255,255,255,0.45);
+        backdrop-filter: blur(8px);
+        border-radius: 20px;
+        padding: 1rem;
+        text-align: center;
+        transition: all 0.2s;
+    }
     .stock-stat-card:hover { transform: translateY(-3px); background: rgba(255,255,255,0.6); }
-    .stat-number { font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #2C5F8A, #2E8B57); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #2C5F8A, #2E8B57);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    .medicine-thumb {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 12px;
+        background: #f0f0f0;
+    }
 </style>
 
-<!-- HEADER -->
-<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 md:pt-12 pb-4">
-    <div class="text-center">
-        <div class="inline-flex items-center gap-2 bg-white/40 backdrop-blur-sm rounded-full px-4 py-1.5 mb-4">
-            <i class="fas fa-boxes text-[#2E8B57] text-sm"></i>
-            <span class="text-xs font-medium text-gray-600">Gestion pharmaceutique</span>
-        </div>
-        <h1 class="text-3xl md:text-4xl font-bold text-gray-800">
-            Gestion des <span class="text-[#2E8B57]">stocks</span>
-        </h1>
-        <div class="w-20 h-1 bg-[#2E8B57] mx-auto mt-3 rounded-full"></div>
-        <p class="text-gray-600 mt-4 max-w-2xl mx-auto text-sm md:text-base">
-            Gérez vos médicaments, suivez les niveaux de stock et anticipez les réapprovisionnements.
-        </p>
-    </div>
-</section>
-
-<!-- STATISTIQUES RAPIDES (calculées côté serveur ou via API) -->
+<!-- STATISTIQUES RAPIDES -->
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="stock-stat-card">
             <i class="fas fa-capsules text-2xl text-[#2C5F8A] mb-2"></i>
             <div class="stat-number" id="totalMedicines">0</div>
-            <p class="text-xs text-gray-500 mt-1">Médicaments distincts</p>
+            <p class="text-xs text-gray-500 mt-1">Lignes de stock</p>
         </div>
         <div class="stock-stat-card">
             <i class="fas fa-exclamation-triangle text-2xl text-[#dc3545] mb-2"></i>
@@ -58,7 +90,7 @@
         <div class="stock-stat-card">
             <i class="fas fa-chart-line text-2xl text-[#2E8B57] mb-2"></i>
             <div class="stat-number" id="totalValue">0</div>
-            <p class="text-xs text-gray-500 mt-1">Valeur stock (FCFA)</p>
+            <p class="text-xs text-gray-500 mt-1">Valeur totale (FCFA)</p>
         </div>
     </div>
 </section>
@@ -69,7 +101,7 @@
         <div class="flex flex-col md:flex-row gap-4">
             <div class="flex-1 relative">
                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                <input type="text" id="searchInput" placeholder="Nom, générique, fabricant..." 
+                <input type="text" id="searchInput" placeholder="Nom du médicament, fabricant, lot..." 
                        class="search-input w-full pl-10 pr-4 py-3 text-gray-700 text-sm">
             </div>
             <div class="flex gap-3 flex-wrap">
@@ -80,7 +112,7 @@
                     <option value="ok">Stock suffisant</option>
                 </select>
                 <button id="addStockBtn" class="bg-gradient-to-r from-[#2E8B57] to-[#1f6e46] px-5 py-2 rounded-full text-white text-sm hover:shadow-lg transition-all flex items-center gap-2">
-                    <i class="fas fa-plus"></i> Ajouter un stock
+                    <i class="fas fa-plus"></i> Ajouter un médicament
                 </button>
                 <button id="resetFilters" class="bg-white/50 backdrop-blur-sm px-4 py-2 rounded-full text-[#2C5F8A] border border-white/60 hover:bg-white/80 transition text-sm">
                     <i class="fas fa-undo-alt"></i>
@@ -90,10 +122,7 @@
         <div class="flex justify-between items-center mt-4 pt-2 border-t border-white/40">
             <div class="text-xs text-gray-500">
                 <i class="fas fa-database text-[#2E8B57]"></i>
-                <span id="resultCount" class="ml-2 font-medium">0 lignes de stock</span>
-            </div>
-            <div class="text-xs text-gray-400">
-                <i class="fas fa-info-circle"></i> Cliquez sur <i class="fas fa-edit"></i> pour modifier
+                <span id="resultCount" class="ml-2 font-medium">0 lignes</span>
             </div>
         </div>
     </div>
@@ -110,6 +139,7 @@
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b border-white/40">
+                        <th class="text-left py-3 px-2">Photo</th>
                         <th class="text-left py-3 px-2">Médicament</th>
                         <th class="text-left py-3 px-2">Fabricant</th>
                         <th class="text-left py-3 px-2">Lot</th>
@@ -202,20 +232,11 @@
 
 <script>
     // ============================================
-    // CONNEXION À L'API BACKEND (à implémenter)
-    // Endpoints attendus :
-    // GET    /api/pharmacist/stocks          -> liste des stocks de la pharmacie connectée
-    // POST   /api/pharmacist/stock           -> ajouter un stock
-    // PUT    /api/pharmacist/stock/<id>      -> modifier un stock
-    // DELETE /api/pharmacist/stock/<id>      -> supprimer un stock
-    // PATCH  /api/pharmacist/stock/<id>/quantity -> ajuster quantité
-    // GET    /api/medicines/list             -> tous les médicaments (pour le select)
+    // CONNEXION À L'API BACKEND
     // ============================================
-
-    let stocks = [];      // Liste des stocks (avec jointure medicine)
+    let stocks = [];      // Liste des stocks
     let medicines = [];   // Liste des médicaments pour le select
 
-    // Fonction d'appel API générique
     async function apiCall(url, method = 'GET', data = null) {
         const options = { method, headers: { 'Content-Type': 'application/json' } };
         if (data) options.body = JSON.stringify(data);
@@ -227,11 +248,11 @@
         return response.json();
     }
 
-    // Charger les stocks depuis le backend
+    // Charger les stocks
     async function loadStocks() {
         try {
             const data = await apiCall('/api/pharmacist/stocks');
-            stocks = data.stocks;   // Chaque stock contient medicine: { id, name, manufacturer, ... }
+            stocks = data.stocks;
             renderStats();
             renderTable();
         } catch (err) {
@@ -303,7 +324,7 @@
         if (filtered.length === 0) {
             tbody.innerHTML = '';
             noResults.classList.remove('hidden');
-            document.getElementById('resultCount').innerText = '0 ligne de stock';
+            document.getElementById('resultCount').innerText = '0 ligne';
             return;
         }
 
@@ -329,9 +350,13 @@
             const medicineName = s.medicine.name;
             const manufacturer = s.medicine.manufacturer || '—';
             const batch = s.batch_number || '—';
+            const imageUrl = s.medicine.image_url || '/static/images/default-medicine.png';
 
             return `
                 <tr class="border-b border-white/30 hover:bg-white/20 transition">
+                    <td class="py-3 px-2">
+                        <img src="${imageUrl}" class="medicine-thumb" onerror="this.src='/static/images/default-medicine.png'" alt="${medicineName}">
+                    </td>
                     <td class="py-3 px-2 font-medium">${escapeHtml(medicineName)}</td>
                     <td class="py-3 px-2">${escapeHtml(manufacturer)}</td>
                     <td class="py-3 px-2 text-xs font-mono">${escapeHtml(batch)}</td>
@@ -339,7 +364,7 @@
                     <td class="py-3 px-2">${parseFloat(s.price).toLocaleString()} FCFA</td>
                     <td class="py-3 px-2 text-xs">${expiryDisplay}</td>
                     <td class="py-3 px-2">${statusBadge}</td>
-                    <td class="py-3 px-2">
+                    <td class="py-3 px-2 whitespace-nowrap">
                         <button onclick="openAdjustModal(${s.id})" class="action-btn mr-1" title="Ajuster quantité"><i class="fas fa-plus-circle text-[#2E8B57]"></i></button>
                         <button onclick="openEditStockModal(${s.id})" class="action-btn mr-1" title="Modifier"><i class="fas fa-edit text-[#2C5F8A]"></i></button>
                         <button onclick="deleteStock(${s.id})" class="action-btn" title="Supprimer"><i class="fas fa-trash-alt text-red-500"></i></button>
@@ -351,12 +376,12 @@
 
     function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m;}); }
 
-    // Ajout / Modification
+    // Gestion modale stock
     let currentStockId = null;
 
     function openAddStockModal() {
         currentStockId = null;
-        document.getElementById('modalTitle').innerText = 'Ajouter un stock';
+        document.getElementById('modalTitle').innerText = 'Ajouter un médicament au stock';
         document.getElementById('stockForm').reset();
         document.getElementById('stockId').value = '';
         document.getElementById('stockModal').classList.remove('hidden');
@@ -400,7 +425,7 @@
                 await apiCall('/api/pharmacist/stock', 'POST', payload);
             }
             closeModal();
-            await loadStocks();  // recharger la liste
+            await loadStocks();
         } catch (err) {
             alert('Erreur : ' + err.message);
         }
@@ -444,7 +469,6 @@
         }
     }
 
-    // Gestion des modales
     function closeModal() {
         document.getElementById('stockModal').classList.add('hidden');
         document.getElementById('stockModal').classList.remove('flex');
@@ -488,5 +512,4 @@
         await loadStocks();
     });
 </script>
-
 {% endblock %}

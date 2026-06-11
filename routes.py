@@ -3,19 +3,29 @@ import random
 import os
 import cv2
 import numpy as np
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, current_app
 from werkzeug.utils import secure_filename
 from db import db
 from models import User, Pharmacy, Medicine, Order, Stock, QRCode
 from email_utils import send_email
 from datetime import datetime
 from pyzbar.pyzbar import decode
+from qreader import QReader
 
 main_bp = Blueprint('main', __name__)
 
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# Initialisation de QReader (instance unique)
+_qreader_instance = None
+
+def get_qreader():
+    global _qreader_instance
+    if _qreader_instance is None:
+        _qreader_instance = QReader()
+    return _qreader_instance
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -421,7 +431,7 @@ def profile():
     return render_template("admin/profile.html", user=user, pharmacy=pharmacy)
 
 # ------------------------------------------------------------------
-# API Scan et upload QR code
+# API Scan et upload QR code (avec amélioration QReader)
 # ------------------------------------------------------------------
 @main_bp.route("/scan")
 def scan_page():
@@ -477,7 +487,10 @@ def api_scan():
 
 @main_bp.route("/api/upload-qrcode", methods=["POST"])
 def api_upload_qrcode():
-    """Reçoit une image, utilise pyzbar pour extraire le QR code"""
+    """
+    Reçoit une image, utilise QReader (robuste) pour extraire le QR code.
+    Fallback sur pyzbar avec prétraitement.
+    """
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': 'Non authentifié'}), 401
     
@@ -496,17 +509,39 @@ def api_upload_qrcode():
         if img is None:
             return jsonify({'success': False, 'message': 'Image invalide'}), 400
         
-        decoded_objects = decode(img)
+        qr_data = None
         
-        if not decoded_objects:
+        # 1. Tentative avec QReader (robuste)
+        try:
+            qreader = get_qreader()
+            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            decoded_texts = qreader.detect_and_decode(image=img_rgb)
+            if decoded_texts and decoded_texts[0] is not None:
+                qr_data = decoded_texts[0]
+                print(f"[QReader] Décodé : {qr_data}")
+        except Exception as e:
+            print(f"[QReader] Erreur : {e}")
+        
+        # 2. Fallback pyzbar avec prétraitement
+        if qr_data is None:
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
+            sharpened = cv2.filter2D(gray, -1, kernel)
+            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+            contrasted = clahe.apply(sharpened)
+            decoded_objects = decode(contrasted)
+            if decoded_objects:
+                qr_data = decoded_objects[0].data.decode('utf-8')
+                print(f"[pyzbar] Décodé : {qr_data}")
+        
+        if qr_data is None:
             return jsonify({'success': False, 'message': 'Aucun QR code trouvé dans l\'image'}), 404
         
-        qr_data = decoded_objects[0].data.decode('utf-8')
         return jsonify({'success': True, 'code': qr_data})
     
     except Exception as e:
         print(f"Erreur décodage: {e}")
-        return jsonify({'success': False, 'message': 'Erreur lors du décodage'}), 500
+        return jsonify({'success': False, 'message': f'Erreur lors du décodage : {str(e)}'}), 500
 
 @main_bp.route("/api/medicine/add", methods=["POST"])
 def api_add_medicine():
@@ -532,6 +567,7 @@ def api_add_medicine():
     if not name:
         return jsonify({'success': False, 'message': 'Nom du médicament requis'}), 400
     
+    # Vérifier si le médicament existe déjà
     existing = Medicine.query.filter_by(name=name, dosage=dosage, manufacturer=manufacturer).first()
     if not existing:
         medicine = Medicine(
@@ -581,3 +617,203 @@ def api_add_medicine():
     
     db.session.commit()
     return jsonify({'success': True, 'message': 'Médicament ajouté avec succès', 'medicine_id': medicine.id})
+
+
+# ------------------------------------------------------------------
+# Gestion des stocks pour pharmacien (API)
+# ------------------------------------------------------------------
+@main_bp.route("/api/pharmacist/stocks", methods=["GET"])
+def api_get_pharmacy_stocks():
+    """Retourne tous les stocks de la pharmacie du pharmacien connecté."""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Non authentifié'}), 401
+    user = User.query.get(session['user_id'])
+    if user.role != 'pharmacien':
+        return jsonify({'success': False, 'message': 'Accès réservé aux pharmaciens'}), 403
+    
+    pharmacy = Pharmacy.query.filter_by(manager_id=user.id).first()
+    if not pharmacy:
+        return jsonify({'success': False, 'message': 'Aucune pharmacie associée'}), 404
+    
+    stocks = Stock.query.filter_by(pharmacy_id=pharmacy.id).all()
+    result = []
+    for stock in stocks:
+        med = stock.medicine
+        result.append({
+            'id': stock.id,
+            'medicine_id': med.id,
+            'medicine': {
+                'id': med.id,
+                'name': med.name,
+                'generic_name': med.generic_name,
+                'manufacturer': med.manufacturer,
+                'dosage': med.dosage,
+                'form': med.form,
+                'image_url': med.image_url or '/static/images/default-medicine.png',
+                'prescription_required': med.prescription_required
+            },
+            'quantity': stock.quantity,
+            'price': float(stock.price) if stock.price else 0,
+            'batch_number': stock.batch_number,
+            'expiry_date': stock.expiry_date.isoformat() if stock.expiry_date else None
+        })
+    return jsonify({'success': True, 'stocks': result})
+
+
+@main_bp.route("/api/pharmacist/stock", methods=["POST"])
+def api_create_stock():
+    """Ajouter une nouvelle ligne de stock (liée à un médicament existant)."""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Non authentifié'}), 401
+    user = User.query.get(session['user_id'])
+    if user.role != 'pharmacien':
+        return jsonify({'success': False, 'message': 'Accès réservé aux pharmaciens'}), 403
+    
+    pharmacy = Pharmacy.query.filter_by(manager_id=user.id).first()
+    if not pharmacy:
+        return jsonify({'success': False, 'message': 'Aucune pharmacie associée'}), 404
+    
+    data = request.get_json()
+    medicine_id = data.get('medicine_id')
+    quantity = data.get('quantity')
+    price = data.get('price')
+    expiry_date_str = data.get('expiry_date')
+    batch_number = data.get('batch_number', '')
+    
+    if not medicine_id or quantity is None or price is None or not expiry_date_str:
+        return jsonify({'success': False, 'message': 'Champs obligatoires manquants'}), 400
+    
+    medicine = Medicine.query.get(medicine_id)
+    if not medicine:
+        return jsonify({'success': False, 'message': 'Médicament introuvable'}), 404
+    
+    try:
+        expiry_date = datetime.strptime(expiry_date_str, '%Y-%m-%d').date()
+    except:
+        return jsonify({'success': False, 'message': 'Format de date invalide'}), 400
+    
+    stock = Stock(
+        pharmacy_id=pharmacy.id,
+        medicine_id=medicine_id,
+        quantity=int(quantity),
+        price=float(price),
+        expiry_date=expiry_date,
+        batch_number=batch_number
+    )
+    db.session.add(stock)
+    db.session.commit()
+    
+    return jsonify({'success': True, 'message': 'Stock ajouté', 'stock_id': stock.id})
+
+
+@main_bp.route("/api/pharmacist/stock/<int:stock_id>", methods=["PUT"])
+def api_update_stock(stock_id):
+    """Modifier une ligne de stock existante."""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Non authentifié'}), 401
+    user = User.query.get(session['user_id'])
+    if user.role != 'pharmacien':
+        return jsonify({'success': False, 'message': 'Accès réservé aux pharmaciens'}), 403
+    
+    pharmacy = Pharmacy.query.filter_by(manager_id=user.id).first()
+    if not pharmacy:
+        return jsonify({'success': False, 'message': 'Aucune pharmacie associée'}), 404
+    
+    stock = Stock.query.filter_by(id=stock_id, pharmacy_id=pharmacy.id).first()
+    if not stock:
+        return jsonify({'success': False, 'message': 'Stock introuvable'}), 404
+    
+    data = request.get_json()
+    if 'quantity' in data:
+        stock.quantity = int(data['quantity'])
+    if 'price' in data:
+        stock.price = float(data['price'])
+    if 'expiry_date' in data:
+        try:
+            stock.expiry_date = datetime.strptime(data['expiry_date'], '%Y-%m-%d').date()
+        except:
+            pass
+    if 'batch_number' in data:
+        stock.batch_number = data['batch_number']
+    if 'medicine_id' in data:
+        # Vérifier que le médicament existe
+        med = Medicine.query.get(data['medicine_id'])
+        if med:
+            stock.medicine_id = med.id
+    
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Stock mis à jour'})
+
+
+@main_bp.route("/api/pharmacist/stock/<int:stock_id>", methods=["DELETE"])
+def api_delete_stock(stock_id):
+    """Supprimer une ligne de stock."""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Non authentifié'}), 401
+    user = User.query.get(session['user_id'])
+    if user.role != 'pharmacien':
+        return jsonify({'success': False, 'message': 'Accès réservé aux pharmaciens'}), 403
+    
+    pharmacy = Pharmacy.query.filter_by(manager_id=user.id).first()
+    if not pharmacy:
+        return jsonify({'success': False, 'message': 'Aucune pharmacie associée'}), 404
+    
+    stock = Stock.query.filter_by(id=stock_id, pharmacy_id=pharmacy.id).first()
+    if not stock:
+        return jsonify({'success': False, 'message': 'Stock introuvable'}), 404
+    
+    db.session.delete(stock)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Stock supprimé'})
+
+
+@main_bp.route("/api/pharmacist/stock/<int:stock_id>/quantity", methods=["PATCH"])
+def api_adjust_quantity(stock_id):
+    """Ajuster rapidement la quantité d'un stock."""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Non authentifié'}), 401
+    user = User.query.get(session['user_id'])
+    if user.role != 'pharmacien':
+        return jsonify({'success': False, 'message': 'Accès réservé aux pharmaciens'}), 403
+    
+    pharmacy = Pharmacy.query.filter_by(manager_id=user.id).first()
+    if not pharmacy:
+        return jsonify({'success': False, 'message': 'Aucune pharmacie associée'}), 404
+    
+    stock = Stock.query.filter_by(id=stock_id, pharmacy_id=pharmacy.id).first()
+    if not stock:
+        return jsonify({'success': False, 'message': 'Stock introuvable'}), 404
+    
+    data = request.get_json()
+    new_qty = data.get('quantity')
+    if new_qty is None or new_qty < 0:
+        return jsonify({'success': False, 'message': 'Quantité invalide'}), 400
+    
+    stock.quantity = int(new_qty)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Quantité mise à jour'})
+
+
+@main_bp.route("/api/medicines/list", methods=["GET"])
+def api_medicines_list():
+    """Liste de tous les médicaments (pour le select)."""
+    medicines = Medicine.query.order_by(Medicine.name).all()
+    result = [{
+        'id': m.id,
+        'name': m.name,
+        'generic_name': m.generic_name,
+        'manufacturer': m.manufacturer
+    } for m in medicines]
+    return jsonify({'success': True, 'medicines': result})
+
+
+@main_bp.route("/stocks")
+def stocks():
+    if 'user_id' not in session:
+        flash("Veuillez vous connecter.", "warning")
+        return redirect(url_for("main.login"))
+    user = User.query.get(session['user_id'])
+    if user.role != 'pharmacien':
+        flash("Accès réservé aux pharmaciens.", "danger")
+        return redirect(url_for("main.dashboard"))
+    return render_template("admin/stocks.html")
