@@ -1356,3 +1356,62 @@ def patient_scan():
         flash("Cette page est réservée aux patients.", "danger")
         return redirect(url_for("main.dashboard"))
     return render_template("admin/patient_scan.html")
+
+
+    # ------------------------------------------------------------------
+# Pharmacies à proximité (dashboard)
+# ------------------------------------------------------------------
+@main_bp.route("/dashboard/nearby-pharmacies")
+def nearby_pharmacies():
+    if 'user_id' not in session:
+        flash("Veuillez vous connecter.", "warning")
+        return redirect(url_for("main.login"))
+    
+    user = User.query.get(session['user_id'])
+    # Récupérer toutes les pharmacies avec coordonnées
+    pharmacies = Pharmacy.query.filter(
+        Pharmacy.latitude.isnot(None),
+        Pharmacy.longitude.isnot(None)
+    ).all()
+    
+    # Transformer en liste de dicts avec statut ouvert/fermé calculé
+    pharmacies_data = []
+    for p in pharmacies:
+        # Exemple de logique d'ouverture (à adapter selon vos horaires réels)
+        is_open = is_pharmacy_open(p)  # fonction définie plus bas
+        schedule = get_pharmacy_schedule(p)  # horaire texte
+        
+        pharmacies_data.append({
+            'id': p.id,
+            'name': p.name,
+            'address': p.address or '',
+            'city': p.city or '',
+            'phone': p.phone or '',
+            'email': p.email or '',
+            'lat': p.latitude,
+            'lng': p.longitude,
+            'is_open': is_open,
+            'schedule': schedule,
+            'rating': 4.5  # valeur par défaut, à personnaliser
+        })
+    
+    return render_template("admin/nearby_pharmacies.html",
+                           user=user,
+                           pharmacies=pharmacies_data)
+
+def is_pharmacy_open(pharmacy):
+    """Détermine si la pharmacie est ouverte selon l'heure courante."""
+    from datetime import datetime
+    now = datetime.now()
+    current_hour = now.hour
+    # Règle simple : 8h-20h ouvert, 24h pour certaines
+    if "24h" in (pharmacy.name or "").lower() or "garde" in (pharmacy.name or "").lower():
+        return True
+    # Par défaut : ouvert entre 8h et 20h
+    return 8 <= current_hour < 20
+
+def get_pharmacy_schedule(pharmacy):
+    """Retourne une chaîne d'horaires lisible."""
+    if "24h" in (pharmacy.name or "").lower():
+        return "24h/24 (garde)"
+    return "08h00 - 20h00"

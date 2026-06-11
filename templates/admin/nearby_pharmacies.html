@@ -1,0 +1,436 @@
+{% extends "admin/master.html" %}
+
+{% block title %}Pharmacies à proximité - PharmaConnect Cameroun{% endblock %}
+
+{% block content %}
+<!-- Leaflet CSS/JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+    * {
+        font-family: 'Goodly', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+    .glass-card {
+        background: rgba(255, 255, 255, 0.5);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 24px;
+        transition: all 0.3s ease;
+    }
+    .search-input {
+        background: rgba(255, 255, 255, 0.55);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 60px;
+        transition: all 0.2s ease;
+    }
+    .search-input:focus {
+        outline: none;
+        border-color: #2E8B57;
+        background: rgba(255, 255, 255, 0.85);
+        box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.15);
+    }
+    .badge-open {
+        background: rgba(46, 139, 87, 0.15);
+        color: #2E8B57;
+        border-radius: 40px;
+        padding: 0.2rem 0.75rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    .badge-closed {
+        background: rgba(180, 60, 50, 0.12);
+        color: #b91c1c;
+        border-radius: 40px;
+        padding: 0.2rem 0.75rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    #map {
+        height: 500px;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    .pharmacy-card {
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    .pharmacy-card:hover {
+        transform: translateY(-2px);
+        background: rgba(255, 255, 255, 0.7);
+    }
+    .distance-badge {
+        background: rgba(44, 95, 138, 0.12);
+        color: #2C5F8A;
+        border-radius: 40px;
+        padding: 0.15rem 0.6rem;
+        font-size: 0.7rem;
+        font-weight: 500;
+    }
+    .leaflet-popup-content {
+        font-family: 'Goodly', system-ui, sans-serif;
+        font-size: 13px;
+        min-width: 200px;
+    }
+    .custom-marker {
+        background: transparent;
+        border: none;
+    }
+    .result-count {
+        background: rgba(46, 139, 87, 0.15);
+        padding: 0.25rem 0.75rem;
+        border-radius: 40px;
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: #2E8B57;
+    }
+</style>
+
+<!-- En-tête -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4">
+    <div class="flex items-center justify-between flex-wrap gap-4">
+        <div>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800">
+                <i class="fas fa-map-marker-alt text-[#2E8B57] mr-2"></i>
+                Pharmacies à proximité
+            </h1>
+            <p class="text-gray-500 text-sm mt-1">Trouvez la pharmacie la plus proche de vous</p>
+        </div>
+        <button id="locateMeBtn" class="bg-[#2E8B57] text-white px-5 py-2 rounded-full text-sm shadow-md hover:bg-[#1f6e46] transition flex items-center gap-2">
+            <i class="fas fa-location-dot"></i> Me localiser
+        </button>
+    </div>
+</section>
+
+<!-- Filtres -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+    <div class="glass-card p-4">
+        <div class="flex flex-col sm:flex-row gap-4">
+            <div class="flex-1 relative">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="text" id="searchInput" placeholder="Nom, ville ou quartier..." class="search-input w-full pl-10 pr-4 py-2.5 text-gray-700 text-sm">
+            </div>
+            <div class="flex gap-3 flex-wrap">
+                <select id="openFilter" class="search-input px-4 py-2.5 text-gray-700 text-sm cursor-pointer">
+                    <option value="all">Toutes les pharmacies</option>
+                    <option value="open">Ouvertes uniquement</option>
+                    <option value="closed">Fermées uniquement</option>
+                </select>
+                <select id="radiusFilter" class="search-input px-4 py-2.5 text-gray-700 text-sm cursor-pointer">
+                    <option value="all">Tous rayons</option>
+                    <option value="5">≤ 5 km</option>
+                    <option value="10">≤ 10 km</option>
+                    <option value="20">≤ 20 km</option>
+                </select>
+                <button id="resetFilters" class="bg-white/50 backdrop-blur-sm px-4 py-2 rounded-full text-[#2C5F8A] border border-white/60 hover:bg-white/80 transition text-sm">
+                    <i class="fas fa-undo-alt"></i> Réinitialiser
+                </button>
+            </div>
+        </div>
+        <div class="flex justify-between items-center mt-3 pt-2 border-t border-white/40">
+            <div class="filter-stats text-xs text-gray-500">
+                <i class="fas fa-store text-[#2E8B57] mr-1"></i>
+                <span id="resultCount" class="result-count ml-1">0 pharmacies</span>
+            </div>
+            <div class="filter-stats text-xs text-gray-500">
+                <i class="fas fa-info-circle text-[#2C5F8A]"></i>
+                <span class="ml-1">Cliquez sur un marqueur ou une carte pour réserver</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Carte + Liste en deux colonnes -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 pb-12">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Carte -->
+        <div class="lg:col-span-2">
+            <div class="glass-card p-4">
+                <div class="flex items-center gap-2 mb-3">
+                    <i class="fas fa-map-marked-alt text-[#2E8B57] text-lg"></i>
+                    <h2 class="text-lg font-semibold text-gray-800">Carte interactive</h2>
+                </div>
+                <div id="map"></div>
+            </div>
+        </div>
+
+        <!-- Liste des pharmacies -->
+        <div class="lg:col-span-1">
+            <div class="glass-card p-4 h-full">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-lg font-semibold text-gray-800">
+                        <i class="fas fa-list-ul text-[#2E8B57] mr-2"></i>Résultats
+                    </h2>
+                    <span id="listCount" class="text-xs text-gray-500"></span>
+                </div>
+                <div id="pharmacyList" class="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+                    <!-- Les cartes seront injectées ici -->
+                    <div class="text-center text-gray-400 py-8">Activez votre position pour voir les pharmacies proches</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- MODALE DE RÉSERVATION (identique) -->
+<div id="reservationModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/20 backdrop-blur-md transition-all duration-300">
+    <div class="bg-white/95 backdrop-blur-xl rounded-2xl max-w-md w-full p-6 shadow-2xl border border-white/60">
+        <div class="flex justify-between items-center mb-5">
+            <h3 class="text-xl font-bold text-[#2C5F8A] flex items-center gap-2">
+                <i class="fas fa-calendar-check text-[#2E8B57]"></i>
+                Réservation rapide
+            </h3>
+            <button id="closeModalBtn" class="text-gray-400 hover:text-gray-600 transition text-2xl">&times;</button>
+        </div>
+        <div id="modalPharmacyName" class="text-sm text-gray-500 mb-4 pb-2 border-b border-gray-200"></div>
+        <form id="reservationForm" onsubmit="return false;">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nom complet <span class="text-red-500">*</span></label>
+                <input type="text" id="patientName" required class="w-full px-3 py-2 bg-white/70 border border-gray-200 rounded-xl focus:outline-none focus:border-[#2E8B57]">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone <span class="text-red-500">*</span></label>
+                <input type="tel" id="patientPhone" required class="w-full px-3 py-2 bg-white/70 border border-gray-200 rounded-xl focus:outline-none focus:border-[#2E8B57]">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Date souhaitée</label>
+                <input type="date" id="reservationDate" required class="w-full px-3 py-2 bg-white/70 border border-gray-200 rounded-xl">
+            </div>
+            <div class="mb-5">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Message (médicament / besoin)</label>
+                <textarea id="reservationMessage" rows="2" class="w-full px-3 py-2 bg-white/70 border border-gray-200 rounded-xl" placeholder="Précisez votre demande..."></textarea>
+            </div>
+            <button type="submit" class="w-full bg-gradient-to-r from-[#2E8B57] to-[#1f6e46] py-2.5 rounded-xl text-white font-medium text-sm hover:shadow-lg transition-all">
+                Confirmer la réservation
+            </button>
+        </form>
+        <p class="text-[10px] text-center text-gray-400 mt-4">Un pharmacien vous recontactera sous 24h</p>
+    </div>
+</div>
+
+<script>
+    // Données des pharmacies (injectées depuis Flask)
+    const allPharmacies = {{ pharmacies | tojson }};
+    let map;
+    let markers = [];
+    let userLat = null;
+    let userLng = null;
+    let currentPharmacies = [...allPharmacies];
+
+    // Calcul de distance (Haversine)
+    function getDistanceFromUser(lat, lng) {
+        if (userLat === null || userLng === null) return Infinity;
+        const R = 6371; // km
+        const dLat = (lat - userLat) * Math.PI / 180;
+        const dLon = (lng - userLng) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(userLat * Math.PI / 180) * Math.cos(lat * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
+    // Mise à jour des listes et des marqueurs
+    function updateDisplay() {
+        const searchText = document.getElementById('searchInput').value.toLowerCase();
+        const openFilter = document.getElementById('openFilter').value;
+        const radiusVal = document.getElementById('radiusFilter').value;
+        const maxRadius = radiusVal === 'all' ? Infinity : parseFloat(radiusVal);
+
+        let filtered = allPharmacies.filter(p => {
+            // Recherche textuelle
+            const matchSearch = searchText === '' || 
+                p.name.toLowerCase().includes(searchText) ||
+                (p.city && p.city.toLowerCase().includes(searchText)) ||
+                (p.address && p.address.toLowerCase().includes(searchText));
+            if (!matchSearch) return false;
+
+            // Filtre ouvert/fermé
+            if (openFilter === 'open' && !p.is_open) return false;
+            if (openFilter === 'closed' && p.is_open) return false;
+
+            // Filtre rayon
+            if (userLat !== null && maxRadius !== Infinity) {
+                const dist = getDistanceFromUser(p.lat, p.lng);
+                if (dist > maxRadius) return false;
+            }
+            return true;
+        });
+
+        // Trier par distance si position connue
+        if (userLat !== null) {
+            filtered.sort((a,b) => getDistanceFromUser(a.lat, a.lng) - getDistanceFromUser(b.lat, b.lng));
+        }
+
+        currentPharmacies = filtered;
+        const count = filtered.length;
+        document.getElementById('resultCount').innerHTML = count === 1 ? '1 pharmacie' : `${count} pharmacies`;
+        document.getElementById('listCount').innerHTML = `${count} résultat${count > 1 ? 's' : ''}`;
+
+        updateMarkers(filtered);
+        updateList(filtered);
+        fitMapBounds(filtered);
+    }
+
+    function updateMarkers(pharmacies) {
+        markers.forEach(m => map.removeLayer(m));
+        markers = [];
+
+        pharmacies.forEach(pharmacy => {
+            const iconColor = pharmacy.is_open ? '#2E8B57' : '#9ca3af';
+            const customIcon = L.divIcon({
+                html: `<div style="background-color: ${iconColor}; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+                        <i class="fas fa-store" style="color: white; font-size: 16px;"></i>
+                       </div>`,
+                className: 'custom-marker',
+                iconSize: [36, 36],
+                popupAnchor: [0, -18]
+            });
+            const marker = L.marker([pharmacy.lat, pharmacy.lng], { icon: customIcon }).addTo(map);
+            marker.bindPopup(`
+                <div style="font-family: 'Goodly', sans-serif; padding: 6px; min-width: 180px;">
+                    <strong style="color: #2C5F8A;">${escapeHtml(pharmacy.name)}</strong><br>
+                    <i class="fas fa-map-pin" style="color: #2E8B57;"></i> ${escapeHtml(pharmacy.address)}<br>
+                    <i class="fas fa-phone" style="color: #2C5F8A;"></i> ${escapeHtml(pharmacy.phone)}<br>
+                    <span class="${pharmacy.is_open ? 'badge-open' : 'badge-closed'}" style="display: inline-block; margin-top: 6px;">
+                        ${pharmacy.is_open ? '✓ Ouvert' : '✗ Fermé'} | ${escapeHtml(pharmacy.schedule)}
+                    </span><br>
+                    <button onclick="openReservationModal(${pharmacy.id}, '${escapeHtml(pharmacy.name).replace(/'/g, "\\'")}')" 
+                            style="margin-top: 8px; background: #2E8B57; color: white; border: none; padding: 5px 12px; border-radius: 25px; font-size: 11px; cursor: pointer; width: 100%;">
+                        📅 Réserver
+                    </button>
+                </div>
+            `);
+            markers.push(marker);
+        });
+    }
+
+    function updateList(pharmacies) {
+        const container = document.getElementById('pharmacyList');
+        if (pharmacies.length === 0) {
+            container.innerHTML = '<div class="text-center text-gray-400 py-8">Aucune pharmacie trouvée</div>';
+            return;
+        }
+        let html = '';
+        pharmacies.forEach(p => {
+            const distance = userLat !== null ? getDistanceFromUser(p.lat, p.lng).toFixed(1) : null;
+            html += `
+                <div class="pharmacy-card glass-card p-3" onclick="flyToPharmacy(${p.lat}, ${p.lng})">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-bold text-gray-800 text-sm">${escapeHtml(p.name)}</h3>
+                            <p class="text-xs text-gray-500 mt-1"><i class="fas fa-location-dot text-[#2E8B57] w-3"></i> ${escapeHtml(p.address)}</p>
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <span class="${p.is_open ? 'badge-open' : 'badge-closed'}">${p.is_open ? 'Ouvert' : 'Fermé'}</span>
+                                ${distance ? `<span class="distance-badge"><i class="fas fa-route"></i> ${distance} km</span>` : ''}
+                            </div>
+                        </div>
+                        <button onclick="event.stopPropagation(); openReservationModal(${p.id}, '${escapeHtml(p.name).replace(/'/g, "\\'")}')" 
+                                class="bg-[#2E8B57] text-white text-xs px-3 py-1 rounded-full hover:bg-[#1f6e46] transition">
+                            Réserver
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function flyToPharmacy(lat, lng) {
+        map.flyTo([lat, lng], 15);
+    }
+
+    function fitMapBounds(pharmacies) {
+        if (pharmacies.length === 0) return;
+        const bounds = L.latLngBounds(pharmacies.map(p => [p.lat, p.lng]));
+        map.fitBounds(bounds);
+    }
+
+    function setUserLocation(lat, lng) {
+        userLat = lat;
+        userLng = lng;
+        // Ajouter un marqueur utilisateur
+        if (window.userMarker) map.removeLayer(window.userMarker);
+        const userIcon = L.divIcon({
+            html: `<div style="background-color: #1E88E5; width: 28px; height: 28px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 2px #1E88E5;">
+                        <i class="fas fa-user" style="color: white; font-size: 14px; display: flex; align-items: center; justify-content: center; height: 100%;"></i>
+                   </div>`,
+            className: 'custom-marker',
+            iconSize: [28, 28]
+        });
+        window.userMarker = L.marker([lat, lng], { icon: userIcon }).addTo(map).bindPopup("Votre position");
+        map.setView([lat, lng], 13);
+        updateDisplay();
+    }
+
+    // Géolocalisation
+    document.getElementById('locateMeBtn').addEventListener('click', () => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => setUserLocation(pos.coords.latitude, pos.coords.longitude),
+                (err) => alert("Impossible d'obtenir votre position : " + err.message)
+            );
+        } else {
+            alert("Géolocalisation non supportée");
+        }
+    });
+
+    // Filtres
+    document.getElementById('searchInput').addEventListener('input', updateDisplay);
+    document.getElementById('openFilter').addEventListener('change', updateDisplay);
+    document.getElementById('radiusFilter').addEventListener('change', updateDisplay);
+    document.getElementById('resetFilters').addEventListener('click', () => {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('openFilter').value = 'all';
+        document.getElementById('radiusFilter').value = 'all';
+        updateDisplay();
+    });
+
+    // Initialisation carte
+    function initMap() {
+        map = L.map('map').setView([5.5, 11.5], 7);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; CartoDB',
+            subdomains: 'abcd',
+            maxZoom: 18
+        }).addTo(map);
+        updateDisplay();
+    }
+
+    // Réservation (identique)
+    let currentPharmacyId = null;
+    function openReservationModal(id, name) {
+        currentPharmacyId = id;
+        document.getElementById('modalPharmacyName').innerHTML = `<i class="fas fa-store mr-1"></i> Réservation chez <strong class="text-[#2E8B57]">${escapeHtml(name)}</strong>`;
+        document.getElementById('reservationModal').classList.remove('hidden');
+        document.getElementById('reservationModal').classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeModal() {
+        document.getElementById('reservationModal').classList.add('hidden');
+        document.getElementById('reservationModal').classList.remove('flex');
+        document.body.style.overflow = '';
+        document.getElementById('reservationForm').reset();
+    }
+    function submitReservation() {
+        const name = document.getElementById('patientName').value;
+        const phone = document.getElementById('patientPhone').value;
+        const date = document.getElementById('reservationDate').value;
+        if (!name || !phone || !date) {
+            alert('Veuillez remplir tous les champs obligatoires');
+            return;
+        }
+        alert(`✅ ${name}, votre réservation a bien été envoyée.\nUn pharmacien vous contactera au ${phone} sous 24h.`);
+        closeModal();
+    }
+    document.getElementById('reservationForm').addEventListener('submit', (e) => { e.preventDefault(); submitReservation(); });
+    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+    document.getElementById('reservationModal').addEventListener('click', (e) => { if (e.target === this) closeModal(); });
+
+    function escapeHtml(str) { return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+    document.addEventListener('DOMContentLoaded', initMap);
+</script>
+{% endblock %}
