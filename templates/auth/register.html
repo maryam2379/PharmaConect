@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PharmaFind · Inscription sécurisée</title>
+  <title>PharmaConnect · Inscription sécurisée</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
@@ -115,13 +115,17 @@
     .logo-mark {
       width: 48px;
       height: 48px;
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.2);
       border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.6rem;
+      overflow: hidden;
+    }
+    
+    .logo-mark img {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
     }
 
     .logo-text {
@@ -162,6 +166,33 @@
       align-items: center;
       justify-content: center;
       color: var(--green-pharma);
+    }
+
+    /* Bouton retour accueil */
+    .back-home-btn {
+      margin: 20px;
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 40px;
+      padding: 8px 16px;
+      color: white;
+      font-size: 0.8rem;
+      font-weight: 500;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(4px);
+    }
+    
+    .back-home-btn:hover {
+      background: rgba(255,255,255,0.3);
+      transform: translateX(-2px);
     }
 
     /* ========== PANEL DROIT ========== */
@@ -483,20 +514,32 @@
 </head>
 <body>
 <div class="register-wrapper">
+  
+  <!-- Bouton retour à l'accueil -->
+   <br><br>
+  <a href="{{ url_for('main.home') }}" class="back-home-btn">
+    <i class="fas fa-arrow-left"></i> Retour à l'accueil
+  </a>
+
   <!-- PANEL GAUCHE -->
   <div class="left-panel">
     <div class="left-content">
       <div class="logo-area">
-        <div class="logo-mark"><i class="fas fa-shield-alt"></i></div>
-        <div><div class="logo-text">PharmaFind</div><div class="logo-small">authenticité · localisation</div></div>
+        <div class="logo-mark">
+          <img src="{{ url_for('static', filename='images/Group 2.svg') }}" alt="PharmaConnect Logo">
+        </div>
+        <div>
+          <div class="logo-text">PharmaConnect</div>
+          <div class="logo-small">Cameroun · Santé connectée</div>
+        </div>
       </div>
       <h1 class="left-title">Votre santé mérite un accès sûr et rapide</h1>
       <p class="left-paragraph">
-        PharmaFind connecte les patients aux pharmacies de proximité disposant du médicament recherché,
-        tout en garantissant l’authenticité des produits via l’API de l’OMS.
+        PharmaConnect connecte les patients aux pharmacies de proximité disposant du médicament recherché,
+        tout en garantissant l'authenticité des produits grâce à notre système de traçabilité.
       </p>
       <div class="feature-item"><span class="feature-dot"><i class="fas fa-check"></i></span> Géolocalisation en temps réel</div>
-      <div class="feature-item"><span class="feature-dot"><i class="fas fa-check"></i></span> Scan code-barres anti-contrefaçon</div>
+      <div class="feature-item"><span class="feature-dot"><i class="fas fa-check"></i></span> Scan QR code anti-contrefaçon</div>
       <div class="feature-item"><span class="feature-dot"><i class="fas fa-check"></i></span> Gratuit pour les patients</div>
       <div class="feature-item"><span class="feature-dot"><i class="fas fa-check"></i></span> Gestion digitale de stock pour pharmacies</div>
     </div>
@@ -547,7 +590,7 @@
       </div>
     </div>
 
-    <!-- ÉTAPE 1 : identité dynamique (avec géolocalisation pour les deux rôles) -->
+    <!-- ÉTAPE 1 : identité dynamique -->
     <div class="step-panel" id="step1">
       <div class="form-grid" id="identityForm"></div>
       <div class="btn-group">
@@ -601,7 +644,6 @@
   let uploadedDocs = {};
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
-  // --- Gestion de l'effet de sélection des cartes rôle ---
   function initRoleSelection() {
     const cards = document.querySelectorAll('.role-card');
     cards.forEach(card => {
@@ -615,7 +657,6 @@
     });
   }
 
-  // UI progression
   function updateStepUI() {
     document.querySelectorAll('.step-panel').forEach((p, idx) => p.classList.toggle('active', idx === currentStep));
     document.querySelectorAll('.step-item').forEach((item, idx) => {
@@ -628,7 +669,6 @@
   }
   function goToStep(step) { if (step>=0 && step<=4) { currentStep = step; updateStepUI(); } }
 
-  // Fonction de géolocalisation partagée (pour patient et pharmacie)
   async function getGeolocation(targetInputId, statusDivId, buttonId) {
     const btn = document.getElementById(buttonId);
     const statusDiv = document.getElementById(statusDivId);
@@ -657,10 +697,8 @@
         inputAddr.value = fullAddress;
         statusDiv.innerText = '✓ Adresse récupérée avec succès';
         statusDiv.className = 'geo-status success';
-        // Mettre à jour profileData en fonction du rôle
         if (selectedRole === 'patient') profileData.adresse = fullAddress;
         else profileData.geoInput = fullAddress;
-        // Si le champ région est vide, on peut le pré-remplir
         const regionField = document.getElementById('region');
         if (regionField && !regionField.value && ville) regionField.value = ville;
       } catch (error) {
@@ -691,7 +729,6 @@
     }, { timeout: 10000, enableHighAccuracy: true });
   }
 
-  // Rendu formulaire identité (avec géolocalisation pour les deux profils)
   function renderIdentityForm() {
     const container = document.getElementById('identityForm');
     if (selectedRole === 'patient') {
@@ -731,7 +768,6 @@
     }
   }
 
-  // Validation identité
   function validateIdentity() {
     let ok = true;
     if (selectedRole === 'patient') {
@@ -770,7 +806,6 @@
     return ok;
   }
 
-  // Validation accès (inchangée)
   function validateAccess() {
     let ok = true;
     const email = document.getElementById('email').value.trim();
@@ -793,7 +828,6 @@
     return ok;
   }
 
-  // Documents (inchangé)
   function renderDocumentsForm() {
     const container = document.getElementById('documentsForm');
     if (selectedRole === 'patient') {
@@ -807,6 +841,7 @@
       attachUploadEvents();
     }
   }
+  
   function attachUploadEvents() {
     document.querySelectorAll('.upload-area').forEach(zone => {
       const input = zone.querySelector('input[type="file"]');
@@ -814,6 +849,7 @@
       input.addEventListener('change', (e) => uploadDoc(e.target, input.id.split('_')[1]));
     });
   }
+  
   async function uploadDoc(input, docId) {
     const file = input.files[0];
     if (!file || file.size > 5*1024*1024) { alert('Fichier trop volumineux (max 5 Mo)'); input.value=''; return; }
@@ -835,6 +871,7 @@
       } else alert('Erreur lors de l\'upload');
     } catch(e) { zone.innerHTML = original; alert('Erreur réseau'); }
   }
+  
   function validateDocs() {
     if (selectedRole === 'pharmacien') {
       if (!uploadedDocs['licence']) { document.getElementById('licenceErr').innerText = 'La licence est obligatoire'; return false; }
@@ -847,7 +884,6 @@
     return true;
   }
 
-  // Soumission finale
   async function submitFinal() {
     if (!validateDocs()) return;
     const btn = document.getElementById('submitFinalBtn');
@@ -876,7 +912,6 @@
     } catch(e) { alert('Erreur de connexion au serveur'); btn.disabled = false; btn.innerHTML = 'Soumettre'; }
   }
 
-  // Navigation
   document.querySelectorAll('.nextStep').forEach(btn => {
     btn.addEventListener('click', () => {
       if (currentStep === 1 && !validateIdentity()) return;
@@ -888,7 +923,6 @@
   document.getElementById('nextStep0').addEventListener('click', () => { goToStep(1); });
   document.getElementById('submitFinalBtn').addEventListener('click', submitFinal);
 
-  // Initialisation
   initRoleSelection();
   renderIdentityForm();
   updateStepUI();
