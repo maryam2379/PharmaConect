@@ -1,0 +1,492 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion des stocks - PharmaConnect Cameroun{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Réutilisation des styles glassmorphism existants */
+    .glass-card { background: rgba(255,255,255,0.5); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.6); border-radius: 24px; transition: all 0.3s ease; }
+    .search-input { background: rgba(255,255,255,0.55); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.6); border-radius: 60px; transition: all 0.2s; }
+    .search-input:focus { outline: none; border-color: #2E8B57; background: rgba(255,255,255,0.85); box-shadow: 0 0 0 3px rgba(46,139,87,0.15); }
+    .badge-stock-low { background: rgba(220,53,69,0.12); color: #dc3545; border-radius: 40px; padding: 0.2rem 0.75rem; font-size: 0.7rem; font-weight: 600; }
+    .badge-stock-ok { background: rgba(46,139,87,0.12); color: #2E8B57; border-radius: 40px; padding: 0.2rem 0.75rem; font-size: 0.7rem; font-weight: 600; }
+    .badge-expired { background: rgba(108,117,125,0.12); color: #6c757d; border-radius: 40px; padding: 0.2rem 0.75rem; font-size: 0.7rem; font-weight: 600; }
+    .action-btn { background: rgba(255,255,255,0.5); border: none; border-radius: 30px; padding: 0.3rem 0.7rem; font-size: 0.7rem; cursor: pointer; }
+    .action-btn:hover { background: rgba(46,139,87,0.2); }
+    .modal-glass { background: rgba(255,255,255,0.98); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.8); }
+    .stock-stat-card { background: rgba(255,255,255,0.45); backdrop-filter: blur(8px); border-radius: 20px; padding: 1rem; text-align: center; transition: all 0.2s; }
+    .stock-stat-card:hover { transform: translateY(-3px); background: rgba(255,255,255,0.6); }
+    .stat-number { font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #2C5F8A, #2E8B57); -webkit-background-clip: text; background-clip: text; color: transparent; }
+</style>
+
+<!-- HEADER -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 md:pt-12 pb-4">
+    <div class="text-center">
+        <div class="inline-flex items-center gap-2 bg-white/40 backdrop-blur-sm rounded-full px-4 py-1.5 mb-4">
+            <i class="fas fa-boxes text-[#2E8B57] text-sm"></i>
+            <span class="text-xs font-medium text-gray-600">Gestion pharmaceutique</span>
+        </div>
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-800">
+            Gestion des <span class="text-[#2E8B57]">stocks</span>
+        </h1>
+        <div class="w-20 h-1 bg-[#2E8B57] mx-auto mt-3 rounded-full"></div>
+        <p class="text-gray-600 mt-4 max-w-2xl mx-auto text-sm md:text-base">
+            Gérez vos médicaments, suivez les niveaux de stock et anticipez les réapprovisionnements.
+        </p>
+    </div>
+</section>
+
+<!-- STATISTIQUES RAPIDES (calculées côté serveur ou via API) -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="stock-stat-card">
+            <i class="fas fa-capsules text-2xl text-[#2C5F8A] mb-2"></i>
+            <div class="stat-number" id="totalMedicines">0</div>
+            <p class="text-xs text-gray-500 mt-1">Médicaments distincts</p>
+        </div>
+        <div class="stock-stat-card">
+            <i class="fas fa-exclamation-triangle text-2xl text-[#dc3545] mb-2"></i>
+            <div class="stat-number" id="lowStockCount">0</div>
+            <p class="text-xs text-gray-500 mt-1">Stock critique (&lt;10)</p>
+        </div>
+        <div class="stock-stat-card">
+            <i class="fas fa-calendar-times text-2xl text-[#6c757d] mb-2"></i>
+            <div class="stat-number" id="expiredCount">0</div>
+            <p class="text-xs text-gray-500 mt-1">Expire &lt; 3 mois</p>
+        </div>
+        <div class="stock-stat-card">
+            <i class="fas fa-chart-line text-2xl text-[#2E8B57] mb-2"></i>
+            <div class="stat-number" id="totalValue">0</div>
+            <p class="text-xs text-gray-500 mt-1">Valeur stock (FCFA)</p>
+        </div>
+    </div>
+</section>
+
+<!-- FILTRES -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div class="glass-card p-4">
+        <div class="flex flex-col md:flex-row gap-4">
+            <div class="flex-1 relative">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="text" id="searchInput" placeholder="Nom, générique, fabricant..." 
+                       class="search-input w-full pl-10 pr-4 py-3 text-gray-700 text-sm">
+            </div>
+            <div class="flex gap-3 flex-wrap">
+                <select id="stockFilter" class="search-input px-4 py-3 text-gray-700 text-sm cursor-pointer">
+                    <option value="all">Tous les stocks</option>
+                    <option value="low">Stock faible (&lt; 10)</option>
+                    <option value="critical">Stock critique (&lt; 5)</option>
+                    <option value="ok">Stock suffisant</option>
+                </select>
+                <button id="addStockBtn" class="bg-gradient-to-r from-[#2E8B57] to-[#1f6e46] px-5 py-2 rounded-full text-white text-sm hover:shadow-lg transition-all flex items-center gap-2">
+                    <i class="fas fa-plus"></i> Ajouter un stock
+                </button>
+                <button id="resetFilters" class="bg-white/50 backdrop-blur-sm px-4 py-2 rounded-full text-[#2C5F8A] border border-white/60 hover:bg-white/80 transition text-sm">
+                    <i class="fas fa-undo-alt"></i>
+                </button>
+            </div>
+        </div>
+        <div class="flex justify-between items-center mt-4 pt-2 border-t border-white/40">
+            <div class="text-xs text-gray-500">
+                <i class="fas fa-database text-[#2E8B57]"></i>
+                <span id="resultCount" class="ml-2 font-medium">0 lignes de stock</span>
+            </div>
+            <div class="text-xs text-gray-400">
+                <i class="fas fa-info-circle"></i> Cliquez sur <i class="fas fa-edit"></i> pour modifier
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- TABLEAU DES STOCKS -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 pb-12">
+    <div class="glass-card p-4 overflow-x-auto">
+        <div class="flex items-center gap-2 mb-4">
+            <i class="fas fa-table-list text-[#2E8B57] text-lg"></i>
+            <h2 class="text-lg font-semibold text-gray-800">Inventaire détaillé</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-white/40">
+                        <th class="text-left py-3 px-2">Médicament</th>
+                        <th class="text-left py-3 px-2">Fabricant</th>
+                        <th class="text-left py-3 px-2">Lot</th>
+                        <th class="text-left py-3 px-2">Qté</th>
+                        <th class="text-left py-3 px-2">Prix unitaire</th>
+                        <th class="text-left py-3 px-2">Expiration</th>
+                        <th class="text-left py-3 px-2">Statut</th>
+                        <th class="text-left py-3 px-2">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="stocksTableBody">
+                    <!-- Rempli dynamiquement -->
+                </tbody>
+            </table>
+        </div>
+        <div id="noResults" class="text-center py-8 text-gray-400 hidden">
+            <i class="fas fa-box-open text-3xl mb-2"></i>
+            <p>Aucune ligne de stock trouvée</p>
+        </div>
+    </div>
+</section>
+
+<!-- MODALE AJOUT/MODIFICATION D'UNE LIGNE DE STOCK -->
+<div id="stockModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/20 backdrop-blur-md transition-all duration-300">
+    <div class="modal-glass rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-white/60">
+        <div class="flex justify-between items-center mb-5">
+            <h3 class="text-xl font-bold text-[#2C5F8A] flex items-center gap-2">
+                <i class="fas fa-pills text-[#2E8B57]"></i>
+                <span id="modalTitle">Ajouter un stock</span>
+            </h3>
+            <button id="closeModalBtn" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+        </div>
+        <form id="stockForm" onsubmit="return false;">
+            <input type="hidden" id="stockId" value="">
+            <div class="mb-3">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Médicament *</label>
+                <select id="medicineId" required class="w-full px-3 py-2 bg-white/70 border border-gray-200 rounded-xl">
+                    <option value="">Sélectionner un médicament</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Numéro de lot</label>
+                <input type="text" id="batchNumber" class="w-full px-3 py-2 bg-white/70 border border-gray-200 rounded-xl">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="mb-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Quantité *</label>
+                    <input type="number" id="quantity" required min="0" class="w-full px-3 py-2 bg-white/70 border border-gray-200 rounded-xl">
+                </div>
+                <div class="mb-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Prix unitaire (FCFA) *</label>
+                    <input type="number" id="price" required min="0" step="100" class="w-full px-3 py-2 bg-white/70 border border-gray-200 rounded-xl">
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Date d'expiration *</label>
+                <input type="date" id="expiryDate" required class="w-full px-3 py-2 bg-white/70 border border-gray-200 rounded-xl">
+            </div>
+            <div class="flex gap-3 mt-2">
+                <button type="submit" class="flex-1 bg-gradient-to-r from-[#2E8B57] to-[#1f6e46] py-2.5 rounded-xl text-white font-medium text-sm hover:shadow-lg transition-all">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+                <button type="button" id="cancelModalBtn" class="flex-1 bg-white/50 backdrop-blur-sm border border-gray-300 py-2.5 rounded-xl text-gray-700 text-sm hover:bg-white/80 transition-all">
+                    Annuler
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODALE D'AJUSTEMENT RAPIDE DE QUANTITÉ -->
+<div id="adjustModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/20 backdrop-blur-md">
+    <div class="modal-glass rounded-2xl max-w-md w-full p-6 shadow-2xl">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-[#2C5F8A]">Ajuster la quantité</h3>
+            <button id="closeAdjustModal" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+        </div>
+        <p id="adjustStockName" class="text-sm text-gray-600 mb-4"></p>
+        <input type="hidden" id="adjustStockId">
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nouvelle quantité</label>
+            <input type="number" id="adjustQuantity" min="0" class="w-full px-3 py-2 bg-white/70 border border-gray-200 rounded-xl">
+        </div>
+        <div class="flex gap-3">
+            <button id="confirmAdjustBtn" class="flex-1 bg-[#2C5F8A] py-2 rounded-xl text-white text-sm hover:bg-[#1f4a6e] transition">Mettre à jour</button>
+            <button id="cancelAdjustBtn" class="flex-1 bg-white/50 border border-gray-300 py-2 rounded-xl text-gray-700 text-sm">Annuler</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ============================================
+    // CONNEXION À L'API BACKEND (à implémenter)
+    // Endpoints attendus :
+    // GET    /api/pharmacist/stocks          -> liste des stocks de la pharmacie connectée
+    // POST   /api/pharmacist/stock           -> ajouter un stock
+    // PUT    /api/pharmacist/stock/<id>      -> modifier un stock
+    // DELETE /api/pharmacist/stock/<id>      -> supprimer un stock
+    // PATCH  /api/pharmacist/stock/<id>/quantity -> ajuster quantité
+    // GET    /api/medicines/list             -> tous les médicaments (pour le select)
+    // ============================================
+
+    let stocks = [];      // Liste des stocks (avec jointure medicine)
+    let medicines = [];   // Liste des médicaments pour le select
+
+    // Fonction d'appel API générique
+    async function apiCall(url, method = 'GET', data = null) {
+        const options = { method, headers: { 'Content-Type': 'application/json' } };
+        if (data) options.body = JSON.stringify(data);
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Erreur serveur');
+        }
+        return response.json();
+    }
+
+    // Charger les stocks depuis le backend
+    async function loadStocks() {
+        try {
+            const data = await apiCall('/api/pharmacist/stocks');
+            stocks = data.stocks;   // Chaque stock contient medicine: { id, name, manufacturer, ... }
+            renderStats();
+            renderTable();
+        } catch (err) {
+            console.error(err);
+            alert('Erreur lors du chargement des stocks : ' + err.message);
+        }
+    }
+
+    // Charger la liste des médicaments pour le select
+    async function loadMedicines() {
+        try {
+            const data = await apiCall('/api/medicines/list');
+            medicines = data.medicines;
+            const select = document.getElementById('medicineId');
+            select.innerHTML = '<option value="">Sélectionner un médicament</option>';
+            medicines.forEach(med => {
+                const option = document.createElement('option');
+                option.value = med.id;
+                option.textContent = `${med.name} (${med.generic_name || ''}) - ${med.manufacturer || ''}`;
+                select.appendChild(option);
+            });
+        } catch (err) {
+            console.error(err);
+            alert('Impossible de charger la liste des médicaments');
+        }
+    }
+
+    // Calcul des statistiques
+    function renderStats() {
+        const totalMedicines = stocks.length;
+        const lowStock = stocks.filter(s => s.quantity < 10).length;
+        const today = new Date();
+        const threeMonthsLater = new Date();
+        threeMonthsLater.setMonth(today.getMonth() + 3);
+        const expiringSoon = stocks.filter(s => {
+            if (!s.expiry_date) return false;
+            const expDate = new Date(s.expiry_date);
+            return expDate <= threeMonthsLater && expDate >= today;
+        }).length;
+        const totalValue = stocks.reduce((sum, s) => sum + (s.quantity * parseFloat(s.price)), 0);
+
+        document.getElementById('totalMedicines').innerText = totalMedicines;
+        document.getElementById('lowStockCount').innerText = lowStock;
+        document.getElementById('expiredCount').innerText = expiringSoon;
+        document.getElementById('totalValue').innerText = totalValue.toLocaleString();
+    }
+
+    // Rendu du tableau avec filtres
+    function renderTable() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const stockFilter = document.getElementById('stockFilter').value;
+
+        let filtered = stocks.filter(s => {
+            const medicine = s.medicine;
+            const matchSearch = medicine.name.toLowerCase().includes(searchTerm) ||
+                (medicine.generic_name && medicine.generic_name.toLowerCase().includes(searchTerm)) ||
+                (medicine.manufacturer && medicine.manufacturer.toLowerCase().includes(searchTerm)) ||
+                (s.batch_number && s.batch_number.toLowerCase().includes(searchTerm));
+            let matchStock = true;
+            if (stockFilter === 'low') matchStock = s.quantity < 10;
+            else if (stockFilter === 'critical') matchStock = s.quantity < 5;
+            else if (stockFilter === 'ok') matchStock = s.quantity >= 10;
+            return matchSearch && matchStock;
+        });
+
+        const tbody = document.getElementById('stocksTableBody');
+        const noResults = document.getElementById('noResults');
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = '';
+            noResults.classList.remove('hidden');
+            document.getElementById('resultCount').innerText = '0 ligne de stock';
+            return;
+        }
+
+        noResults.classList.add('hidden');
+        document.getElementById('resultCount').innerText = `${filtered.length} ligne${filtered.length > 1 ? 's' : ''}`;
+
+        tbody.innerHTML = filtered.map(s => {
+            const isLowStock = s.quantity < 10;
+            const isCritical = s.quantity < 5;
+            const today = new Date();
+            const expiryDate = s.expiry_date ? new Date(s.expiry_date) : null;
+            const isExpired = expiryDate && expiryDate < today;
+            const expiringSoon = expiryDate && (expiryDate - today) < 90 * 24 * 60 * 60 * 1000 && expiryDate >= today;
+
+            let statusBadge = '';
+            if (isCritical) statusBadge = '<span class="badge-stock-low">⚠️ Stock critique</span>';
+            else if (isLowStock) statusBadge = '<span class="badge-stock-low">Stock faible</span>';
+            else statusBadge = '<span class="badge-stock-ok">✓ Stock OK</span>';
+            if (isExpired) statusBadge = '<span class="badge-expired">⏰ Expiré</span>';
+            else if (expiringSoon && !isCritical) statusBadge = '<span class="badge-expired">⚠️ Expire bientôt</span>';
+
+            const expiryDisplay = s.expiry_date ? new Date(s.expiry_date).toLocaleDateString('fr-FR') : 'N/A';
+            const medicineName = s.medicine.name;
+            const manufacturer = s.medicine.manufacturer || '—';
+            const batch = s.batch_number || '—';
+
+            return `
+                <tr class="border-b border-white/30 hover:bg-white/20 transition">
+                    <td class="py-3 px-2 font-medium">${escapeHtml(medicineName)}</td>
+                    <td class="py-3 px-2">${escapeHtml(manufacturer)}</td>
+                    <td class="py-3 px-2 text-xs font-mono">${escapeHtml(batch)}</td>
+                    <td class="py-3 px-2 font-semibold ${isCritical ? 'text-red-600' : (isLowStock ? 'text-orange-500' : '')}">${s.quantity}</td>
+                    <td class="py-3 px-2">${parseFloat(s.price).toLocaleString()} FCFA</td>
+                    <td class="py-3 px-2 text-xs">${expiryDisplay}</td>
+                    <td class="py-3 px-2">${statusBadge}</td>
+                    <td class="py-3 px-2">
+                        <button onclick="openAdjustModal(${s.id})" class="action-btn mr-1" title="Ajuster quantité"><i class="fas fa-plus-circle text-[#2E8B57]"></i></button>
+                        <button onclick="openEditStockModal(${s.id})" class="action-btn mr-1" title="Modifier"><i class="fas fa-edit text-[#2C5F8A]"></i></button>
+                        <button onclick="deleteStock(${s.id})" class="action-btn" title="Supprimer"><i class="fas fa-trash-alt text-red-500"></i></button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m;}); }
+
+    // Ajout / Modification
+    let currentStockId = null;
+
+    function openAddStockModal() {
+        currentStockId = null;
+        document.getElementById('modalTitle').innerText = 'Ajouter un stock';
+        document.getElementById('stockForm').reset();
+        document.getElementById('stockId').value = '';
+        document.getElementById('stockModal').classList.remove('hidden');
+        document.getElementById('stockModal').classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    }
+
+    async function openEditStockModal(id) {
+        const stock = stocks.find(s => s.id === id);
+        if (!stock) return;
+        currentStockId = id;
+        document.getElementById('modalTitle').innerText = 'Modifier le stock';
+        document.getElementById('stockId').value = stock.id;
+        document.getElementById('medicineId').value = stock.medicine_id;
+        document.getElementById('batchNumber').value = stock.batch_number || '';
+        document.getElementById('quantity').value = stock.quantity;
+        document.getElementById('price').value = stock.price;
+        document.getElementById('expiryDate').value = stock.expiry_date || '';
+        document.getElementById('stockModal').classList.remove('hidden');
+        document.getElementById('stockModal').classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    }
+
+    async function submitStockForm() {
+        const medicine_id = document.getElementById('medicineId').value;
+        const batch_number = document.getElementById('batchNumber').value;
+        const quantity = parseInt(document.getElementById('quantity').value);
+        const price = parseFloat(document.getElementById('price').value);
+        const expiry_date = document.getElementById('expiryDate').value;
+
+        if (!medicine_id || isNaN(quantity) || isNaN(price) || !expiry_date) {
+            alert('Veuillez remplir tous les champs obligatoires (Médicament, Quantité, Prix, Date d\'expiration)');
+            return;
+        }
+
+        const payload = { medicine_id, batch_number, quantity, price, expiry_date };
+        try {
+            if (currentStockId) {
+                await apiCall(`/api/pharmacist/stock/${currentStockId}`, 'PUT', payload);
+            } else {
+                await apiCall('/api/pharmacist/stock', 'POST', payload);
+            }
+            closeModal();
+            await loadStocks();  // recharger la liste
+        } catch (err) {
+            alert('Erreur : ' + err.message);
+        }
+    }
+
+    async function deleteStock(id) {
+        if (!confirm('Supprimer définitivement cette ligne de stock ?')) return;
+        try {
+            await apiCall(`/api/pharmacist/stock/${id}`, 'DELETE');
+            await loadStocks();
+        } catch (err) {
+            alert('Erreur : ' + err.message);
+        }
+    }
+
+    // Ajustement rapide de quantité
+    function openAdjustModal(id) {
+        const stock = stocks.find(s => s.id === id);
+        if (!stock) return;
+        document.getElementById('adjustStockId').value = stock.id;
+        document.getElementById('adjustStockName').innerText = stock.medicine.name;
+        document.getElementById('adjustQuantity').value = stock.quantity;
+        document.getElementById('adjustModal').classList.remove('hidden');
+        document.getElementById('adjustModal').classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    }
+
+    async function confirmAdjust() {
+        const id = parseInt(document.getElementById('adjustStockId').value);
+        const newQty = parseInt(document.getElementById('adjustQuantity').value);
+        if (isNaN(newQty) || newQty < 0) {
+            alert('Quantité invalide');
+            return;
+        }
+        try {
+            await apiCall(`/api/pharmacist/stock/${id}/quantity`, 'PATCH', { quantity: newQty });
+            closeAdjustModal();
+            await loadStocks();
+        } catch (err) {
+            alert('Erreur : ' + err.message);
+        }
+    }
+
+    // Gestion des modales
+    function closeModal() {
+        document.getElementById('stockModal').classList.add('hidden');
+        document.getElementById('stockModal').classList.remove('flex');
+        document.body.style.overflow = '';
+    }
+
+    function closeAdjustModal() {
+        document.getElementById('adjustModal').classList.add('hidden');
+        document.getElementById('adjustModal').classList.remove('flex');
+        document.body.style.overflow = '';
+    }
+
+    // Event listeners
+    document.getElementById('searchInput').addEventListener('input', renderTable);
+    document.getElementById('stockFilter').addEventListener('change', renderTable);
+    document.getElementById('resetFilters').addEventListener('click', () => {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('stockFilter').value = 'all';
+        renderTable();
+    });
+    document.getElementById('addStockBtn').addEventListener('click', openAddStockModal);
+    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+    document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
+    document.getElementById('stockForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        submitStockForm();
+    });
+    document.getElementById('closeAdjustModal').addEventListener('click', closeAdjustModal);
+    document.getElementById('cancelAdjustBtn').addEventListener('click', closeAdjustModal);
+    document.getElementById('confirmAdjustBtn').addEventListener('click', confirmAdjust);
+    document.getElementById('adjustModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('adjustModal')) closeAdjustModal();
+    });
+    document.getElementById('stockModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('stockModal')) closeModal();
+    });
+
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', async () => {
+        await loadMedicines();
+        await loadStocks();
+    });
+</script>
+
+{% endblock %}
