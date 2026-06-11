@@ -80,11 +80,11 @@ class Stock(db.Model):
     __tablename__ = 'stocks'
     id = db.Column(db.Integer, primary_key=True)
     quantity = db.Column(db.Integer, nullable=False, default=0)
-    batch_number = db.Column(db.String(50))
+    # Suppression du doublon : une seule définition
+    batch_number = db.Column(db.String(200), nullable=True)  # taille augmentée à 200
     expiry_date = db.Column(db.Date, nullable=False)
     price = db.Column(db.Numeric(10, 2))
     last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
     pharmacy_id = db.Column(db.Integer, db.ForeignKey('pharmacies.id'), nullable=False)
     medicine_id = db.Column(db.Integer, db.ForeignKey('medicines.id'), nullable=False)
 

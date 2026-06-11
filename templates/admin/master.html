@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PharmaFind · {% block title %}Accueil{% endblock %}</title>
+    <title>PharmaConnect · {% block title %}Accueil{% endblock %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
         <!-- Tailwind CSS CDN -->
@@ -282,7 +282,8 @@
     <!-- Sidebar desktop (conservée mais cachée sur mobile via CSS) -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <a href="{{ url_for('main.dashboard') }}" class="logo">
+            <!-- Logo redirige vers l'accueil (main.home) -->
+            <a href="{{ url_for('main.home') }}" class="logo">
                 <img src="{{ url_for('static', filename='images/Group 2.svg') }}" alt="PharmaConnect Logo" style="width: 42px; height: 42px; object-fit: contain;">
                 <span class="logo-text">Dashboard</span>
             </a>
@@ -296,6 +297,10 @@
         </div>
         <nav class="nav-menu">
             <div class="nav-section">Navigation</div>
+            <!-- NOUVEAU : Bouton Accueil -->
+            <a href="{{ url_for('main.home') }}" class="nav-item {% if request.endpoint == 'main.home' %}active{% endif %}">
+                <i class="fas fa-home"></i> Accueil
+            </a>
             <a href="{{ url_for('main.dashboard') }}" class="nav-item {% if request.endpoint == 'main.dashboard' %}active{% endif %}">
                 <i class="fas fa-tachometer-alt"></i> Tableau de bord
             </a>
@@ -349,32 +354,14 @@
                 <i class="fas fa-tachometer-alt"></i>
             </a>
 
-            <!-- Item selon rôle (exemple : pour patient, recherche; pour pharmacien, stocks; etc.) -->
-            {% if session.role == 'patient' %}
-                <a href="#" class="mobile-nav-item">
-                    <i class="fas fa-search"></i>
-                </a>
-            {% elif session.role == 'pharmacien' %}
-                <a href="#" class="mobile-nav-item">
-                    <i class="fas fa-boxes"></i>
-                </a>
-            {% elif session.role == 'admin' %}
-                <a href="#" class="mobile-nav-item">
-                    <i class="fas fa-users"></i>
-                </a>
-            {% elif session.role == 'grossiste' %}
-                <a href="#" class="mobile-nav-item">
-                    <i class="fas fa-chart-line"></i>
-                </a>
-            {% else %}
-                <a href="#" class="mobile-nav-item">
-                    <i class="fas fa-th-large"></i>
-                </a>
-            {% endif %}
+            <!-- NOUVEAU : Bouton Accueil (remplace l'icône variable selon le rôle) -->
+            <a href="{{ url_for('main.home') }}" class="mobile-nav-item {% if request.endpoint == 'main.home' %}active{% endif %}">
+                <i class="fas fa-home"></i>
+            </a>
 
-            <!-- Logo central (surélevé) -->
+            <!-- Logo central (surélevé) - redirige vers l'accueil -->
             <div class="mobile-nav-center">
-                <a href="{{ url_for('main.dashboard') }}" class="mobile-nav-item">
+                <a href="{{ url_for('main.home') }}" class="mobile-nav-item">
                     <img src="{{ url_for('static', filename='images/Group 2.svg') }}" alt="Logo" style="width: 30px; height: 30px; object-fit: contain;">
                 </a>
             </div>
@@ -396,7 +383,6 @@
     </button>
     <script>
         // Supprimer l'ancienne gestion du toggle car la sidebar est cachée sur mobile
-        // On garde juste pour éviter les erreurs, mais on désactive
         const sidebar = document.getElementById('sidebar');
         const toggle = document.getElementById('menu-toggle');
         if (toggle) {

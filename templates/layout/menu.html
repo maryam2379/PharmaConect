@@ -142,6 +142,11 @@
     @media (min-width: 768px) {
         .logo-icon { width: 2.2rem; height: 2.2rem; }
     }
+    @media (max-width: 768px) {
+        #a{
+            display:none;
+        }
+    }
 </style>
 
 <nav class="navbar-glass rounded-bottom-nav sticky top-0 z-50 w-full navbar-height">
@@ -188,9 +193,9 @@
                 <div class="flex items-center gap-2.5">
                     {% if session.user_id %}
                         <!-- Utilisateur connecté -->
-                        <a href="{{ url_for('main.dashboard') }}"
+                        <a href="{{ url_for('main.dashboard') }}" id="a"
                            class="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#2E8B57] to-[#1f6e46] text-white font-medium px-4 py-2 shadow-md hover:shadow-lg transition-all hover:translate-y-[-2px]">
-                            <i class="fas fa-tachometer-alt"></i>
+                            <i class="fas fa-tachometer-alt" ></i>
                             <span>Tableau de bord</span>
                         </a>
                     {% else %}

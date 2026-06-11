@@ -1,6 +1,8 @@
 import secrets
 import random
 import os
+import re
+import requests as http_requests
 import cv2
 import numpy as np
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, current_app
@@ -8,11 +10,243 @@ from werkzeug.utils import secure_filename
 from db import db
 from models import User, Pharmacy, Medicine, Order, Stock, QRCode
 from email_utils import send_email
-from datetime import datetime
+from datetime import datetime, date
 from pyzbar.pyzbar import decode
 from qreader import QReader
 
 main_bp = Blueprint('main', __name__)
+
+# ------------------------------------------------------------------
+# Parser GS1 — déchiffrage automatique des codes médicaments
+# ------------------------------------------------------------------
+
+# Application Identifiers GS1 avec leurs longueurs fixes (None = variable, terminé par  ou fin)
+_GS1_AI_LENGTHS = {
+    '00': 18, '01': 14, '02': 14,
+    '10': None, '11': 6, '17': 6, '21': None,
+    '30': None, '37': None,
+    '240': None, '241': None, '310': 6, '311': 6,
+    '400': None, '401': None, '410': 13, '411': 13,
+    '412': 13, '413': 13, '414': 13,
+    '8005': 6, '8012': None, '8020': None,
+}
+
+def parse_gs1(raw: str) -> dict:
+    """
+    Parse une chaîne GS1-128 / GS1 DataMatrix brute.
+    Supporte les formats :
+      - Avec parenthèses : (01)12345678901234(17)251231(10)LOT01
+      - Sans parenthèses (flux brut) : 0112345678901234171231021001
+      - Avec séparateur GS (\x1d) entre AIs variables
+    Retourne un dict avec les clés nommées.
+    """
+    result = {}
+    s = raw.strip()
+
+    # Format avec parenthèses : (AI)valeur
+    if '(' in s:
+        pattern = re.compile(r'\((\d{2,4})\)([^(]*)')
+        for m in pattern.finditer(s):
+            ai, val = m.group(1), m.group(2).strip()
+            result[ai] = val
+    else:
+        # Format flux brut — on avance caractère par caractère
+        s = s.replace('\x1d', '\x1d')  # garder GS tel quel
+        i = 0
+        while i < len(s):
+            # Identifier l'AI (2, 3 ou 4 chiffres)
+            ai = None
+            for length in (4, 3, 2):
+                candidate = s[i:i+length]
+                if candidate in _GS1_AI_LENGTHS:
+                    ai = candidate
+                    break
+            if ai is None:
+                break
+            i += len(ai)
+            fixed_len = _GS1_AI_LENGTHS[ai]
+            if fixed_len is not None:
+                result[ai] = s[i:i+fixed_len]
+                i += fixed_len
+            else:
+                # Variable : lire jusqu'au séparateur GS ou fin
+                end = s.find('\x1d', i)
+                if end == -1:
+                    result[ai] = s[i:]
+                    break
+                result[ai] = s[i:end]
+                i = end + 1
+
+    return result
+
+
+def _parse_expiry(yymmdd: str):
+    """Convertit YYMMDD en objet date. DD=00 → dernier jour du mois."""
+    try:
+        yy = int(yymmdd[0:2])
+        mm = int(yymmdd[2:4])
+        dd = int(yymmdd[4:6])
+        year = 2000 + yy if yy < 50 else 1900 + yy
+        if dd == 0:
+            import calendar
+            dd = calendar.monthrange(year, mm)[1]
+        return date(year, mm, dd)
+    except Exception:
+        return None
+
+
+def _lookup_gtin(gtin: str) -> dict:
+    """
+    Cherche les infos produit par GTIN via Open Food Facts (médicaments OTC)
+    puis fallback Open Drug Data (RxNorm / openFDA).
+    Retourne un dict partiel avec les champs disponibles.
+    """
+    info = {}
+
+    # 1. Open Food Facts (produits grand public, médicaments OTC)
+    try:
+        url = f"https://world.openfoodfacts.org/api/v0/product/{gtin}.json"
+        resp = http_requests.get(url, timeout=5)
+        if resp.status_code == 200:
+            data = resp.json()
+            if data.get('status') == 1:
+                prod = data.get('product', {})
+                info['name'] = prod.get('product_name') or prod.get('generic_name') or ''
+                info['manufacturer'] = prod.get('brands') or prod.get('manufacturer') or ''
+                info['generic_name'] = prod.get('generic_name') or ''
+                info['form'] = prod.get('categories') or ''
+    except Exception:
+        pass
+
+    # 2. OpenFDA — médicaments
+    if not info.get('name'):
+        try:
+            url = f"https://api.fda.gov/drug/ndc.json?search=product_ndc:{gtin}&limit=1"
+            resp = http_requests.get(url, timeout=5)
+            if resp.status_code == 200:
+                data = resp.json()
+                results = data.get('results', [])
+                if results:
+                    r = results[0]
+                    info['name'] = r.get('brand_name') or r.get('generic_name') or ''
+                    info['generic_name'] = r.get('generic_name') or ''
+                    info['manufacturer'] = r.get('labeler_name') or ''
+                    info['dosage'] = r.get('dosage_form') or ''
+                    info['form'] = r.get('dosage_form') or ''
+                    info['prescription_required'] = r.get('marketing_category', '').upper() not in ('OTC', 'OTCMONOGRAPH')
+        except Exception:
+            pass
+
+    return info
+
+
+def decode_medicine_from_code(raw_code: str) -> dict:
+    """
+    Point d'entrée unique : reçoit un code brut (QR, barcode, DataMatrix).
+    Retourne un dict structuré avec tous les champs disponibles pour Medicine + Stock.
+
+    Stratégies dans l'ordre :
+      1. Format interne custom  name|generic|manufacturer|dosage|form|expiry|lot
+      2. Format JSON {"name":..., "dosage":...}
+      3. GS1 standard (parenthèses ou flux brut)
+      4. Code numérique seul → traité comme GTIN (lookup API)
+    """
+    info = {
+        'raw_code': raw_code,
+        'name': '',
+        'generic_name': '',
+        'manufacturer': '',
+        'dosage': '',
+        'form': '',
+        'prescription_required': False,
+        'expiry_date': None,
+        'batch_number': '',
+        'serial_number': '',
+        'gtin': '',
+        'source': 'unknown',
+    }
+
+    s = raw_code.strip()
+
+    # --- Stratégie 1 : Format JSON ---
+    if s.startswith('{'):
+        try:
+            import json
+            d = json.loads(s)
+            info.update({k: v for k, v in d.items() if k in info})
+            info['source'] = 'json'
+            return info
+        except Exception:
+            pass
+
+    # --- Stratégie 2 : Format pipe custom name|generic|manufacturer|dosage|form|expiry|lot ---
+    if '|' in s and not s.startswith('(') and not re.match(r'^\d{8,}', s):
+        parts = s.split('|')
+        fields = ['name', 'generic_name', 'manufacturer', 'dosage', 'form', 'expiry_date', 'batch_number']
+        for idx, field in enumerate(fields):
+            if idx < len(parts) and parts[idx]:
+                if field == 'expiry_date':
+                    # Accepter YYYY-MM-DD ou YYMMDD
+                    val = parts[idx].strip()
+                    if re.match(r'^\d{4}-\d{2}-\d{2}$', val):
+                        try:
+                            info['expiry_date'] = datetime.strptime(val, '%Y-%m-%d').date()
+                        except Exception:
+                            pass
+                    elif re.match(r'^\d{6}$', val):
+                        info['expiry_date'] = _parse_expiry(val)
+                else:
+                    info[field] = parts[idx].strip()
+        info['source'] = 'pipe'
+        return info
+
+    # --- Stratégie 3 : GS1 (parenthèses ou flux brut numérique) ---
+    gs1 = {}
+    if '(' in s or re.match(r'^[\d\x1d]+', s):
+        gs1 = parse_gs1(s)
+
+    if gs1:
+        gtin = gs1.get('01', '')
+        info['gtin'] = gtin
+        info['batch_number'] = gs1.get('10', '')
+        info['serial_number'] = gs1.get('21', '')
+        expiry_raw = gs1.get('17', '')
+        if expiry_raw:
+            info['expiry_date'] = _parse_expiry(expiry_raw)
+
+        # Lookup GTIN pour enrichir name/manufacturer
+        if gtin:
+            enriched = _lookup_gtin(gtin)
+            for k, v in enriched.items():
+                if v:
+                    info[k] = v
+
+        # Si le nom reste vide, utiliser le GTIN comme nom temporaire
+        if not info['name'] and gtin:
+            info['name'] = f"GTIN-{gtin}"
+
+        info['source'] = 'gs1'
+        return info
+
+    # --- Stratégie 4 : Code numérique seul (GTIN EAN-8/13/14) ---
+    if re.match(r'^\d{8,14}$', s):
+        info['gtin'] = s
+        info['batch_number'] = s
+        enriched = _lookup_gtin(s)
+        for k, v in enriched.items():
+            if v:
+                info[k] = v
+        if not info['name']:
+            info['name'] = f"GTIN-{s}"
+        info['source'] = 'gtin'
+        return info
+
+    # --- Fallback : code opaque, utiliser comme nom ---
+    info['name'] = s[:150]
+    info['batch_number'] = s
+    info['source'] = 'raw'
+    return info
+
 
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
@@ -442,24 +676,29 @@ def scan_page():
 
 @main_bp.route("/api/scan", methods=["POST"])
 def api_scan():
+    """
+    Scan principal : verification anti-contrefacon + insertion automatique
+    pour pharmaciens/admins si le code est inconnu.
+    """
     if 'user_id' not in session:
-        return jsonify({'success': False, 'message': 'Non authentifié'}), 401
-    
+        return jsonify({'success': False, 'message': 'Non authentifie'}), 401
+
     data = request.get_json()
     scanned_code = data.get('code', '').strip()
     if not scanned_code:
         return jsonify({'success': False, 'message': 'Code vide'}), 400
-    
+
     user = User.query.get(session['user_id'])
     role = user.role
-    
+
+    # 1. Code deja connu en DB → verification anti-contrefacon
     qr = QRCode.query.filter_by(code=scanned_code).first()
     if qr:
         medicine = qr.medicine
         if qr.status == 'used' and role != 'pharmacien':
             return jsonify({
                 'success': False,
-                'message': '⚠️ Ce médicament a déjà été scanné auparavant ! Possible contrefaçon.'
+                'message': '⚠️ Ce médicament a déjà été scanné ! Possible contrefaçon.'
             })
         if role == 'patient' and qr.status == 'active':
             qr.status = 'used'
@@ -468,7 +707,9 @@ def api_scan():
             db.session.commit()
         return jsonify({
             'success': True,
+            'already_known': True,
             'medicine': {
+                'id': medicine.id,
                 'name': medicine.name,
                 'generic_name': medicine.generic_name,
                 'manufacturer': medicine.manufacturer,
@@ -478,12 +719,132 @@ def api_scan():
                 'authentic': qr.status == 'used' if role == 'patient' else True
             }
         })
-    else:
+
+    # 2. Code inconnu → dechiffrage automatique
+    decoded = decode_medicine_from_code(scanned_code)
+
+    # Pour les patients : signaler que le medicament est inconnu
+    if role == 'patient':
         return jsonify({
             'success': False,
             'not_found': True,
-            'message': 'Médicament non trouvé dans la base.'
+            'message': 'Médicament non trouvé dans la base. Consultez un pharmacien.'
         }), 404
+
+    # 3. Insertion automatique (pharmacien / admin)
+    try:
+        med_info = decoded
+        pharmacy = None
+
+        # Chercher ou creer le medicament
+        medicine = None
+        if med_info.get('gtin'):
+            existing_qr = QRCode.query.filter(
+                QRCode.serial_number == med_info['gtin']
+            ).first()
+            if existing_qr:
+                medicine = existing_qr.medicine
+
+        if not medicine and med_info.get('name') and not med_info['name'].startswith('GTIN-'):
+            medicine = Medicine.query.filter_by(
+                name=med_info['name'],
+                dosage=med_info.get('dosage', '')
+            ).first()
+
+        if not medicine:
+            medicine = Medicine(
+                name=med_info.get('name') or f'Medicament-{scanned_code[:20]}',
+                generic_name=med_info.get('generic_name', ''),
+                manufacturer=med_info.get('manufacturer', ''),
+                dosage=med_info.get('dosage', ''),
+                form=med_info.get('form', ''),
+                prescription_required=bool(med_info.get('prescription_required', False)),
+            )
+            db.session.add(medicine)
+            db.session.flush()
+            is_new_medicine = True
+        else:
+            is_new_medicine = False
+
+        # Gerer le stock si pharmacien
+        stock_id = None
+        if role == 'pharmacien':
+            pharmacy = Pharmacy.query.filter_by(manager_id=user.id).first()
+            if pharmacy:
+                from datetime import timedelta
+                expiry = med_info.get('expiry_date')
+                if not expiry:
+                    expiry = (datetime.utcnow() + timedelta(days=365)).date()
+
+                batch = med_info.get('batch_number', '')
+                stock = Stock.query.filter_by(
+                    pharmacy_id=pharmacy.id,
+                    medicine_id=medicine.id,
+                    batch_number=batch
+                ).first()
+                if stock:
+                    stock.quantity += 1
+                    stock.last_updated = datetime.utcnow()
+                else:
+                    stock = Stock(
+                        pharmacy_id=pharmacy.id,
+                        medicine_id=medicine.id,
+                        quantity=1,
+                        expiry_date=expiry,
+                        price=0,
+                        batch_number=batch
+                    )
+                    db.session.add(stock)
+                    db.session.flush()
+                stock_id = stock.id
+
+        # Enregistrer le QRCode pour future detection
+        if not QRCode.query.filter_by(code=scanned_code).first():
+            qr_entry = QRCode(
+                code=scanned_code,
+                serial_number=med_info.get('serial_number') or med_info.get('gtin') or scanned_code,
+                status='active',
+                medicine_id=medicine.id,
+                pharmacy_id=pharmacy.id if pharmacy else None
+            )
+            db.session.add(qr_entry)
+
+        db.session.commit()
+
+        expiry_val = med_info.get('expiry_date')
+        return jsonify({
+            'success': True,
+            'auto_inserted': True,
+            'is_new_medicine': is_new_medicine,
+            'source': med_info.get('source', 'unknown'),
+            'medicine': {
+                'id': medicine.id,
+                'name': medicine.name,
+                'generic_name': medicine.generic_name,
+                'manufacturer': medicine.manufacturer,
+                'dosage': medicine.dosage,
+                'form': medicine.form,
+                'prescription_required': medicine.prescription_required,
+                'authentic': True,
+                'batch_number': med_info.get('batch_number', ''),
+                'expiry_date': expiry_val.isoformat() if expiry_val else None,
+                'gtin': med_info.get('gtin', ''),
+            },
+            'stock_id': stock_id,
+            'message': (
+                'Nouveau medicament cree et ajoute au stock automatiquement.'
+                if is_new_medicine else
+                'Stock mis a jour automatiquement.'
+            )
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"[api_scan] Erreur insertion auto : {e}")
+        return jsonify({
+            'success': False,
+            'message': f"Erreur insertion automatique : {str(e)}"
+        }), 500
 
 @main_bp.route("/api/upload-qrcode", methods=["POST"])
 def api_upload_qrcode():

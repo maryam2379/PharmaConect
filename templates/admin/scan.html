@@ -289,11 +289,22 @@
     video.srcObject = null;
   }
 
-  // ------------------- VÉRIFICATION + AJOUT AUTO -------------------
+  // ------------------- VÉRIFICATION + INSERTION AUTOMATIQUE -------------------
+  function sourceLabel(source) {
+    const labels = {
+      'gs1': '📦 GS1 / DataMatrix',
+      'gtin': '🔢 GTIN / EAN',
+      'json': '🗂️ JSON structuré',
+      'pipe': '📋 Format interne',
+      'raw': '🔡 Code brut'
+    };
+    return labels[source] || source || '-';
+  }
+
   async function verifyCode(code, resultDivId, containerId) {
     const contentDiv = document.getElementById(resultDivId);
-    contentDiv.innerHTML = '<div class="loader"></div> Vérification en cours...';
-    
+    contentDiv.innerHTML = '<div class="loader"></div> Analyse et déchiffrage du code en cours...';
+
     try {
       const scanResponse = await fetch(apiScanUrl, {
         method: 'POST',
@@ -301,73 +312,59 @@
         body: JSON.stringify({ code: code })
       });
       const data = await scanResponse.json();
-      
       const resultDiv = document.getElementById(containerId);
+      resultDiv.style.display = 'block';
+
       if (data.success) {
         const med = data.medicine;
-        const authenticHtml = med.authentic 
-          ? '<span class="authentic-badge authentic-true">✓ Authentique</span>' 
+        const authenticHtml = med.authentic
+          ? '<span class="authentic-badge authentic-true">✓ Authentique</span>'
           : '<span class="authentic-badge authentic-false">✗ Déjà scanné - Risque</span>';
-        
-        // Afficher les infos médicament
+
+        let insertBadge = '';
+        if (data.auto_inserted) {
+          insertBadge = data.is_new_medicine
+            ? `<div class="text-green-600 font-semibold mb-3 p-2 bg-green-50 rounded-xl">
+                ✅ Nouveau médicament créé et ajouté au stock automatiquement
+                <span class="text-xs text-gray-400 ml-2">(${sourceLabel(data.source)})</span>
+               </div>`
+            : `<div class="text-blue-600 font-semibold mb-3 p-2 bg-blue-50 rounded-xl">
+                🔄 Stock mis à jour automatiquement
+                <span class="text-xs text-gray-400 ml-2">(${sourceLabel(data.source)})</span>
+               </div>`;
+        } else if (data.already_known) {
+          insertBadge = `<div class="text-gray-400 text-xs mb-3">📌 Médicament déjà enregistré en base</div>`;
+        }
+
         contentDiv.innerHTML = `
+          ${insertBadge}
           <div class="info-grid">
-            <div><span class="info-label">Médicament :</span> ${med.name}</div>
+            <div><span class="info-label">Médicament :</span> ${med.name || '-'}</div>
             <div><span class="info-label">Générique :</span> ${med.generic_name || '-'}</div>
             <div><span class="info-label">Fabricant :</span> ${med.manufacturer || '-'}</div>
             <div><span class="info-label">Dosage :</span> ${med.dosage || '-'}</div>
             <div><span class="info-label">Forme :</span> ${med.form || '-'}</div>
             <div><span class="info-label">Authenticité :</span> ${authenticHtml}</div>
             <div><span class="info-label">Ordonnance :</span> ${med.prescription_required ? 'Oui' : 'Non'}</div>
+            ${med.batch_number ? `<div><span class="info-label">N° lot :</span> ${med.batch_number}</div>` : ''}
+            ${med.expiry_date ? `<div><span class="info-label">Expiration :</span> ${med.expiry_date}</div>` : ''}
+            ${med.gtin ? `<div><span class="info-label">GTIN :</span> ${med.gtin}</div>` : ''}
           </div>
-          <div id="autoAddMsg"></div>
         `;
-        
-        // AJOUT AUTOMATIQUE pour les pharmaciens (sans bouton)
-        if (currentRole === 'pharmacien') {
-          const msgDiv = document.getElementById('autoAddMsg');
-          msgDiv.innerHTML = '<div class="loader"></div> Ajout automatique au stock...';
-          
-          try {
-            const addResponse = await fetch(apiAddMedicineUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                name: med.name,
-                generic_name: med.generic_name || '',
-                manufacturer: med.manufacturer || '',
-                dosage: med.dosage || '',
-                form: med.form || '',
-                prescription_required: med.prescription_required || false,
-                barcode: code,
-                quantity: 1,
-                expiry_date: null,
-                price: 0
-              })
-            });
-            const addData = await addResponse.json();
-            if (addData.success) {
-              msgDiv.innerHTML = '<div class="text-green-600 mt-2">✅ Médicament ajouté automatiquement à votre stock.</div>';
-            } else {
-              msgDiv.innerHTML = `<div class="text-red-600 mt-2">❌ Ajout automatique échoué : ${addData.message || 'Erreur inconnue'}</div>`;
-            }
-          } catch (err) {
-            console.error("Erreur ajout auto:", err);
-            msgDiv.innerHTML = '<div class="text-red-600 mt-2">❌ Erreur réseau lors de l\'ajout automatique.</div>';
-          }
-        }
+
       } else if (data.not_found) {
         contentDiv.innerHTML = `<div class="bg-yellow-50 p-3 rounded-xl"><i class="fas fa-exclamation-triangle text-yellow-600"></i> ${data.message}</div>`;
       } else {
         contentDiv.innerHTML = `<div class="text-red-600">${data.message}</div>`;
       }
-      resultDiv.style.display = 'block';
+
     } catch (err) {
       document.getElementById(resultDivId).innerHTML = '<div class="text-red-600">Erreur de connexion</div>';
       document.getElementById(containerId).style.display = 'block';
     }
   }
 
+  // ------------------- SOUMISSION FORMULAIRE AJOUT MÉDICAMENT -------------------
   // ------------------- CHANGEMENT DE MÉTHODE -------------------
   methodCards.forEach(card => {
     card.addEventListener('click', () => {
