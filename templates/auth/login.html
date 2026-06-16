@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PharmaFind · Connexion sécurisée</title>
+  <title>PharmaConnect · Connexion sécurisée</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
@@ -66,6 +66,34 @@
       z-index: 1;
     }
 
+    /* Bouton retour accueil - SUR LA PARTIE BLEUE (visible) */
+    .back-home-btn {
+      margin: 10px;
+      height: 25px;
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 20;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 40px;
+      padding: 8px 16px;
+      color: white;
+      font-size: 0.8rem;
+      font-weight: 500;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(4px);
+    }
+    
+    .back-home-btn:hover {
+      background: rgba(255, 255, 255, 0.35);
+      transform: translateX(-2px);
+    }
+
     /* PANEL GAUCHE */
     .left-panel {
       flex: 1;
@@ -103,13 +131,17 @@
     .logo-mark {
       width: 48px;
       height: 48px;
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.2);
       border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.6rem;
+      overflow: hidden;
+    }
+    
+    .logo-mark img {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
     }
 
     .logo-text {
@@ -308,16 +340,27 @@
 </head>
 <body>
 <div class="login-wrapper">
-  <!-- PANEL GAUCHE (identique à l'inscription) -->
+  
+  <!-- Bouton retour à l'accueil (SUR LA PARTIE BLEUE - VISIBLE) -->
+  <a href="{{ url_for('main.home') }}" class="back-home-btn">
+    <i class="fas fa-arrow-left"></i> Retour à l'accueil
+  </a>
+
+  <!-- PANEL GAUCHE -->
   <div class="left-panel">
     <div class="left-content">
       <div class="logo-area">
-        <div class="logo-mark"><i class="fas fa-shield-alt"></i></div>
-        <div><div class="logo-text">PharmaFind</div><div class="logo-small">authenticité · localisation</div></div>
+        <div class="logo-mark">
+          <img src="{{ url_for('static', filename='images/Group 2.svg') }}" alt="PharmaConnect Logo">
+        </div>
+        <div>
+          <div class="logo-text">PharmaConnect</div>
+          <div class="logo-small">Cameroun · Santé connectée</div>
+        </div>
       </div>
       <h1 class="left-title">Retrouvez vos médicaments en toute confiance</h1>
       <div class="feature-item"><span class="feature-dot"><i class="fas fa-check"></i></span> Géolocalisation en temps réel</div>
-      <div class="feature-item"><span class="feature-dot"><i class="fas fa-check"></i></span> Scan code-barres anti-contrefaçon</div>
+      <div class="feature-item"><span class="feature-dot"><i class="fas fa-check"></i></span> Scan QR code anti-contrefaçon</div>
       <div class="feature-item"><span class="feature-dot"><i class="fas fa-check"></i></span> Gratuit pour les patients</div>
       <div class="feature-item"><span class="feature-dot"><i class="fas fa-check"></i></span> Gestion digitale de stock pour pharmacies</div>
     </div>
@@ -328,7 +371,7 @@
     <div class="form-header">
       <div class="header-icon"><i class="fas fa-sign-in-alt"></i></div>
       <h2>Connexion</h2>
-      <p>Accédez à votre compte PharmaFind</p>
+      <p>Accédez à votre compte PharmaConnect</p>
     </div>
 
     <!-- Affichage des messages flash -->
