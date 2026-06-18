@@ -9,7 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* --- Styles inchangés --- */
+        /* --- Variables et styles de base (inchangés) --- */
         @font-face {
             font-family: 'Goodly';
             src: local('Goodly'), local('SF Pro Text'), local('Segoe UI');
@@ -46,6 +46,30 @@
             z-index: 40;
             transition: transform 0.3s ease;
             overflow-y: auto;
+        }
+        /* Version mobile : sidebar en overlay (hors écran par défaut) */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                display: block; /* on garde le block pour l'animation */
+                box-shadow: 0 0 30px rgba(0,0,0,0.2);
+                border-right: none;
+                z-index: 60;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            /* Overlay sombre derrière la sidebar */
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.4);
+                z-index: 50;
+            }
+            .sidebar-overlay.active {
+                display: block;
+            }
         }
         .sidebar-header {
             padding: 2rem 1.5rem;
@@ -143,6 +167,11 @@
             display: flex;
             flex-direction: column;
         }
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+            }
+        }
         .top-bar {
             background: var(--blanc-carte);
             padding: 1rem 2rem;
@@ -153,6 +182,26 @@
             position: sticky;
             top: 0;
             z-index: 30;
+        }
+        .top-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        /* Bouton hamburger pour mobile */
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.6rem;
+            color: var(--texte-fonce);
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: block;
+            }
         }
         .page-title {
             font-family: 'Goodly', 'Ubuntu', sans-serif;
@@ -171,6 +220,9 @@
             transition: 0.2s;
         }
         .btn-logout:hover { background: #dc2626; color: white; }
+        @media (max-width: 768px) {
+            .btn-logout { display: none; }
+        }
         .flash-messages { padding: 1rem 2rem; }
         .alert {
             padding: 12px 16px;
@@ -184,8 +236,11 @@
         .alert-success { background: #e0f2e9; border-left: 4px solid var(--vert-principal); color: #166534; }
         .alert-danger { background: #fee2e2; border-left: 4px solid #dc2626; color: #991b1b; }
         .content { padding: 2rem; flex: 1; }
+        @media (max-width: 768px) {
+            .content { padding: 1rem; padding-bottom: 90px; }
+        }
 
-        /* --- Barre flottante mobile --- */
+        /* --- Barre flottante mobile (inchangée) --- */
         .mobile-bottom-nav {
             display: none;
             position: fixed;
@@ -245,35 +300,18 @@
             font-size: 1.8rem;
         }
         @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                display: none;
-            }
-            .main-content {
-                margin-left: 0;
-            }
-            .top-bar {
-                padding: 0.8rem 1rem;
-            }
-            .content {
-                padding: 1rem;
-                padding-bottom: 90px;
-            }
-            .btn-logout {
-                display: none;
-            }
             .mobile-bottom-nav {
                 display: block;
-            }
-            #menu-toggle {
-                display: none;
             }
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Sidebar desktop -->
+    <!-- Overlay pour la sidebar mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar (desktop + mobile overlay) -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <a href="{{ url_for('main.home') }}" class="logo">
@@ -320,7 +358,13 @@
 
     <div class="main-content">
         <header class="top-bar">
-            <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+            <div class="top-bar-left">
+                <!-- Bouton hamburger pour ouvrir la sidebar sur mobile -->
+                <button class="menu-toggle" id="menuToggle" aria-label="Menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+            </div>
             <a href="{{ url_for('main.logout') }}" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
         </header>
         <div class="flash-messages">
@@ -338,15 +382,15 @@
         </main>
     </div>
 
-    <!-- BARRE DE NAVIGATION MOBILE FLOTTANTE AVEC ICÔNE SPÉCIFIQUE AU RÔLE -->
+    <!-- Barre de navigation mobile flottante (actions rapides) -->
     <div class="mobile-bottom-nav">
         <div class="mobile-nav-items">
-            <!-- 1. Tableau de bord -->
+            <!-- Tableau de bord -->
             <a href="{{ url_for('main.dashboard') }}" class="mobile-nav-item {% if request.endpoint == 'main.dashboard' %}active{% endif %}">
                 <i class="fas fa-tachometer-alt"></i>
             </a>
 
-            <!-- 2. Icône spécifique au rôle (remplace l'ancien bouton Accueil) -->
+            <!-- Icône spécifique au rôle (action principale) -->
             {% if session.role == 'patient' %}
                 <a href="{{ url_for('main.patient_scan') }}" class="mobile-nav-item {% if request.endpoint == 'main.patient_scan' %}active{% endif %}">
                     <i class="fas fa-qrcode"></i>
@@ -364,37 +408,76 @@
                     <i class="fas fa-chart-simple"></i>
                 </a>
             {% else %}
-                <!-- fallback : Accueil -->
                 <a href="{{ url_for('main.home') }}" class="mobile-nav-item {% if request.endpoint == 'main.home' %}active{% endif %}">
                     <i class="fas fa-home"></i>
                 </a>
             {% endif %}
 
-            <!-- 3. Logo central (Accueil) -->
+            <!-- Logo central (Accueil) -->
             <div class="mobile-nav-center">
                 <a href="{{ url_for('main.home') }}" class="mobile-nav-item">
                     <img src="{{ url_for('static', filename='images/Group 2.svg') }}" alt="Logo" style="width: 30px; height: 30px; object-fit: contain;">
                 </a>
             </div>
 
-            <!-- 4. Profil -->
+            <!-- Profil -->
             <a href="{{ url_for('main.profile') }}" class="mobile-nav-item">
                 <i class="fas fa-user-circle"></i>
             </a>
 
-            <!-- 5. Déconnexion -->
+            <!-- Déconnexion -->
             <a href="{{ url_for('main.logout') }}" class="mobile-nav-item">
                 <i class="fas fa-sign-out-alt"></i>
             </a>
         </div>
     </div>
 
-    <button id="menu-toggle" class="fixed bottom-4 left-4 z-50 md:hidden bg-white rounded-full p-3 shadow-lg border">
-        <i class="fas fa-bars text-vert-principal"></i>
-    </button>
     <script>
-        // La sidebar est masquée sur mobile, on cache le toggle
-        document.getElementById('menu-toggle').style.display = 'none';
+        // Gestion de l'ouverture/fermeture de la sidebar sur mobile
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        const toggleBtn = document.getElementById('menuToggle');
+
+        function openSidebar() {
+            sidebar.classList.add('open');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden'; // empêcher le scroll
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        toggleBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (sidebar.classList.contains('open')) {
+                closeSidebar();
+            } else {
+                openSidebar();
+            }
+        });
+
+        overlay.addEventListener('click', closeSidebar);
+
+        // Fermer la sidebar si on clique sur un lien (pour une meilleure UX)
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                if (window.innerWidth <= 768) {
+                    closeSidebar();
+                }
+            });
+        });
+
+        // Gérer le redimensionnement : si on passe en desktop, s'assurer que la sidebar est ouverte (sans overlay)
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
     </script>
     {% block extra_js %}{% endblock %}
 </body>
