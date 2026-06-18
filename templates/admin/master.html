@@ -6,14 +6,10 @@
     <title>PharmaConnect · {% block title %}Accueil{% endblock %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-        <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
-        /* --- Styles existants (inchangés pour desktop) --- */
+        /* --- Styles inchangés --- */
         @font-face {
             font-family: 'Goodly';
             src: local('Goodly'), local('SF Pro Text'), local('Segoe UI');
@@ -38,7 +34,6 @@
             color: var(--texte-fonce);
             overflow-x: hidden;
         }
-        /* Sidebar pour desktop */
         .sidebar {
             position: fixed;
             left: 0;
@@ -190,7 +185,7 @@
         .alert-danger { background: #fee2e2; border-left: 4px solid #dc2626; color: #991b1b; }
         .content { padding: 2rem; flex: 1; }
 
-        /* --- NOUVEAU : Barre flottante mobile (icônes seulement, logo centré) --- */
+        /* --- Barre flottante mobile --- */
         .mobile-bottom-nav {
             display: none;
             position: fixed;
@@ -249,11 +244,10 @@
         .mobile-nav-center .mobile-nav-item i {
             font-size: 1.8rem;
         }
-        /* Masquer l'ancien bouton toggle et sidebar sur mobile */
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
-                display: none; /* On cache complètement la sidebar sur mobile */
+                display: none;
             }
             .main-content {
                 margin-left: 0;
@@ -263,10 +257,10 @@
             }
             .content {
                 padding: 1rem;
-                padding-bottom: 90px; /* pour éviter que le contenu soit caché sous la barre */
+                padding-bottom: 90px;
             }
             .btn-logout {
-                display: none; /* on utilise la déconnexion dans la barre mobile */
+                display: none;
             }
             .mobile-bottom-nav {
                 display: block;
@@ -279,10 +273,9 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Sidebar desktop (conservée mais cachée sur mobile via CSS) -->
+    <!-- Sidebar desktop -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <!-- Logo redirige vers l'accueil (main.home) -->
             <a href="{{ url_for('main.home') }}" class="logo">
                 <img src="{{ url_for('static', filename='images/Group 2.svg') }}" alt="PharmaConnect Logo" style="width: 42px; height: 42px; object-fit: contain;">
                 <span class="logo-text">Dashboard</span>
@@ -297,7 +290,6 @@
         </div>
         <nav class="nav-menu">
             <div class="nav-section">Navigation</div>
-            <!-- NOUVEAU : Bouton Accueil -->
             <a href="{{ url_for('main.home') }}" class="nav-item {% if request.endpoint == 'main.home' %}active{% endif %}">
                 <i class="fas fa-home"></i> Accueil
             </a>
@@ -346,32 +338,51 @@
         </main>
     </div>
 
-    <!-- BARRE DE NAVIGATION MOBILE FLOTTANTE (icônes seulement, logo centré) -->
+    <!-- BARRE DE NAVIGATION MOBILE FLOTTANTE AVEC ICÔNE SPÉCIFIQUE AU RÔLE -->
     <div class="mobile-bottom-nav">
         <div class="mobile-nav-items">
-            <!-- Item gauche : Tableau de bord -->
+            <!-- 1. Tableau de bord -->
             <a href="{{ url_for('main.dashboard') }}" class="mobile-nav-item {% if request.endpoint == 'main.dashboard' %}active{% endif %}">
                 <i class="fas fa-tachometer-alt"></i>
             </a>
 
-            <!-- NOUVEAU : Bouton Accueil (remplace l'icône variable selon le rôle) -->
-            <a href="{{ url_for('main.home') }}" class="mobile-nav-item {% if request.endpoint == 'main.home' %}active{% endif %}">
-                <i class="fas fa-home"></i>
-            </a>
+            <!-- 2. Icône spécifique au rôle (remplace l'ancien bouton Accueil) -->
+            {% if session.role == 'patient' %}
+                <a href="{{ url_for('main.patient_scan') }}" class="mobile-nav-item {% if request.endpoint == 'main.patient_scan' %}active{% endif %}">
+                    <i class="fas fa-qrcode"></i>
+                </a>
+            {% elif session.role == 'pharmacien' %}
+                <a href="{{ url_for('main.scan_page') }}" class="mobile-nav-item {% if request.endpoint == 'main.scan_page' %}active{% endif %}">
+                    <i class="fas fa-qrcode"></i>
+                </a>
+            {% elif session.role == 'admin' %}
+                <a href="#" class="mobile-nav-item">
+                    <i class="fas fa-users"></i>
+                </a>
+            {% elif session.role == 'grossiste' %}
+                <a href="#" class="mobile-nav-item">
+                    <i class="fas fa-chart-simple"></i>
+                </a>
+            {% else %}
+                <!-- fallback : Accueil -->
+                <a href="{{ url_for('main.home') }}" class="mobile-nav-item {% if request.endpoint == 'main.home' %}active{% endif %}">
+                    <i class="fas fa-home"></i>
+                </a>
+            {% endif %}
 
-            <!-- Logo central (surélevé) - redirige vers l'accueil -->
+            <!-- 3. Logo central (Accueil) -->
             <div class="mobile-nav-center">
                 <a href="{{ url_for('main.home') }}" class="mobile-nav-item">
                     <img src="{{ url_for('static', filename='images/Group 2.svg') }}" alt="Logo" style="width: 30px; height: 30px; object-fit: contain;">
                 </a>
             </div>
 
-            <!-- Item : Profil -->
+            <!-- 4. Profil -->
             <a href="{{ url_for('main.profile') }}" class="mobile-nav-item">
                 <i class="fas fa-user-circle"></i>
             </a>
 
-            <!-- Item : Déconnexion -->
+            <!-- 5. Déconnexion -->
             <a href="{{ url_for('main.logout') }}" class="mobile-nav-item">
                 <i class="fas fa-sign-out-alt"></i>
             </a>
@@ -382,12 +393,8 @@
         <i class="fas fa-bars text-vert-principal"></i>
     </button>
     <script>
-        // Supprimer l'ancienne gestion du toggle car la sidebar est cachée sur mobile
-        const sidebar = document.getElementById('sidebar');
-        const toggle = document.getElementById('menu-toggle');
-        if (toggle) {
-            toggle.style.display = 'none';
-        }
+        // La sidebar est masquée sur mobile, on cache le toggle
+        document.getElementById('menu-toggle').style.display = 'none';
     </script>
     {% block extra_js %}{% endblock %}
 </body>

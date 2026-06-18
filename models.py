@@ -81,7 +81,7 @@ class Stock(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     quantity = db.Column(db.Integer, nullable=False, default=0)
     # Suppression du doublon : une seule définition
-    batch_number = db.Column(db.String(200), nullable=True)  # taille augmentée à 200
+    batch_number = db.Column(db.String(6000), nullable=True)  # taille augmentée à 200
     expiry_date = db.Column(db.Date, nullable=False)
     price = db.Column(db.Numeric(10, 2))
     last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -95,8 +95,8 @@ class Stock(db.Model):
 class QRCode(db.Model):
     __tablename__ = 'qrcodes'
     id = db.Column(db.Integer, primary_key=True)
-    code = db.Column(db.String(200), unique=True, nullable=False)
-    serial_number = db.Column(db.String(100))
+    code = db.Column(db.Text, unique=True, nullable=False)
+    serial_number = db.Column(db.Text, unique=True, nullable=False)
     status = db.Column(db.String(20), default='active')
     verified_at = db.Column(db.DateTime)
     verified_by = db.Column(db.String(20))

@@ -849,8 +849,8 @@ def api_scan():
 @main_bp.route("/api/upload-qrcode", methods=["POST"])
 def api_upload_qrcode():
     """
-    Reçoit une image, utilise QReader (robuste) pour extraire le QR code.
-    Fallback sur pyzbar avec prétraitement.
+    Reçoit une image, décode QR code ou code-barres avec pyzbar en priorité,
+    puis QReader en fallback.
     """
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': 'Non authentifié'}), 401
@@ -872,38 +872,48 @@ def api_upload_qrcode():
         
         qr_data = None
         
-        # 1. Tentative avec QReader (robuste)
+        # 1. TENTATIVE AVEC PYZBAR (sur l'image couleur)
         try:
-            qreader = get_qreader()
-            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            decoded_texts = qreader.detect_and_decode(image=img_rgb)
-            if decoded_texts and decoded_texts[0] is not None:
-                qr_data = decoded_texts[0]
-                print(f"[QReader] Décodé : {qr_data}")
-        except Exception as e:
-            print(f"[QReader] Erreur : {e}")
-        
-        # 2. Fallback pyzbar avec prétraitement
-        if qr_data is None:
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
-            sharpened = cv2.filter2D(gray, -1, kernel)
-            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
-            contrasted = clahe.apply(sharpened)
-            decoded_objects = decode(contrasted)
+            decoded_objects = decode(img)
             if decoded_objects:
                 qr_data = decoded_objects[0].data.decode('utf-8')
-                print(f"[pyzbar] Décodé : {qr_data}")
+                print(f"[pyzbar] Décodé (couleur) : {qr_data}")
+        except Exception as e:
+            print(f"[pyzbar] Erreur : {e}")
+        
+        # 2. SI ÉCHEC, on tente un prétraitement pour les codes peu contrastés (niveaux de gris + seuillage adaptatif)
+        if qr_data is None:
+            try:
+                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+                decoded = decode(thresh)
+                if decoded:
+                    qr_data = decoded[0].data.decode('utf-8')
+                    print(f"[pyzbar] Décodé (OTSU) : {qr_data}")
+            except Exception as e:
+                print(f"[pyzbar] Erreur prétraitement : {e}")
+        
+        # 3. FALLBACK AVEC QReader (QR codes uniquement)
+        if qr_data is None:
+            try:
+                qreader = get_qreader()
+                img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                decoded_texts = qreader.detect_and_decode(image=img_rgb)
+                if decoded_texts and decoded_texts[0] is not None:
+                    qr_data = decoded_texts[0]
+                    print(f"[QReader] Décodé : {qr_data}")
+            except Exception as e:
+                print(f"[QReader] Erreur : {e}")
         
         if qr_data is None:
-            return jsonify({'success': False, 'message': 'Aucun QR code trouvé dans l\'image'}), 404
+            return jsonify({'success': False, 'message': 'Aucun code détecté dans l\'image'}), 404
         
         return jsonify({'success': True, 'code': qr_data})
     
     except Exception as e:
         print(f"Erreur décodage: {e}")
         return jsonify({'success': False, 'message': f'Erreur lors du décodage : {str(e)}'}), 500
-
+    
 @main_bp.route("/api/medicine/add", methods=["POST"])
 def api_add_medicine():
     if 'user_id' not in session:
