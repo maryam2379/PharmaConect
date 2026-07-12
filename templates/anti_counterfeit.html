@@ -149,6 +149,18 @@
         outline: none;
         border-color: #2E8B57;
     }
+
+    /* Correction de l'alignement des boutons */
+    .btn-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    .btn-group .btn {
+        white-space: nowrap;
+        flex: 0 1 auto;
+    }
 </style>
 
 <!-- HEADER -->
@@ -181,14 +193,18 @@
                         <i class="fas fa-camera text-[#2E8B57] text-lg"></i>
                         <h2 class="text-lg font-semibold text-gray-800">Scanner intelligent</h2>
                     </div>
-                    <div class="flex gap-2">
+                    <!-- Nouveau groupe de boutons -->
+                    <div class="btn-group">
                         <select id="cameraSelect" class="camera-select">
                             <option value="">Sélectionner une caméra...</option>
                         </select>
-                        <button id="startCameraBtn" class="bg-gradient-to-r from-[#2E8B57] to-[#1f6e46] px-4 py-2 rounded-full text-white text-sm hover:shadow-lg transition-all">
+                        <button id="startCameraBtn" class="btn bg-gradient-to-r from-[#2E8B57] to-[#1f6e46] px-4 py-2 rounded-full text-white text-sm hover:shadow-lg transition-all">
                             <i class="fas fa-play"></i> Démarrer
                         </button>
-                        <button id="stopCameraBtn" class="bg-gray-500/50 backdrop-blur-sm px-4 py-2 rounded-full text-gray-700 text-sm hover:bg-gray-500/70 transition-all hidden">
+                        <button id="captureBtn" class="btn bg-gradient-to-r from-[#2C5F8A] to-[#1a3f5f] px-4 py-2 rounded-full text-white text-sm hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <i class="fas fa-camera"></i> Capturer
+                        </button>
+                        <button id="stopCameraBtn" class="btn bg-gray-500/50 backdrop-blur-sm px-4 py-2 rounded-full text-gray-700 text-sm hover:bg-gray-500/70 transition-all hidden">
                             <i class="fas fa-stop"></i> Arrêter
                         </button>
                     </div>
@@ -279,6 +295,9 @@
     </div>
 </div>
 
+<!-- Librairie jsQR pour le décodage des QR codes depuis la caméra -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+
 <script>
     // ============================================
     // VARIABLES GLOBALES
@@ -287,71 +306,7 @@
     let stream = null;
     let scannerActive = false;
     let scanInterval = null;
-    
-    // Base de données simulée des médicaments authentiques
-    const medicinesDB = {
-        // Codes QR authentiques
-        "PHARMA-CM-123456789": {
-            name: "Paracétamol 500mg",
-            manufacturer: "CIPHARM Cameroun",
-            batchNumber: "BATCH-2024-001",
-            expiryDate: "2026-12-31",
-            status: "authentic",
-            verifiedCount: 152,
-            firstVerified: "2024-01-15"
-        },
-        "PHARMA-CM-987654321": {
-            name: "Amoxicilline 500mg",
-            manufacturer: "LAPROPHAN Cameroun",
-            batchNumber: "BATCH-2024-089",
-            expiryDate: "2025-08-15",
-            status: "authentic",
-            verifiedCount: 89,
-            firstVerified: "2024-02-10"
-        },
-        "PHARMA-CM-456789123": {
-            name: "Artésunate 60mg",
-            manufacturer: "APPM Cameroun",
-            batchNumber: "BATCH-2024-045",
-            expiryDate: "2027-03-20",
-            status: "authentic",
-            verifiedCount: 234,
-            firstVerified: "2024-01-05"
-        },
-        "PHARMA-CM-789123456": {
-            name: "Vitamine C 1000mg",
-            manufacturer: "SANDOZ Cameroun",
-            batchNumber: "BATCH-2024-112",
-            expiryDate: "2026-06-10",
-            status: "authentic",
-            verifiedCount: 67,
-            firstVerified: "2024-03-01"
-        },
-        // Code suspect (contrefaçon potentielle)
-        "FAKE-123456789": {
-            name: "⚠️ MÉDICAMENT SUSPECT",
-            manufacturer: "Fabricant non reconnu",
-            batchNumber: "INCONNU",
-            expiryDate: "Date illisible",
-            status: "fake",
-            warning: "Ce numéro de série n'est pas enregistré dans la base officielle. MÉDICAMENT POTENTIELLEMENT CONTREFAIT !"
-        },
-        "WARNING-987654321": {
-            name: "Médicament périmé",
-            manufacturer: "PHARMACIEN SARL",
-            batchNumber: "BATCH-2020-999",
-            expiryDate: "2022-01-01",
-            status: "warning",
-            warning: "⚠️ Ce médicament est EXPIRÉ depuis plus de 3 ans. Ne pas utiliser !"
-        }
-    };
-    
-    // Clés API pour les codes-barres (simulation)
-    const barcodeDB = {
-        "5901234123457": medicinesDB["PHARMA-CM-123456789"],
-        "5909876543210": medicinesDB["PHARMA-CM-987654321"],
-        "5904567891234": medicinesDB["PHARMA-CM-456789123"]
-    };
+    const SCAN_INTERVAL = 500; // ms entre chaque tentative de décodage
     
     // Historique localStorage
     let verificationHistory = [];
@@ -416,40 +371,150 @@
         }).join('');
     }
     
-    function reverifyCode(code) {
-        document.getElementById('manualCodeInput').value = code;
-        closeManualModal();
-        verifyCode(code);
-    }
+    // ============================================
+    // FONCTIONS DE VÉRIFICATION AVEC API RÉELLE
+    // ============================================
     
-    // ============================================
-    // VÉRIFICATION DU CODE
-    // ============================================
-    function verifyCode(code) {
-        let medicine = medicinesDB[code] || barcodeDB[code];
-        let isAuthentic = false;
-        let status = 'warning';
-        
-        if (!medicine) {
-            // Code non trouvé -> suspect
-            medicine = {
-                name: "⚠️ CODE NON RECONNU",
-                manufacturer: "Aucune correspondance",
-                batchNumber: "INCONNU",
-                expiryDate: "INCONNU",
-                status: "fake",
-                warning: "Ce code n'existe pas dans notre base de données. MÉDICAMENT POTENTIELLEMENT CONTREFAIT !"
+    async function verifyCodeWithBackend(code) {
+        // Afficher un indicateur de chargement
+        document.getElementById('resultArea').innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-spinner fa-spin text-3xl text-[#2E8B57]"></i>
+                <p class="text-gray-500 mt-2">Vérification en cours...</p>
+            </div>
+        `;
+
+        try {
+            const response = await fetch('/api/scan', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ code: code }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                let errorMsg = data.message || 'Erreur serveur';
+                if (response.status === 401) {
+                    errorMsg = 'Vous devez être connecté pour vérifier un médicament. <a href="/login" class="text-[#2E8B57] underline">Se connecter</a>';
+                } else if (response.status === 404) {
+                    // Code non trouvé -> on simule un médicament suspect
+                    const notFound = {
+                        name: "⚠️ CODE NON RECONNU",
+                        manufacturer: "Aucune correspondance",
+                        batchNumber: "INCONNU",
+                        expiryDate: "INCONNU",
+                        status: "fake",
+                        warning: "Ce code n'existe pas dans notre base de données. Médicament potentiellement contrefait !"
+                    };
+                    displayResult(notFound, code);
+                    addToHistory(notFound, code, 'fake');
+                    return;
+                }
+                // Afficher l'erreur dans la zone de résultat
+                document.getElementById('resultArea').innerHTML = `
+                    <div class="text-center text-red-500 py-8">
+                        <i class="fas fa-exclamation-circle text-4xl mb-3 opacity-70"></i>
+                        <p class="text-sm">${errorMsg}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Succès : data.medicine contient les infos
+            const med = data.medicine;
+            const medDisplay = {
+                name: med.name || 'Médicament',
+                manufacturer: med.manufacturer || 'Fabricant inconnu',
+                batchNumber: med.batch_number || med.gtin || 'Non spécifié',
+                expiryDate: med.expiry_date ? new Date(med.expiry_date).toLocaleDateString('fr-FR') : 'Non spécifiée',
+                status: med.authentic ? 'authentic' : (med.status || 'warning'),
+                warning: med.authentic ? '' : (data.message || 'Ce médicament a déjà été scanné ou n\'est pas authentifié.'),
+                verifiedCount: med.verified_count || 0,
+                firstVerified: med.first_verified || ''
             };
-            status = 'fake';
-        } else {
-            status = medicine.status;
-            isAuthentic = (status === 'authentic');
+            addToHistory(medDisplay, code, medDisplay.status);
+            displayResult(medDisplay, code);
+        } catch (error) {
+            console.error('Erreur réseau:', error);
+            document.getElementById('resultArea').innerHTML = `
+                <div class="text-center text-gray-400 py-8">
+                    <i class="fas fa-wifi-slash text-4xl mb-3 opacity-50"></i>
+                    <p class="text-sm">Erreur de connexion au serveur.</p>
+                </div>
+            `;
         }
-        
-        addToHistory(medicine, code, status);
-        displayResult(medicine, code);
     }
-    
+
+    // ============================================
+    // CAPTURE D'IMAGE ET ENVOI À L'API UPLOAD
+    // ============================================
+    async function captureAndUpload() {
+        if (!stream) {
+            alert('Veuillez démarrer la caméra d\'abord.');
+            return;
+        }
+
+        // Prendre une photo du flux vidéo
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Convertir en blob (JPEG)
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+        if (!blob) {
+            alert('Erreur lors de la capture.');
+            return;
+        }
+
+        // Créer un FormData
+        const formData = new FormData();
+        formData.append('image', blob, 'capture.jpg');
+
+        // Afficher un chargement
+        document.getElementById('resultArea').innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-spinner fa-spin text-3xl text-[#2E8B57]"></i>
+                <p class="text-gray-500 mt-2">Décodage de l'image...</p>
+            </div>
+        `;
+
+        try {
+            const response = await fetch('/api/upload-qrcode', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Erreur lors du décodage');
+            }
+
+            if (data.success && data.code) {
+                // Appeler la vérification avec le code décodé
+                verifyCodeWithBackend(data.code);
+            } else {
+                throw new Error('Aucun code détecté dans l\'image');
+            }
+        } catch (error) {
+            console.error('Erreur capture:', error);
+            document.getElementById('resultArea').innerHTML = `
+                <div class="text-center text-red-500 py-8">
+                    <i class="fas fa-exclamation-circle text-4xl mb-3 opacity-70"></i>
+                    <p class="text-sm">${error.message}</p>
+                </div>
+            `;
+        }
+    }
+
+    // ============================================
+    // AFFICHAGE DU RÉSULTAT
+    // ============================================
     function displayResult(medicine, code) {
         const resultArea = document.getElementById('resultArea');
         const isAuthentic = medicine.status === 'authentic';
@@ -520,9 +585,49 @@
             </div>
         `;
     }
-    
+
     // ============================================
-    // FONCTIONS DE SCAN
+    // FONCTIONS DE SCAN CAMÉRA (avec jsQR)
+    // ============================================
+    function scanFrame() {
+        if (!scannerActive || !video.videoWidth) return;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        
+        try {
+            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                inversionAttempts: "dontInvert",
+            });
+            if (code && code.data) {
+                const decoded = code.data;
+                console.log('QR code détecté :', decoded);
+                // Suspendre temporairement le scan pour éviter les doublons
+                scannerActive = false;
+                verifyCodeWithBackend(decoded);
+                // Réactiver après 3 secondes
+                setTimeout(() => { scannerActive = true; }, 3000);
+            }
+        } catch (e) {
+            // Ignorer les erreurs de décodage
+        }
+    }
+
+    function startScanning() {
+        if (scanInterval) clearInterval(scanInterval);
+        scanInterval = setInterval(() => {
+            if (scannerActive) {
+                scanFrame();
+            }
+        }, SCAN_INTERVAL);
+    }
+
+    // ============================================
+    // GESTION DE LA CAMÉRA
     // ============================================
     async function startCamera(deviceId = null) {
         stopCamera();
@@ -538,6 +643,7 @@
             
             document.getElementById('startCameraBtn').classList.add('hidden');
             document.getElementById('stopCameraBtn').classList.remove('hidden');
+            document.getElementById('captureBtn').disabled = false;
             document.getElementById('scannerOverlay').style.display = 'block';
             
             scannerActive = true;
@@ -564,36 +670,12 @@
         scannerActive = false;
         document.getElementById('startCameraBtn').classList.remove('hidden');
         document.getElementById('stopCameraBtn').classList.add('hidden');
+        document.getElementById('captureBtn').disabled = true;
         document.getElementById('scannerOverlay').style.display = 'none';
     }
-    
-    function startScanning() {
-        if (scanInterval) clearInterval(scanInterval);
-        
-        // Simule la détection de QR code toutes les 2 secondes (pour démo)
-        // Dans une vraie implémentation, on utiliserait une librairie comme jsQR
-        scanInterval = setInterval(() => {
-            if (!scannerActive) return;
-            
-            // Simulation aléatoire pour la démo
-            // En production, remplacer par une vraie détection de QR code
-            const codes = Object.keys(medicinesDB).concat(Object.keys(barcodeDB));
-            const randomCode = codes[Math.floor(Math.random() * codes.length)];
-            
-            // Pour la démo, on simule un scan quand l'utilisateur clique sur "Simuler"
-            // Le vrai scan serait automatique avec jsQR
-        }, 1000);
-    }
-    
-    // Simulation d'un scan manuel (pour démonstration)
-    function simulateScan() {
-        const codes = Object.keys(medicinesDB).concat(Object.keys(barcodeDB));
-        const randomCode = codes[Math.floor(Math.random() * codes.length)];
-        verifyCode(randomCode);
-    }
-    
+
     // ============================================
-    // GESTION DES CAMÉRAS
+    // LISTE DES CAMÉRAS
     // ============================================
     async function listCameras() {
         try {
@@ -616,7 +698,7 @@
             console.error('Erreur liste caméras:', error);
         }
     }
-    
+
     // ============================================
     // UTILITAIRES
     // ============================================
@@ -640,7 +722,13 @@
             return;
         }
         closeManualModal();
-        verifyCode(code);
+        verifyCodeWithBackend(code);
+    }
+    
+    function reverifyCode(code) {
+        document.getElementById('manualCodeInput').value = code;
+        closeManualModal();
+        verifyCodeWithBackend(code);
     }
     
     function reportMedicine(code) {
@@ -664,7 +752,7 @@
             renderHistory();
         }
     }
-    
+
     // ============================================
     // INITIALISATION
     // ============================================
@@ -677,15 +765,21 @@
             alert('Votre navigateur ne supporte pas l\'accès à la caméra. Utilisez la saisie manuelle.');
             document.getElementById('startCameraBtn').disabled = true;
             document.getElementById('startCameraBtn').style.opacity = '0.5';
+            document.getElementById('captureBtn').disabled = true;
         }
         
         // Event listeners
         document.getElementById('startCameraBtn').addEventListener('click', () => startCamera());
         document.getElementById('stopCameraBtn').addEventListener('click', stopCamera);
+        document.getElementById('captureBtn').addEventListener('click', captureAndUpload);
         document.getElementById('cameraSelect').addEventListener('change', (e) => {
             if (e.target.value) startCamera(e.target.value);
         });
-        document.getElementById('simulateScanBtn').addEventListener('click', simulateScan);
+        document.getElementById('simulateScanBtn').addEventListener('click', () => {
+            // Génère un code aléatoire pour tester l'API (sera probablement inconnu)
+            const fakeCode = 'TEST-' + Math.random().toString(36).substring(2, 10);
+            verifyCodeWithBackend(fakeCode);
+        });
         document.getElementById('manualInputBtn').addEventListener('click', openManualModal);
         document.getElementById('closeManualModalBtn').addEventListener('click', closeManualModal);
         document.getElementById('cancelManualBtn').addEventListener('click', closeManualModal);
