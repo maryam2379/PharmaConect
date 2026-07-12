@@ -1435,6 +1435,7 @@ def api_pharmacies():
     ).all()
     result = []
     for p in pharmacies:
+        is_open = is_pharmacy_open(p)
         schedule = get_pharmacy_schedule(p)
         result.append({
             'id': p.id,
