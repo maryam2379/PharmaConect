@@ -194,25 +194,16 @@
 
 <script>
     // ============================================
-    // DONNÉES STATIQUES DES PHARMACIES
+    // VARIABLES GLOBALES
     // ============================================
-    const pharmaciesData = [
-        { id: 1, name: "Pharmacie Centrale", city: "Yaoundé", address: "Boulevard du 20 Mai, Mvog-Mbi", phone: "222 20 10 10", email: "contact@centrale.cm", lat: 3.8667, lng: 11.5167, rating: 4.8, is_open: true, schedule: "08h00 - 21h00" },
-        { id: 2, name: "Pharmacie Mvog-Mbi", city: "Yaoundé", address: "Avenue Mvog-Mbi, face CHU", phone: "222 21 34 56", email: "mvogmbi@pharma.cm", lat: 3.8722, lng: 11.5189, rating: 4.5, is_open: true, schedule: "07h30 - 20h00" },
-        { id: 3, name: "Pharmacie Bastos", city: "Yaoundé", address: "Rue Bastos, face Ambassade US", phone: "222 45 67 89", email: "bastos@pharma.cm", lat: 3.8583, lng: 11.5208, rating: 4.9, is_open: true, schedule: "24h/24 (garde)" },
-        { id: 4, name: "Pharmacie Bonapriso", city: "Douala", address: "Rue Bonapriso, près Mairie", phone: "233 42 15 78", email: "bonapriso@pharma.cm", lat: 4.0511, lng: 9.7035, rating: 4.7, is_open: true, schedule: "08h00 - 22h00" },
-        { id: 5, name: "Pharmacie Akwa", city: "Douala", address: "Boulevard Liberté, Akwa", phone: "233 43 22 11", email: "akwa@pharma.cm", lat: 4.0433, lng: 9.6867, rating: 4.2, is_open: false, schedule: "Fermé (réouverture lundi)" },
-        { id: 6, name: "Pharmacie Makepe", city: "Douala", address: "Makepe Bloc 96", phone: "233 55 66 77", email: "makepe@pharma.cm", lat: 4.0625, lng: 9.7186, rating: 4.0, is_open: false, schedule: "Fermé pour inventaire" },
-        { id: 7, name: "Pharmacie Roumde", city: "Garoua", address: "Quartier Roumde, rue principale", phone: "227 33 44 55", email: "roumde@pharma.cm", lat: 9.3014, lng: 13.3956, rating: 4.3, is_open: true, schedule: "08h00 - 19h00" },
-        { id: 8, name: "Pharmacie Bafoussam", city: "Bafoussam", address: "Avenue Brasseries, Dchang", phone: "233 12 34 56", email: "contact@bafoussam.cm", lat: 5.4756, lng: 10.4186, rating: 4.6, is_open: true, schedule: "08h00 - 20h30" },
-        { id: 9, name: "Pharmacie Bamenda", city: "Bamenda", address: "Commercial Avenue, Up Station", phone: "233 88 99 00", email: "bamenda@pharma.cm", lat: 5.9601, lng: 10.1493, rating: 4.4, is_open: true, schedule: "08h00 - 18h30" }
-    ];
-
+    let pharmaciesData = [];
     let map;
     let markers = [];
     let currentPharmacyId = null;
 
-    // Initialisation de la carte Leaflet
+    // ============================================
+    // INITIALISATION DE LA CARTE
+    // ============================================
     function initMap() {
         map = L.map('map').setView([5.5, 11.5], 7);
         
@@ -222,10 +213,34 @@
             maxZoom: 18
         }).addTo(map);
         
-        // Afficher toutes les pharmacies au départ
-        filterAndUpdateMap();
+        // Charger les pharmacies depuis l'API
+        loadPharmacies();
     }
-    
+
+    // ============================================
+    // CHARGEMENT DES DONNÉES DEPUIS L'API
+    // ============================================
+    function loadPharmacies() {
+        fetch('/api/pharmacies')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    pharmaciesData = data.pharmacies;
+                    filterAndUpdateMap();
+                } else {
+                    console.error('Erreur API:', data);
+                    document.getElementById('resultCount').textContent = 'Erreur de chargement';
+                }
+            })
+            .catch(error => {
+                console.error('Erreur fetch:', error);
+                document.getElementById('resultCount').textContent = 'Erreur de connexion';
+            });
+    }
+
+    // ============================================
+    // AJOUT DES MARQUEURS SUR LA CARTE
+    // ============================================
     function addMarkersToMap(pharmacies) {
         // Supprimer les anciens marqueurs
         markers.forEach(marker => map.removeLayer(marker));
@@ -262,7 +277,10 @@
             markers.push(marker);
         });
     }
-    
+
+    // ============================================
+    // FILTRAGE ET MISE À JOUR DE LA CARTE
+    // ============================================
     function filterAndUpdateMap() {
         const searchText = document.getElementById('searchInput').value.toLowerCase();
         const city = document.getElementById('cityFilter').value;
@@ -284,20 +302,21 @@
             resultCount.innerHTML = `${filtered.length} pharmacies`;
         }
         
-        // Mettre à jour les marqueurs sur la carte
+        // Mettre à jour les marqueurs
         addMarkersToMap(filtered);
         
-        // Ajuster la vue de la carte sur les pharmacies filtrées
+        // Ajuster la vue de la carte
         if (filtered.length > 0) {
             const bounds = L.latLngBounds(filtered.map(p => [p.lat, p.lng]));
             map.fitBounds(bounds);
         } else {
-            // Si aucune pharmacie, centrer sur le Cameroun
             map.setView([5.5, 11.5], 6);
         }
     }
-    
-    // Réservation
+
+    // ============================================
+    // GESTION DE LA MODALE DE RÉSERVATION
+    // ============================================
     function openReservationModal(id, name) {
         currentPharmacyId = id;
         document.getElementById('modalPharmacyName').innerHTML = `<i class="fas fa-store mr-1"></i> Réservation chez <strong class="text-[#2E8B57]">${name}</strong>`;
@@ -305,14 +324,14 @@
         document.getElementById('reservationModal').classList.add('flex');
         document.body.style.overflow = 'hidden';
     }
-    
+
     function closeModal() {
         document.getElementById('reservationModal').classList.add('hidden');
         document.getElementById('reservationModal').classList.remove('flex');
         document.body.style.overflow = '';
         document.getElementById('reservationForm').reset();
     }
-    
+
     function submitReservation() {
         const patientName = document.getElementById('patientName').value;
         const patientPhone = document.getElementById('patientPhone').value;
@@ -327,17 +346,20 @@
         alert(`✅ ${patientName}, votre réservation a bien été envoyée à la pharmacie.\n\nUn pharmacien vous contactera au ${patientPhone} sous 24h.`);
         closeModal();
     }
-    
-    // Event listeners
+
+    // ============================================
+    // ÉVÉNEMENTS
+    // ============================================
     document.getElementById('reservationForm').addEventListener('submit', (e) => {
         e.preventDefault();
         submitReservation();
     });
+
     document.getElementById('closeModalBtn').addEventListener('click', closeModal);
     document.getElementById('reservationModal').addEventListener('click', function(e) {
         if (e.target === this) closeModal();
     });
-    
+
     document.getElementById('searchInput').addEventListener('input', filterAndUpdateMap);
     document.getElementById('cityFilter').addEventListener('change', filterAndUpdateMap);
     document.getElementById('resetFilters').addEventListener('click', () => {
@@ -345,8 +367,10 @@
         document.getElementById('cityFilter').value = 'all';
         filterAndUpdateMap();
     });
-    
-    // Initialisation
+
+    // ============================================
+    // LANCEMENT AU CHARGEMENT DU DOM
+    // ============================================
     document.addEventListener('DOMContentLoaded', () => {
         initMap();
     });

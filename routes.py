@@ -1425,3 +1425,28 @@ def get_pharmacy_schedule(pharmacy):
     if "24h" in (pharmacy.name or "").lower():
         return "24h/24 (garde)"
     return "08h00 - 20h00"
+
+@main_bp.route("/api/pharmacies")
+def api_pharmacies():
+    """Retourne toutes les pharmacies avec coordonnées et statut (ouvert/fermé)."""
+    pharmacies = Pharmacy.query.filter(
+        Pharmacy.latitude.isnot(None),
+        Pharmacy.longitude.isnot(None)
+    ).all()
+    result = []
+    for p in pharmacies:
+        schedule = get_pharmacy_schedule(p)
+        result.append({
+            'id': p.id,
+            'name': p.name,
+            'city': p.city or '',
+            'address': p.address or '',
+            'phone': p.phone or '',
+            'email': p.email or '',
+            'lat': p.latitude,
+            'lng': p.longitude,
+            'rating': 4.5,            # valeur par défaut (à personnaliser)
+            'is_open': is_open,
+            'schedule': schedule
+        })
+    return jsonify({'success': True, 'pharmacies': result})
