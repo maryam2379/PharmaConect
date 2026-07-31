@@ -62,7 +62,7 @@ def nearby_pharmacies(request):
     lat = request.GET.get('lat')
     lng = request.GET.get('lng')
     pharmacies = Pharmacy.objects.filter(is_verified=True)
-    return render(request, 'pharmacies/dashboard.html', {'pharmacies': pharmacies})
+    return render(request, 'pharmacies.html', {'pharmacies': pharmacies})
 
 
 # ── API ──

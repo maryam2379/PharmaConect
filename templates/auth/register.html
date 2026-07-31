@@ -1,8 +1,10 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="csrf-token" content="{{ csrf_token }}">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PharmaConnect · Inscription sécurisée</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -517,7 +519,7 @@
   
   <!-- Bouton retour à l'accueil -->
    <br><br>
-  <a href="{{ url_for('main.home') }}" class="back-home-btn">
+  <a href="{% url 'auth:home' %}" class="back-home-btn">
     <i class="fas fa-arrow-left"></i> Retour à l'accueil
   </a>
 
@@ -526,7 +528,7 @@
     <div class="left-content">
       <div class="logo-area">
         <div class="logo-mark">
-          <img src="{{ url_for('static', filename='images/Group 2.svg') }}" alt="PharmaConnect Logo">
+          <img src="{% static 'images/Group 2.svg' %}" alt="PharmaConnect Logo">
         </div>
         <div>
           <div class="logo-text">PharmaConnect</div>
@@ -631,7 +633,7 @@
         <h3>Compte créé !</h3>
         <p id="successMsg">Un email de vérification vous a été envoyé.</p>
         <div class="upgrade-id" id="upgradeIdDisplay">UPGRADE-CM-XXXXXXXX</div>
-        <a href="/login" class="btn-primary" style="text-decoration:none; display:inline-block; margin-top:1rem;">Se connecter</a>
+        <a href="{% url 'auth:login' %}" class="btn-primary" style="text-decoration:none; display:inline-block; margin-top:1rem;">Se connecter</a>
       </div>
     </div>
   </div>
@@ -854,12 +856,20 @@
     const file = input.files[0];
     if (!file || file.size > 5*1024*1024) { alert('Fichier trop volumineux (max 5 Mo)'); input.value=''; return; }
     const fd = new FormData();
-    fd.append('document', file); fd.append('type', docId); fd.append('_token', csrfToken);
+    fd.append('document', file); fd.append('type', docId); 
+    // Ne pas ajouter _token dans FormData, utiliser le header
     const zone = document.getElementById(`ua_${docId}`);
     const original = zone.innerHTML;
     zone.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Téléchargement...';
     try {
-      const res = await fetch('/upload-document', { method: 'POST', body: fd, credentials: 'same-origin' });
+      const res = await fetch("{% url 'auth:upload_document' %}", { 
+        method: 'POST', 
+        body: fd, 
+        credentials: 'same-origin',
+        headers: {
+          'X-CSRFToken': csrfToken
+        }
+      });
       const data = await res.json();
       zone.innerHTML = original;
       if (data.success) {
@@ -896,9 +906,14 @@
       documents: uploadedDocs
     };
     try {
-      const resp = await fetch('/register', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-        body: JSON.stringify(payload), credentials: 'same-origin'
+      const resp = await fetch("{% url 'auth:register' %}", {
+        method: 'POST', 
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify(payload), 
+        credentials: 'same-origin'
       });
       const data = await resp.json();
       if (data.success) {

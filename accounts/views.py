@@ -15,14 +15,31 @@ from .services import send_otp_email, send_verification_email
 from pharmacies.models import Pharmacy
 
 
+def home(request):
+    return render(request, "index.html")
+
+
+def faq(request):
+    return render(request, 'layout/faq.html')
+
+
+def newsletter_subscribe(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        # Traitement de l'inscription à la newsletter
+        messages.success(request, "Inscription à la newsletter réussie !")
+        return redirect('auth:home')
+    return redirect('auth:home')
+
+
 # ------------------------------------------------------------------
 # Inscription
 # ------------------------------------------------------------------
 def register(request):
     if request.method == "GET":
-        return render(request, "accounts/register.html")
+        return render(request, "auth/register.html")
 
-    # Cas API (JSON) — équivalent request.is_json de Flask
+    # Cas API (JSON)
     if request.content_type == "application/json":
         data = json.loads(request.body)
         role = data.get('role')
@@ -72,7 +89,7 @@ def register(request):
 
         send_verification_email(new_user, _build_verification_url(request, new_user.verification_token))
 
-        upgrade_id = f"UPGRADE-CM-{new_user.id:06d}"
+        upgrade_id = f"pharmaconnect-CM-{new_user.id:05d}"
         return JsonResponse({
             'success': True,
             'upgrade_id': upgrade_id,
@@ -87,9 +104,14 @@ def register(request):
     password = request.POST.get("password")
     role = request.POST.get("role")
 
+    # Vérification des champs obligatoires
+    if not email or not phone or not password or not role:
+        messages.error(request, "Tous les champs sont obligatoires.")
+        return redirect("auth:register")
+
     if User.objects.filter(email=email).exists() or User.objects.filter(phone=phone).exists():
         messages.error(request, "Un compte avec cet email ou téléphone existe déjà.")
-        return redirect("accounts:register")
+        return redirect("auth:register")
 
     new_user = User(
         username=email,
@@ -108,18 +130,24 @@ def register(request):
 
     if role == "pharmacien":
         Pharmacy.objects.create(
-            name=request.POST.get("pharmacy_name"),
-            license_number=request.POST.get("license_number"),
-            address=request.POST.get("pharmacy_address"),
-            city=request.POST.get("pharmacy_city"),
-            phone=request.POST.get("pharmacy_phone"),
-            email=request.POST.get("pharmacy_email"),
+            name=request.POST.get("pharmacy_name", ""),
+            license_number=request.POST.get("license_number", ""),
+            address=request.POST.get("pharmacy_address", ""),
+            city=request.POST.get("pharmacy_city", ""),
+            phone=request.POST.get("pharmacy_phone", phone),
+            email=request.POST.get("pharmacy_email", email),
             manager=new_user,
             is_verified=False,
         )
 
+    # Stocker l'ID de l'utilisateur en session pour la vérification
     request.session['pending_user_id'] = new_user.id
-    return redirect("accounts:verification_choice")
+    
+    # Envoyer l'email de vérification
+    send_verification_email(new_user, _build_verification_url(request, new_user.verification_token))
+    
+    messages.success(request, "Compte créé avec succès ! Un email de vérification vous a été envoyé.")
+    return redirect("auth:verification_choice")
 
 
 def _build_verification_url(request, token):
@@ -163,14 +191,16 @@ def upload_document(request):
 # ------------------------------------------------------------------
 def verification_choice(request):
     if 'pending_user_id' not in request.session:
-        return redirect("accounts:register")
-    return render(request, "accounts/verification_choice.html")
+        messages.warning(request, "Aucune inscription en cours. Veuillez vous inscrire d'abord.")
+        return redirect("auth:register")
+    return render(request, "auth/verification_choice.html")
 
 
 def send_otp_route(request):
     user_id = request.session.get('pending_user_id')
     if not user_id:
-        return redirect("accounts:register")
+        messages.warning(request, "Aucune inscription en cours.")
+        return redirect("auth:register")
 
     user = User.objects.filter(id=user_id).first()
     if user:
@@ -178,15 +208,18 @@ def send_otp_route(request):
             messages.info(request, "Un code OTP a été envoyé à votre adresse email.")
         else:
             messages.error(request, "Erreur lors de l'envoi du code. Réessayez plus tard.")
-    return redirect("accounts:verify_otp")
+    return redirect("auth:verify_otp")
 
 
 def verify_otp(request):
     user_id = request.session.get('pending_user_id')
     if not user_id:
-        return redirect("accounts:register")
+        return redirect("auth:register")
 
     user = User.objects.filter(id=user_id).first()
+    if not user:
+        messages.error(request, "Utilisateur non trouvé.")
+        return redirect("auth:register")
 
     if request.method == "POST":
         entered_otp = request.POST.get("otp")
@@ -198,17 +231,17 @@ def verify_otp(request):
             user.save()
             request.session.pop('pending_user_id', None)
             messages.success(request, "Votre compte a été vérifié avec succès ! Vous pouvez vous connecter.")
-            return redirect("accounts:login")
+            return redirect("auth:login")
         else:
             messages.error(request, "Code OTP invalide.")
 
-    return render(request, "accounts/verify_otp.html", {"email": user.email if user else ""})
+    return render(request, "auth/verify_otp.html", {"email": user.email if user else ""})
 
 
 def send_verification_link(request):
     user_id = request.session.get('pending_user_id')
     if not user_id:
-        return redirect("accounts:register")
+        return redirect("auth:register")
 
     user = User.objects.filter(id=user_id).first()
     if user:
@@ -217,7 +250,7 @@ def send_verification_link(request):
             messages.info(request, "Un lien de vérification a été envoyé à votre adresse email.")
         else:
             messages.error(request, "Erreur d'envoi. Réessayez plus tard.")
-    return redirect("accounts:verification_choice")
+    return redirect("auth:verification_choice")
 
 
 def verify_email(request, token):
@@ -230,10 +263,10 @@ def verify_email(request, token):
         user.save()
         request.session.pop('pending_user_id', None)
         messages.success(request, "Votre adresse email a été vérifiée. Vous pouvez maintenant vous connecter.")
-        return redirect("accounts:login")
+        return redirect("auth:login")
     else:
         messages.error(request, "Lien de vérification invalide ou expiré.")
-        return redirect("accounts:register")
+        return redirect("auth:register")
 
 
 # ------------------------------------------------------------------
@@ -241,7 +274,7 @@ def verify_email(request, token):
 # ------------------------------------------------------------------
 def login_view(request):
     if request.method == "GET":
-        return render(request, "accounts/login.html")
+        return render(request, "auth/login.html")
 
     email = request.POST.get("email")
     password = request.POST.get("password")
@@ -249,26 +282,26 @@ def login_view(request):
 
     if not email or not password:
         messages.error(request, "Veuillez remplir tous les champs.")
-        return redirect("accounts:login")
+        return redirect("auth:login")
 
     # authenticate() utilise USERNAME_FIELD -> on cherche par email
     user_obj = User.objects.filter(email=email).first()
     if not user_obj or not user_obj.check_password(password):
         messages.error(request, "Email ou mot de passe incorrect.")
-        return redirect("accounts:login")
+        return redirect("auth:login")
 
     if not user_obj.is_verified:
         messages.warning(request, "Votre compte n'est pas encore vérifié. Vérifiez votre boîte email.")
-        return redirect("accounts:login")
+        return redirect("auth:login")
 
     if not user_obj.is_active:
         messages.error(request, "Votre compte est désactivé. Contactez l'administrateur.")
-        return redirect("accounts:login")
+        return redirect("auth:login")
 
     user = authenticate(request, username=user_obj.username, password=password)
     if user is None:
         messages.error(request, "Erreur d'authentification.")
-        return redirect("accounts:login")
+        return redirect("auth:login")
 
     auth_login(request, user)
 
@@ -276,13 +309,20 @@ def login_view(request):
         request.session.set_expiry(0)  # expire à la fermeture du navigateur
 
     messages.success(request, f"Bienvenue {user.get_full_name() or user.email} !")
-    return redirect("accounts:dashboard")
+    
+    # Redirection selon le rôle
+    if user.role == "pharmacien":
+        return redirect("pharmacies:dashboard")
+    elif user.role == "grossiste":
+        return redirect("wholesalers:dashboard")
+    else:
+        return redirect("auth:dashboard")
 
 
 def logout_view(request):
     auth_logout(request)
     messages.info(request, "Vous avez été déconnecté avec succès.")
-    return redirect("accounts:login")
+    return redirect("auth:login")
 
 
 # ------------------------------------------------------------------
@@ -296,7 +336,7 @@ def dashboard(request):
         pharmacy = Pharmacy.objects.filter(manager=request.user).first()
         context["pharmacy"] = pharmacy
 
-    return render(request, "accounts/dashboard.html", context)
+    return render(request, "auth/dashboard.html", context)
 
 
 @login_required
@@ -307,6 +347,6 @@ def profile(request):
         request.user.phone = request.POST.get("phone", request.user.phone)
         request.user.save()
         messages.success(request, "Profil mis à jour.")
-        return redirect("accounts:profile")
+        return redirect("auth:profile")
 
-    return render(request, "accounts/profile.html", {"user": request.user})
+    return render(request, "auth/profile.html", {"user": request.user})

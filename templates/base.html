@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -21,7 +22,7 @@
         /* Définition de la police Goodly */
         @font-face {
             font-family: 'Goodly';
-            src: url("{{ url_for('static', filename='fonts/Goodly-Regular.woff2') }}") format('woff2');
+            src: url("{% static 'fonts/Goodly-Regular.woff2' %}") format('woff2');
             font-weight: normal;
             font-style: normal;
             font-display: swap;
@@ -29,7 +30,7 @@
 
         @font-face {
             font-family: 'Goodly';
-            src: url("{{ url_for('static', filename='fonts/Goodly-Bold.woff2') }}") format('woff2');
+            src: url("{% static 'fonts/Goodly-Bold.woff2' %}") format('woff2');
             font-weight: bold;
             font-style: normal;
             font-display: swap;

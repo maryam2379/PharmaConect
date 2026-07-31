@@ -7,7 +7,7 @@ from .models import ScanLog, QRCode
 
 
 def scan_page(request):
-    return render(request, 'anticounterfeit/scan.html')
+    return render(request, 'anti_counterfeit.html')
 
 
 @login_required

@@ -11,6 +11,11 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+# Charger les variables d'environnement depuis .env
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -75,17 +80,41 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'pharmaconnect.wsgi.application'
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
 
 
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+# ==============================================
+# CONFIGURATION BASE DE DONNÉES - PostgreSQL
+# ==============================================
 
+# Récupération des variables depuis .env
+DB_USER = os.getenv('DB_USER', 'postgres')
+DB_PASSWORD = os.getenv('DB_PASSWORD', '')
+DB_HOST = os.getenv('DB_HOST', 'localhost')
+DB_PORT = os.getenv('DB_PORT', '5432')
+DB_NAME = os.getenv('DB_NAME', 'Meditrack')
+
+# Configuration PostgreSQL
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': DB_NAME,
+        'USER': DB_USER,
+        'PASSWORD': DB_PASSWORD,
+        'HOST': DB_HOST,
+        'PORT': DB_PORT,
     }
 }
+
+# Alternative avec DATABASE_URL (si vous préférez)
+# import dj_database_url
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default=os.getenv('DATABASE_URL'),
+#         conn_max_age=600
+#     )
+# }
 
 
 # Password validation
@@ -110,16 +139,64 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'fr-fr'  # Changé en français
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Africa/Douala'  # Changé pour le Cameroun
 
 USE_I18N = True
 
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
+# ==============================================
+# CONFIGURATION EMAIL (depuis le fichier .env)
+# ==============================================
 
-STATIC_URL = 'static/'
+# Email configuration
+if DEBUG:
+    # En développement, on affiche les emails dans la console pour éviter les erreurs
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    print("📧 Mode développement : Les emails seront affichés dans la console")
+else:
+    # En production, on utilise le serveur SMTP
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+    EMAIL_PORT = int(os.getenv('MAIL_PORT', 587))
+    EMAIL_USE_TLS = os.getenv('MAIL_USE_TLS', 'True') == 'True'
+    EMAIL_USE_SSL = os.getenv('MAIL_USE_SSL', 'False') == 'True'
+    EMAIL_HOST_USER = os.getenv('MAIL_USERNAME')
+    EMAIL_HOST_PASSWORD = os.getenv('MAIL_PASSWORD')
+    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
+    
+    # Vérifier que les variables sont définies
+    if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
+        print("⚠️  ATTENTION : Les variables MAIL_USERNAME et MAIL_PASSWORD doivent être définies dans .env")
+
+
+# ==============================================
+# AUTRES CONFIGURATIONS
+# ==============================================
+
+# Redirection après connexion/déconnexion
+LOGIN_URL = 'auth:login'
+LOGIN_REDIRECT_URL = 'auth:dashboard'
+LOGOUT_REDIRECT_URL = 'auth:login'
+
+# Messages
+from django.contrib.messages import constants as messages
+MESSAGE_TAGS = {
+    messages.DEBUG: 'debug',
+    messages.INFO: 'info',
+    messages.SUCCESS: 'success',
+    messages.WARNING: 'warning',
+    messages.ERROR: 'danger',
+}
+
+# Media files (pour les uploads de documents)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Session settings
+SESSION_COOKIE_AGE = 1209600  # 2 semaines en secondes
+SESSION_COOKIE_SECURE = False  # Mettre à True en production avec HTTPS
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'

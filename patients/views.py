@@ -4,7 +4,6 @@ from .models import PatientSearchHistory
 from anticounterfeit.models import Medicine
 from pharmacies.models import Stock
 
-
 @login_required
 def search_medicine(request):
     query = request.GET.get('q', '')

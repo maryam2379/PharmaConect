@@ -1,8 +1,10 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="csrf-token" content="{{ csrf_token }}">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PharmaConnect · Connexion sécurisée</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -332,6 +334,12 @@
       border-left: 4px solid #F59E0B;
     }
 
+    .alert-info {
+      background: #DBEAFE;
+      color: #1E40AF;
+      border-left: 4px solid #3B82F6;
+    }
+
     @media (max-width: 900px) {
       .login-wrapper { flex-direction: column; }
       body { padding: 1rem; }
@@ -342,7 +350,7 @@
 <div class="login-wrapper">
   
   <!-- Bouton retour à l'accueil (SUR LA PARTIE BLEUE - VISIBLE) -->
-  <a href="{{ url_for('main.home') }}" class="back-home-btn">
+  <a href="{% url 'auth:home' %}" class="back-home-btn">
     <i class="fas fa-arrow-left"></i> Retour à l'accueil
   </a>
 
@@ -351,7 +359,7 @@
     <div class="left-content">
       <div class="logo-area">
         <div class="logo-mark">
-          <img src="{{ url_for('static', filename='images/Group 2.svg') }}" alt="PharmaConnect Logo">
+          <img src="{% static 'images/Group 2.svg' %}" alt="PharmaConnect Logo">
         </div>
         <div>
           <div class="logo-text">PharmaConnect</div>
@@ -374,17 +382,17 @@
       <p>Accédez à votre compte PharmaConnect</p>
     </div>
 
-    <!-- Affichage des messages flash -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }}">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
+    <!-- Affichage des messages flash Django -->
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'success' %}success{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
 
-    <form method="POST" action="{{ url_for('main.login') }}">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <form method="POST" action="{% url 'auth:login' %}">
+      {% csrf_token %}
       
       <div class="form-group">
         <div class="input-wrapper">
@@ -412,7 +420,7 @@
       </button>
 
       <div class="register-link">
-        Pas encore de compte ? <a href="{{ url_for('main.register') }}">Inscrivez-vous gratuitement</a>
+        Pas encore de compte ? <a href="{% url 'auth:register' %}">Inscrivez-vous gratuitement</a>
       </div>
     </form>
   </div>

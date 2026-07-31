@@ -1,3 +1,5 @@
+{% load static %}
+
 <!-- Font Awesome 6 -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <style>
@@ -155,10 +157,10 @@
 
             <!-- LOGO (redirige vers l'accueil) -->
             <div class="logo-section">
-                <a href="{{ url_for('main.home') }}" class="flex items-center space-x-2.5">
+                <a href="{% url 'auth:home' %}" class="flex items-center space-x-2.5">
                     <div class="flex-shrink-0">
                         <div class="w-9 h-9 md:w-10 md:h-10 rounded-xl overflow-hidden">
-                            <img src="{{ url_for('static', filename='images/Group 2.svg') }}" alt="PharmaConnect Logo" class="w-full h-full object-contain">
+                            <img src="{% static 'images/Group 2.svg' %}" alt="PharmaConnect Logo" class="w-full h-full object-contain">
                         </div>
                     </div>
                     <div class="flex flex-col leading-tight">
@@ -173,16 +175,16 @@
                 </a>
             </div>
 
-            <!-- LIENS CENTRAUX (URLs valides) -->
+            <!-- LIENS CENTRAUX (URLs Django) -->
             <div class="links-section">
                 <div class="nav-links-container">
-                    <a href="{{ url_for('main.pharmacies') }}" class="nav-link-glass flex items-center gap-2 rounded-full text-gray-700 font-medium">
+                    <a href="{% url 'pharmacies:nearby' %}" class="nav-link-glass flex items-center gap-2 rounded-full text-gray-700 font-medium">
                         <i class="fas fa-store"></i><span>Pharmacies</span>
                     </a>
-                    <a href="{{url_for('main.anti_counterfeit')}}" class="nav-link-glass flex items-center gap-2 rounded-full text-gray-700 font-medium">
+                    <a href="{% url 'anticounterfeit:scan_page' %}" class="nav-link-glass flex items-center gap-2 rounded-full text-gray-700 font-medium">
                         <i class="fas fa-qrcode"></i><span>Anti-contrefaçon</span>
                     </a>
-                    <a href="" class="nav-link-glass flex items-center gap-2 rounded-full text-gray-700 font-medium">
+                    <a href="{% url 'orders:order_list' %}" class="nav-link-glass flex items-center gap-2 rounded-full text-gray-700 font-medium">
                         <i class="fas fa-truck"></i><span>Commandes</span>
                     </a>
                 </div>
@@ -191,20 +193,25 @@
             <!-- BOUTONS DYNAMIQUES (connecté / non connecté) -->
             <div class="buttons-section">
                 <div class="flex items-center gap-2.5">
-                    {% if session.user_id %}
+                    {% if user.is_authenticated %}
                         <!-- Utilisateur connecté -->
-                        <a href="{{ url_for('main.dashboard') }}" id="a"
+                        <a href="{% url 'auth:dashboard' %}" id="a"
                            class="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#2E8B57] to-[#1f6e46] text-white font-medium px-4 py-2 shadow-md hover:shadow-lg transition-all hover:translate-y-[-2px]">
-                            <i class="fas fa-tachometer-alt" ></i>
+                            <i class="fas fa-tachometer-alt"></i>
                             <span>Tableau de bord</span>
+                        </a>
+                        <!-- Lien de déconnexion -->
+                        <a href="{% url 'auth:logout' %}"
+                           class="hidden sm:inline-flex items-center gap-2 rounded-full text-red-600 font-medium btn-outline-glass transition-all">
+                            <i class="fas fa-sign-out-alt"></i><span>Déconnexion</span>
                         </a>
                     {% else %}
                         <!-- Utilisateur non connecté -->
-                        <a href="{{ url_for('main.login') }}"
+                        <a href="{% url 'auth:login' %}"
                            class="hidden sm:inline-flex items-center gap-2 rounded-full text-[#2C5F8A] font-medium btn-outline-glass transition-all">
                             <i class="fas fa-user-circle"></i><span>Connexion</span>
                         </a>
-                        <a href="{{ url_for('main.register') }}"
+                        <a href="{% url 'auth:register' %}"
                            class="btn-solid inline-flex items-center gap-2 rounded-full text-white font-medium transition-all">
                             <i class="fas fa-gem"></i><span>Essai gratuit</span>
                         </a>
@@ -219,27 +226,30 @@
         </div>
     </div>
 
-    <!-- MENU MOBILE (identique logique) -->
+    <!-- MENU MOBILE -->
     <div id="mobile-menu" class="md:hidden hidden bg-white/60 backdrop-blur-xl border-t border-white/40 px-5 pt-3 pb-4 space-y-1.5 shadow-xl rounded-b-2xl mx-2 mt-1">
-        <a href="{{ url_for('main.pharmacies') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 text-sm font-medium hover:bg-white/60">
+        <a href="{% url 'pharmacies:nearby' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 text-sm font-medium hover:bg-white/60">
             <i class="fas fa-store w-4 text-[#2C5F8A]"></i><span>Pharmacies</span>
         </a>
-        <a href="" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 text-sm font-medium hover:bg-white/60">
+        <a href="{% url 'anticounterfeit:scan_page' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 text-sm font-medium hover:bg-white/60">
             <i class="fas fa-qrcode w-4 text-[#2C5F8A]"></i><span>Anti-contrefaçon</span>
         </a>
-        <a href="" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 text-sm font-medium hover:bg-white/60">
+        <a href="{% url 'orders:order_list' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 text-sm font-medium hover:bg-white/60">
             <i class="fas fa-truck w-4 text-[#2C5F8A]"></i><span>Commandes</span>
         </a>
         <div class="pt-3 flex flex-col gap-2 mt-2 border-t border-white/50">
-            {% if session.user_id %}
-                <a href="{{ url_for('main.dashboard') }}" class="flex items-center justify-center gap-2 px-3 py-2 rounded-full bg-[#2E8B57] text-white text-sm font-medium">
+            {% if user.is_authenticated %}
+                <a href="{% url 'auth:dashboard' %}" class="flex items-center justify-center gap-2 px-3 py-2 rounded-full bg-[#2E8B57] text-white text-sm font-medium">
                     <i class="fas fa-tachometer-alt"></i><span>Tableau de bord</span>
                 </a>
+                <a href="{% url 'auth:logout' %}" class="flex items-center justify-center gap-2 px-3 py-2 rounded-full border border-red-500/30 bg-white/40 backdrop-blur-sm text-red-600 text-sm font-medium">
+                    <i class="fas fa-sign-out-alt"></i><span>Déconnexion</span>
+                </a>
             {% else %}
-                <a href="{{ url_for('main.login') }}" class="flex items-center justify-center gap-2 px-3 py-2 rounded-full border border-[#2C5F8A]/30 bg-white/40 backdrop-blur-sm text-[#2C5F8A] text-sm font-medium">
+                <a href="{% url 'auth:login' %}" class="flex items-center justify-center gap-2 px-3 py-2 rounded-full border border-[#2C5F8A]/30 bg-white/40 backdrop-blur-sm text-[#2C5F8A] text-sm font-medium">
                     <i class="fas fa-user-circle"></i><span>Connexion</span>
                 </a>
-                <a href="{{ url_for('main.register') }}" class="btn-solid flex items-center justify-center gap-2 px-3 py-2 rounded-full text-white text-sm font-medium">
+                <a href="{% url 'auth:register' %}" class="btn-solid flex items-center justify-center gap-2 px-3 py-2 rounded-full text-white text-sm font-medium">
                     <i class="fas fa-gem"></i><span>Essai gratuit</span>
                 </a>
             {% endif %}

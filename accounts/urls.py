@@ -1,9 +1,13 @@
 from django.urls import path
 from . import views
 
-app_name = 'accounts'
+app_name = 'auth'
 
 urlpatterns = [
+    
+    path('', views.home, name='home'),
+    path('faq/', views.faq, name='faq'),
+    path('newsletter-subscribe/', views.newsletter_subscribe, name='newsletter_subscribe'),
     path('register/', views.register, name='register'),
     path('upload-document/', views.upload_document, name='upload_document'),
     path('verification-choice/', views.verification_choice, name='verification_choice'),
