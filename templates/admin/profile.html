@@ -1,4 +1,5 @@
 {% extends "admin/master.html" %}
+{% load static %}
 
 {% block title %}Mon profil{% endblock %}
 {% block page_title %}Mon profil{% endblock %}
@@ -10,6 +11,7 @@
     max-width: 1000px;
     margin: 0 auto;
   }
+
   .steps-header {
     display: flex;
     flex-wrap: wrap;
@@ -21,6 +23,7 @@
     box-shadow: var(--ombre);
     border: 1px solid var(--gris-bordure);
   }
+
   .step-tab {
     flex: 1;
     text-align: center;
@@ -34,26 +37,39 @@
     border: none;
     font-size: 0.9rem;
   }
+
   .step-tab i {
     margin-right: 8px;
     font-size: 1rem;
   }
+
   .step-tab.active {
     background: linear-gradient(135deg, var(--vert-principal), var(--vert-fonce));
     color: white;
-    box-shadow: 0 4px 12px rgba(46,139,87,0.3);
+    box-shadow: 0 4px 12px rgba(46, 139, 87, 0.3);
   }
+
   .step-pane {
     display: none;
     animation: fadeIn 0.3s ease;
   }
+
   .step-pane.active {
     display: block;
   }
+
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
+
   .step-card {
     background: var(--blanc-carte);
     border-radius: 32px;
@@ -61,33 +77,40 @@
     border: 1px solid var(--gris-bordure);
     overflow: hidden;
   }
+
   .step-card-header {
-    background: linear-gradient(135deg, rgba(46,139,87,0.05), rgba(15,76,129,0.02));
+    background: linear-gradient(135deg, rgba(46, 139, 87, 0.05), rgba(15, 76, 129, 0.02));
     padding: 1.5rem;
     border-bottom: 1px solid var(--gris-bordure);
   }
+
   .step-card-header h3 {
     font-size: 1.3rem;
     font-weight: 700;
     margin: 0;
     color: var(--texte-fonce);
   }
+
   .step-card-header p {
     font-size: 0.85rem;
     color: var(--texte-mute);
     margin-top: 0.25rem;
   }
+
   .step-body {
     padding: 2rem;
   }
+
   .form-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem;
   }
+
   .field-group {
     margin-bottom: 0.5rem;
   }
+
   .field-label {
     display: block;
     font-size: 0.75rem;
@@ -97,6 +120,7 @@
     color: var(--texte-mute);
     margin-bottom: 0.5rem;
   }
+
   .field-input {
     width: 100%;
     padding: 0.85rem 1rem;
@@ -107,15 +131,18 @@
     background: var(--blanc-carte);
     color: var(--texte-fonce);
   }
+
   .field-input:focus {
     outline: none;
     border-color: var(--vert-principal);
-    box-shadow: 0 0 0 3px rgba(46,139,87,0.1);
+    box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.1);
   }
+
   .field-input[disabled] {
     background: var(--gris-fond);
     color: var(--texte-mute);
   }
+
   .btn-primary {
     background: linear-gradient(135deg, var(--vert-principal), var(--vert-fonce));
     color: white;
@@ -126,10 +153,12 @@
     cursor: pointer;
     transition: all 0.2s;
   }
+
   .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(46,139,87,0.3);
+    box-shadow: 0 8px 20px rgba(46, 139, 87, 0.3);
   }
+
   .btn-secondary {
     background: transparent;
     border: 1.5px solid var(--gris-bordure);
@@ -139,10 +168,14 @@
     cursor: pointer;
     transition: all 0.2s;
     color: var(--texte-fonce);
+    text-decoration: none;
+    display: inline-block;
   }
+
   .btn-secondary:hover {
     background: var(--gris-fond);
   }
+
   .info-badge {
     background: var(--bleu-clair);
     border-radius: 30px;
@@ -150,7 +183,9 @@
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--bleu-profondeur);
+    display: inline-block;
   }
+
   .avatar-large {
     width: 80px;
     height: 80px;
@@ -163,20 +198,171 @@
     font-size: 2rem;
     font-weight: bold;
   }
+
   hr {
     margin: 1.5rem 0;
     border: none;
     border-top: 1px solid var(--gris-bordure);
   }
+
+  .flex {
+    display: flex;
+  }
+
+  .items-center {
+    align-items: center;
+  }
+
+  .gap-2 {
+    gap: 0.5rem;
+  }
+
+  .gap-3 {
+    gap: 0.75rem;
+  }
+
+  .gap-4 {
+    gap: 1rem;
+  }
+
+  .flex-wrap {
+    flex-wrap: wrap;
+  }
+
+  .justify-end {
+    justify-content: flex-end;
+  }
+
+  .justify-center {
+    justify-content: center;
+  }
+
+  .mt-1 {
+    margin-top: 0.25rem;
+  }
+
+  .mt-2 {
+    margin-top: 0.5rem;
+  }
+
+  .mt-6 {
+    margin-top: 1.5rem;
+  }
+
+  .mt-8 {
+    margin-top: 2rem;
+  }
+
+  .mr-2 {
+    margin-right: 0.5rem;
+  }
+
+  .space-y-4>*+* {
+    margin-top: 1rem;
+  }
+
+  .text-xs {
+    font-size: 0.75rem;
+  }
+
+  .text-gray-400 {
+    color: #9ca3af;
+  }
+
+  .w-5 {
+    width: 1.25rem;
+  }
+
+  .w-11 {
+    width: 2.75rem;
+  }
+
+  .h-6 {
+    height: 1.5rem;
+  }
+
+  .relative {
+    position: relative;
+  }
+
+  .inline-flex {
+    display: inline-flex;
+  }
+
+  .cursor-pointer {
+    cursor: pointer;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+  }
+
+  .peer:checked~.peer-checked\:bg-\[var\(--vert-principal\)\] {
+    background: var(--vert-principal);
+  }
+
+  .after\:content-\[\'\'\]::after {
+    content: '';
+  }
+
+  .after\:absolute::after {
+    position: absolute;
+  }
+
+  .after\:top-\[2px\]::after {
+    top: 2px;
+  }
+
+  .after\:left-\[2px\]::after {
+    left: 2px;
+  }
+
+  .after\:bg-white::after {
+    background: white;
+  }
+
+  .after\:rounded-full::after {
+    border-radius: 9999px;
+  }
+
+  .after\:h-5::after {
+    height: 1.25rem;
+  }
+
+  .after\:w-5::after {
+    width: 1.25rem;
+  }
+
+  .after\:transition-all::after {
+    transition: all 0.2s;
+  }
+
+  .peer:checked~.peer-checked\:after\:translate-x-full::after {
+    transform: translateX(100%);
+  }
+
+  .opacity-50 {
+    opacity: 0.5;
+  }
+
   @media (max-width: 680px) {
     .form-grid {
       grid-template-columns: 1fr;
       gap: 1rem;
     }
+
     .steps-header {
       border-radius: 32px;
       flex-direction: column;
     }
+
     .step-tab {
       text-align: left;
       padding: 0.7rem 1rem;
@@ -208,38 +394,45 @@
     <div class="step-card">
       <div class="step-card-header">
         <div class="flex items-center gap-4 flex-wrap">
-          <div class="avatar-large">{{ user.full_name[0]|upper if user.full_name else 'U' }}</div>
+          <div class="avatar-large">{{ user.get_full_name|first|upper|default:'U' }}</div>
           <div>
-            <h3>{{ user.full_name }}</h3>
+            <h3>{{ user.get_full_name|default:user.username }}</h3>
             <div class="flex flex-wrap gap-2 mt-1">
               <span class="info-badge"><i class="fas fa-tag"></i> {{ user.role|title }}</span>
               {% if user.is_verified %}
-              <span class="info-badge" style="background: #e0f2e9; color: #166534;"><i class="fas fa-check-circle"></i> Vérifié</span>
+              <span class="info-badge" style="background: #e0f2e9; color: #166534;">
+                <i class="fas fa-check-circle"></i> Vérifié
+              </span>
               {% endif %}
-              <span class="info-badge"><i class="far fa-calendar-alt"></i> Membre depuis {{ user.created_at.strftime('%b %Y') }}</span>
+              <span class="info-badge">
+                <i class="fas fa-user-plus"></i>
+                Inscrit en {{ user.date_joined|date:"M Y" }}
+              </span>
             </div>
           </div>
         </div>
       </div>
       <div class="step-body">
-        <form method="POST" id="form-personal">
+        <form method="POST" action="{% url 'auth:profile' %}" id="form-personal">
+          {% csrf_token %}
           <input type="hidden" name="form_type" value="user">
           <div class="form-grid">
             <div class="field-group">
-              <label class="field-label">Nom complet</label>
-              <input type="text" name="full_name" value="{{ user.full_name or '' }}" class="field-input">
+              <label class="field-label">Prénom</label>
+              <input type="text" name="first_name" value="{{ user.first_name }}" class="field-input">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Nom</label>
+              <input type="text" name="last_name" value="{{ user.last_name }}" class="field-input">
             </div>
             <div class="field-group">
               <label class="field-label">Email</label>
-              <input type="email" name="email" value="{{ user.email }}" class="field-input">
+              <input type="email" name="email" value="{{ user.email }}" class="field-input" disabled>
+              <small style="color: var(--texte-mute); font-size: 0.7rem;">L'email ne peut pas être modifié</small>
             </div>
             <div class="field-group">
               <label class="field-label">Téléphone</label>
-              <input type="tel" name="phone" value="{{ user.phone or '' }}" class="field-input">
-            </div>
-            <div class="field-group">
-              <label class="field-label">Rôle</label>
-              <input type="text" value="{{ user.role|title }}" class="field-input" disabled>
+              <input type="tel" name="phone" value="{{ user.phone|default:'' }}" class="field-input">
             </div>
           </div>
           <div class="flex justify-end mt-6">
@@ -258,8 +451,9 @@
         <p>Changez votre mot de passe régulièrement pour protéger vos données</p>
       </div>
       <div class="step-body">
-        <form method="POST" id="form-security">
-          <input type="hidden" name="form_type" value="user">
+        <form method="POST" action="{% url 'auth:profile' %}" id="form-security">
+          {% csrf_token %}
+          <input type="hidden" name="form_type" value="security">
           <div class="form-grid">
             <div class="field-group">
               <label class="field-label">Ancien mot de passe</label>
@@ -274,7 +468,7 @@
               <input type="password" name="confirm_password" class="field-input" placeholder="••••••">
             </div>
           </div>
-          <p class="text-xs text-gray-400 mt-2">Minimum 6 caractères. Laissez vide si inchangé.</p>
+          <p class="text-xs text-gray-400 mt-2">Minimum 8 caractères. Laissez vide si inchangé.</p>
           <div class="flex justify-end mt-6">
             <button type="submit" class="btn-primary"><i class="fas fa-key mr-2"></i> Changer le mot de passe</button>
           </div>
@@ -292,7 +486,8 @@
         <p>Modifiez les informations publiques de votre officine</p>
       </div>
       <div class="step-body">
-        <form method="POST" id="form-pharmacy">
+        <form method="POST" action="{% url 'auth:profile' %}" id="form-pharmacy">
+          {% csrf_token %}
           <input type="hidden" name="form_type" value="pharmacy">
           <div class="form-grid">
             <div class="field-group">
@@ -305,23 +500,24 @@
             </div>
             <div class="field-group">
               <label class="field-label">Adresse</label>
-              <input type="text" name="address" value="{{ pharmacy.address or '' }}" class="field-input">
+              <input type="text" name="address" value="{{ pharmacy.address|default:'' }}" class="field-input">
             </div>
             <div class="field-group">
               <label class="field-label">Ville</label>
-              <input type="text" name="city" value="{{ pharmacy.city or '' }}" class="field-input">
+              <input type="text" name="city" value="{{ pharmacy.city|default:'' }}" class="field-input">
             </div>
             <div class="field-group">
               <label class="field-label">Téléphone</label>
-              <input type="tel" name="pharmacy_phone" value="{{ pharmacy.phone or '' }}" class="field-input">
+              <input type="tel" name="pharmacy_phone" value="{{ pharmacy.phone|default:'' }}" class="field-input">
             </div>
             <div class="field-group">
               <label class="field-label">Email</label>
-              <input type="email" name="pharmacy_email" value="{{ pharmacy.email or '' }}" class="field-input">
+              <input type="email" name="pharmacy_email" value="{{ pharmacy.email|default:'' }}" class="field-input">
             </div>
           </div>
           <div class="flex justify-end mt-6">
-            <button type="submit" class="btn-primary"><i class="fas fa-save mr-2"></i> Mettre à jour la pharmacie</button>
+            <button type="submit" class="btn-primary"><i class="fas fa-save mr-2"></i> Mettre à jour la
+              pharmacie</button>
           </div>
         </form>
       </div>
@@ -329,7 +525,7 @@
   </div>
   {% endif %}
 
-  <!-- Étape 4 : Préférences (exemple) -->
+  <!-- Étape 4 : Préférences -->
   <div id="step-preferences" class="step-pane">
     <div class="step-card">
       <div class="step-card-header">
@@ -337,7 +533,8 @@
         <p>Personnalisez votre expérience</p>
       </div>
       <div class="step-body">
-        <form method="POST" id="form-preferences">
+        <form method="POST" action="{% url 'auth:profile' %}" id="form-preferences">
+          {% csrf_token %}
           <input type="hidden" name="form_type" value="preferences">
           <div class="space-y-4">
             <div class="flex items-center justify-between flex-wrap gap-4">
@@ -347,7 +544,9 @@
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" name="email_notifications" class="sr-only peer" {% if user.email_notifications %}checked{% endif %}>
-                <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-[#2E8B57] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                <div
+                  class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-[#2E8B57] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all">
+                </div>
               </label>
             </div>
             <hr>
@@ -360,7 +559,8 @@
             </div>
           </div>
           <div class="flex justify-end mt-8">
-            <button type="submit" class="btn-primary"><i class="fas fa-save mr-2"></i> Enregistrer les préférences</button>
+            <button type="submit" class="btn-primary"><i class="fas fa-save mr-2"></i> Enregistrer les
+              préférences</button>
           </div>
         </form>
       </div>
@@ -368,7 +568,8 @@
   </div>
 
   <div class="flex justify-center mt-8">
-    <a href="{{ url_for('main.dashboard') }}" class="btn-secondary"><i class="fas fa-arrow-left mr-2"></i> Retour au tableau de bord</a>
+    <a href="{% url 'auth:dashboard' %}" class="btn-secondary"><i class="fas fa-arrow-left mr-2"></i> Retour au tableau
+      de bord</a>
   </div>
 </div>
 

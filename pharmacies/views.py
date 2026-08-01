@@ -9,14 +9,14 @@ from .models import Pharmacy, Stock
 def dashboard(request):
     pharmacy = get_object_or_404(Pharmacy, manager=request.user)
     stocks = pharmacy.stocks.select_related('medicine')
-    return render(request, 'pharmacies/dashboard.html', {'pharmacy': pharmacy, 'stocks': stocks})
+    return render(request, 'admin/pharmacies/dashboard.html', {'pharmacy': pharmacy, 'stocks': stocks})
 
 
 @login_required
 def stock_list(request):
     pharmacy = get_object_or_404(Pharmacy, manager=request.user)
     stocks = pharmacy.stocks.select_related('medicine')
-    return render(request, 'pharmacies/stock_list.html', {'stocks': stocks})
+    return render(request, 'admin/pharmacies/stocks.html', {'stocks': stocks})
 
 
 @login_required

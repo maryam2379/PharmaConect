@@ -1,4 +1,5 @@
-{% extends "admin/master.html" %}
+{% extends "admin/pharmacies/master.html" %}
+{% load static %}
 
 {% block title %}Gestion des stocks - PharmaConnect Cameroun{% endblock %}
 {% block page_title %}Gestion des stocks{% endblock %}
@@ -274,13 +275,26 @@
 
 <script>
     // ============================================
+    // CONFIGURATION - URLs Django
+    // ============================================
+    const API_BASE = '/pharmacies/api/';
+    const CSRF_TOKEN = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+
+    // ============================================
     // CONNEXION À L'API BACKEND
     // ============================================
-    let stocks = [];      // Liste des stocks
-    let medicines = [];   // Liste des médicaments pour le select
+    let stocks = [];
+    let medicines = [];
 
     async function apiCall(url, method = 'GET', data = null) {
-        const options = { method, headers: { 'Content-Type': 'application/json' } };
+        const options = {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': CSRF_TOKEN
+            },
+            credentials: 'same-origin'
+        };
         if (data) options.body = JSON.stringify(data);
         const response = await fetch(url, options);
         if (!response.ok) {
@@ -293,7 +307,7 @@
     // Charger les stocks
     async function loadStocks() {
         try {
-            const data = await apiCall('/api/pharmacist/stocks');
+            const data = await apiCall('/pharmacies/api/stocks/');
             stocks = data.stocks;
             renderStats();
             renderTable();
@@ -306,19 +320,59 @@
     // Charger la liste des médicaments pour le select
     async function loadMedicines() {
         try {
-            const data = await apiCall('/api/medicines/list');
-            medicines = data.medicines;
+            // Utiliser l'URL Django pour les médicaments
+            const response = await fetch('/anticounterfeit/api/medicines/', {
+                headers: {
+                    'X-CSRFToken': CSRF_TOKEN
+                },
+                credentials: 'same-origin'
+            });
+            
+            if (!response.ok) {
+                throw new Error('Erreur chargement médicaments');
+            }
+            
+            const data = await response.json();
+            medicines = data.medicines || data.results || [];
+            
             const select = document.getElementById('medicineId');
             select.innerHTML = '<option value="">Sélectionner un médicament</option>';
             medicines.forEach(med => {
                 const option = document.createElement('option');
                 option.value = med.id;
-                option.textContent = `${med.name} (${med.generic_name || ''}) - ${med.manufacturer || ''}`;
+                const name = med.name || med.nom || '';
+                const generic = med.generic_name || med.denomination || '';
+                const manufacturer = med.manufacturer || med.fabricant || '';
+                option.textContent = `${name}${generic ? ' (' + generic + ')' : ''}${manufacturer ? ' - ' + manufacturer : ''}`.trim();
                 select.appendChild(option);
             });
         } catch (err) {
-            console.error(err);
-            alert('Impossible de charger la liste des médicaments');
+            console.error('Erreur chargement médicaments:', err);
+            // Essayer une autre URL si la première échoue
+            try {
+                const response = await fetch('/api/medicines/list/', {
+                    headers: {
+                        'X-CSRFToken': CSRF_TOKEN
+                    },
+                    credentials: 'same-origin'
+                });
+                
+                if (!response.ok) throw new Error('Erreur');
+                const data = await response.json();
+                medicines = data.medicines || [];
+                
+                const select = document.getElementById('medicineId');
+                select.innerHTML = '<option value="">Sélectionner un médicament</option>';
+                medicines.forEach(med => {
+                    const option = document.createElement('option');
+                    option.value = med.id;
+                    option.textContent = med.name || med.nom || 'Médicament';
+                    select.appendChild(option);
+                });
+            } catch (err2) {
+                console.error('Erreur seconde tentative:', err2);
+                // Si pas de médicaments, laisser le select vide
+            }
         }
     }
 
@@ -348,8 +402,8 @@
         const stockFilter = document.getElementById('stockFilter').value;
 
         let filtered = stocks.filter(s => {
-            const medicine = s.medicine;
-            const matchSearch = medicine.name.toLowerCase().includes(searchTerm) ||
+            const medicine = s.medicine || {};
+            const matchSearch = (medicine.name || '').toLowerCase().includes(searchTerm) ||
                 (medicine.generic_name && medicine.generic_name.toLowerCase().includes(searchTerm)) ||
                 (medicine.manufacturer && medicine.manufacturer.toLowerCase().includes(searchTerm)) ||
                 (s.batch_number && s.batch_number.toLowerCase().includes(searchTerm));
@@ -389,8 +443,8 @@
             else if (expiringSoon && !isCritical) statusBadge = '<span class="badge-expired">⚠️ Expire bientôt</span>';
 
             const expiryDisplay = s.expiry_date ? new Date(s.expiry_date).toLocaleDateString('fr-FR') : 'N/A';
-            const medicineName = s.medicine.name;
-            const manufacturer = s.medicine.manufacturer || '—';
+            const medicineName = s.medicine ? (s.medicine.name || '—') : '—';
+            const manufacturer = s.medicine ? (s.medicine.manufacturer || '—') : '—';
             const batch = s.batch_number || '—';
 
             return `
@@ -439,7 +493,7 @@
         currentStockId = id;
         document.getElementById('modalTitle').innerText = 'Modifier le stock';
         document.getElementById('stockId').value = stock.id;
-        document.getElementById('medicineId').value = stock.medicine_id;
+        document.getElementById('medicineId').value = stock.medicine_id || stock.medicine?.id || '';
         document.getElementById('batchNumber').value = stock.batch_number || '';
         document.getElementById('quantity').value = stock.quantity;
         document.getElementById('price').value = stock.price;
@@ -464,9 +518,9 @@
         const payload = { medicine_id, batch_number, quantity, price, expiry_date };
         try {
             if (currentStockId) {
-                await apiCall(`/api/pharmacist/stock/${currentStockId}`, 'PUT', payload);
+                await apiCall(`/pharmacies/api/stocks/${currentStockId}/`, 'PUT', payload);
             } else {
-                await apiCall('/api/pharmacist/stock', 'POST', payload);
+                await apiCall('/pharmacies/api/stocks/', 'POST', payload);
             }
             closeModal();
             await loadStocks();
@@ -478,7 +532,7 @@
     async function deleteStock(id) {
         if (!confirm('Supprimer définitivement cette ligne de stock ?')) return;
         try {
-            await apiCall(`/api/pharmacist/stock/${id}`, 'DELETE');
+            await apiCall(`/pharmacies/api/stocks/${id}/delete/`, 'DELETE');
             await loadStocks();
         } catch (err) {
             alert('Erreur : ' + err.message);
@@ -490,7 +544,7 @@
         const stock = stocks.find(s => s.id === id);
         if (!stock) return;
         document.getElementById('adjustStockId').value = stock.id;
-        document.getElementById('adjustStockName').innerText = stock.medicine.name;
+        document.getElementById('adjustStockName').innerText = stock.medicine ? (stock.medicine.name || '—') : '—';
         document.getElementById('adjustQuantity').value = stock.quantity;
         document.getElementById('adjustModal').classList.remove('hidden');
         document.getElementById('adjustModal').classList.add('flex');
@@ -505,7 +559,7 @@
             return;
         }
         try {
-            await apiCall(`/api/pharmacist/stock/${id}/quantity`, 'PATCH', { quantity: newQty });
+            await apiCall(`/pharmacies/api/stocks/${id}/quantity/`, 'PATCH', { quantity: newQty });
             closeAdjustModal();
             await loadStocks();
         } catch (err) {

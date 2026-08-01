@@ -1,0 +1,111 @@
+{% extends "admin/master.html" %}
+
+{% block page_title %}Tableau de bord Pharmacie{% endblock %}
+
+{% block content %}
+
+<!-- CARTES STATS -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
+    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm">Produits en stock</p>
+                <p class="text-2xl font-bold text-gray-800 mt-1">{{ stocks.count }}</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-[#2C5F8A]/10 flex items-center justify-center">
+                <i class="fas fa-boxes text-[#2C5F8A]"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm">Stock faible</p>
+                <p class="text-2xl font-bold text-orange-500 mt-1">{{ low_stock_count }}</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center">
+                <i class="fas fa-exclamation-triangle text-orange-500"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm">Expiration proche</p>
+                <p class="text-2xl font-bold text-red-500 mt-1">{{ expiring_soon_count }}</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center">
+                <i class="fas fa-clock text-red-500"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm">Commandes en cours</p>
+                <p class="text-2xl font-bold text-[#2E8B57] mt-1">{{ pending_orders_count }}</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-[#2E8B57]/10 flex items-center justify-center">
+                <i class="fas fa-truck text-[#2E8B57]"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- INFOS PHARMACIE -->
+<div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm mb-8">
+    <h3 class="font-bold text-gray-800 mb-4">Informations de la pharmacie</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+        <div>
+            <p class="text-gray-500">Nom</p>
+            <p class="font-medium text-gray-800">{{ pharmacy.name }}</p>
+        </div>
+        <div>
+            <p class="text-gray-500">Numéro de licence</p>
+            <p class="font-medium text-gray-800">{{ pharmacy.license_number }}</p>
+        </div>
+        <div>
+            <p class="text-gray-500">Statut</p>
+            {% if pharmacy.is_verified %}
+                <span class="text-[#2E8B57] font-medium"><i class="fas fa-check-circle"></i> Vérifiée</span>
+            {% else %}
+                <span class="text-orange-500 font-medium"><i class="fas fa-clock"></i> En attente de validation</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- DERNIERS STOCKS -->
+<div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h3 class="font-bold text-gray-800">Derniers médicaments ajoutés</h3>
+        <a href="{% url 'pharmacies:stock_list' %}" class="text-sm text-[#2C5F8A] hover:underline">Voir tout</a>
+    </div>
+    <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-gray-500 text-left">
+            <tr>
+                <th class="px-6 py-3">Médicament</th>
+                <th class="px-6 py-3">Quantité</th>
+                <th class="px-6 py-3">Prix</th>
+                <th class="px-6 py-3">Expiration</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for stock in stocks|slice:":5" %}
+            <tr>
+                <td class="px-6 py-3 font-medium text-gray-800">{{ stock.medicine.name }}</td>
+                <td class="px-6 py-3">{{ stock.quantity }}</td>
+                <td class="px-6 py-3">{{ stock.price }} FCFA</td>
+                <td class="px-6 py-3">{{ stock.expiry_date }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="px-6 py-6 text-center text-gray-400">Aucun stock enregistré</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

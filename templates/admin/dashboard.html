@@ -1,6 +1,8 @@
 {% extends "admin/master.html" %}
+{% load static %}
+
 {% block title %}Tableau de bord{% endblock %}
-{% block page_title %}Bienvenue, {{ session.full_name }} 👋{% endblock %}
+{% block page_title %}Bienvenue, {{ user.get_full_name|default:user.username }} 👋{% endblock %}
 
 {% block content %}
 <style>
@@ -64,38 +66,68 @@
     }
     .badge-success { background: #e0f2e9; color: #166534; }
     .badge-warning { background: #fff3e3; color: #b45309; }
+    .badge-danger { background: #fee2e2; color: #dc2626; }
+    .badge-info { background: #dbeafe; color: #2563eb; }
+    .text-center { text-align: center; }
+    .text-red-600 { color: #dc2626; }
+    .font-semibold { font-weight: 600; }
+    .text-vert-principal { color: var(--vert-principal); }
+    .btn-primary {
+        display: inline-block;
+        padding: 0.75rem 2rem;
+        background: var(--vert-principal);
+        color: white;
+        border-radius: 50px;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+        background: var(--vert-fonce);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(46,139,87,0.3);
+    }
 </style>
 
-{% if session.role == 'patient' %}
+<!-- Patient Dashboard -->
+{% if user.role == 'patient' %}
 <div class="stats-grid">
     <div class="stat-card">
         <div class="stat-icon blue"><i class="fas fa-search"></i></div>
-        <div class="stat-value">{{ stats.recent_searches|default(0) }}</div>
+        <div class="stat-value">{{ stats.recent_searches|default:0 }}</div>
         <div class="stat-label">Recherches récentes</div>
     </div>
     <div class="stat-card">
         <div class="stat-icon green"><i class="fas fa-qrcode"></i></div>
-        <div class="stat-value">{{ stats.scans|default(0) }}</div>
+        <div class="stat-value">{{ stats.scans|default:0 }}</div>
         <div class="stat-label">Médicaments scannés</div>
     </div>
     <div class="stat-card">
         <div class="stat-icon blue"><i class="fas fa-store"></i></div>
-        <div class="stat-value">{{ stats.nearby_pharmacies|default(0) }}</div>
+        <div class="stat-value">{{ stats.nearby_pharmacies|default:0 }}</div>
         <div class="stat-label">Pharmacies à proximité</div>
     </div>
 </div>
+
 <div class="section-title">📋 Dernières recherches</div>
 <div class="table-wrapper">
     <table>
-        <thead><tr><th>Médicament</th><th>Date</th><th>Pharmacie trouvée</th></tr></thead>
+        <thead>
+            <tr>
+                <th>Médicament</th>
+                <th>Date</th>
+                <th>Pharmacie trouvée</th>
+            </tr>
+        </thead>
         <tbody>
             {% for search in recent_searches %}
             <tr>
                 <td>{{ search.medicine_name }}</td>
-                <td>{{ search.searched_at.strftime('%d/%m/%Y') }}</td>
-                <td>{{ search.pharmacy.name if search.pharmacy else '—' }}</td>
+                <td>{{ search.searched_at|date:"d/m/Y" }}</td>
+                <td>{{ search.pharmacy.name|default:"—" }}</td>
             </tr>
-            {% else %}
+            {% empty %}
             <tr><td colspan="3" class="text-center">Aucune recherche pour le moment</td></tr>
             {% endfor %}
         </tbody>
@@ -103,109 +135,212 @@
 </div>
 {% endif %}
 
-{% if session.role == 'pharmacien' %}
+<!-- Pharmacien Dashboard -->
+{% if user.role == 'pharmacien' %}
 <div class="stats-grid">
     <div class="stat-card">
         <div class="stat-icon blue"><i class="fas fa-boxes"></i></div>
-        <div class="stat-value">{{ stats.total_stock|default(0) }}</div>
+        <div class="stat-value">{{ stats.total_stock|default:0 }}</div>
         <div class="stat-label">Produits en stock</div>
     </div>
     <div class="stat-card">
         <div class="stat-icon green"><i class="fas fa-exclamation-triangle"></i></div>
-        <div class="stat-value">{{ stats.low_stock|default(0) }}</div>
+        <div class="stat-value">{{ stats.low_stock|default:0 }}</div>
         <div class="stat-label">Alertes stock faible</div>
     </div>
     <div class="stat-card">
         <div class="stat-icon blue"><i class="fas fa-truck"></i></div>
-        <div class="stat-value">{{ stats.pending_orders|default(0) }}</div>
+        <div class="stat-value">{{ stats.pending_orders|default:0 }}</div>
         <div class="stat-label">Commandes en attente</div>
     </div>
 </div>
+
 <div class="section-title">📦 Stock critique</div>
 <div class="table-wrapper">
     <table>
-        <thead><tr><th>Médicament</th><th>Quantité</th><th>Expiration</th><th>Action</th></tr></thead>
+        <thead>
+            <tr>
+                <th>Médicament</th>
+                <th>Quantité</th>
+                <th>Expiration</th>
+                <th>Action</th>
+            </tr>
+        </thead>
         <tbody>
             {% for item in critical_stock %}
             <tr>
                 <td>{{ item.medicine.name }}</td>
                 <td class="text-red-600 font-semibold">{{ item.quantity }}</td>
-                <td>{{ item.expiry_date.strftime('%d/%m/%Y') }}</td>
-                <td><a href="#" class="text-vert-principal">Commander</a></td>
+                <td>{{ item.expiry_date|date:"d/m/Y" }}</td>
+                <td><a href="{% url 'orders:order_create' %}?medicine={{ item.medicine.id }}" class="text-vert-principal">Commander</a></td>
             </tr>
-            {% else %}
-            <tr><td colspan="4">Aucun stock critique</td></tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center">Aucun stock critique</td></tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 {% endif %}
 
-{% if session.role == 'admin' %}
+<!-- Admin Dashboard -->
+{% if user.role == 'admin' %}
 <div class="stats-grid">
-    <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-users"></i></div><div class="stat-value">{{ stats.users }}</div><div class="stat-label">Utilisateurs</div></div>
-    <div class="stat-card"><div class="stat-icon green"><i class="fas fa-store"></i></div><div class="stat-value">{{ stats.pharmacies }}</div><div class="stat-label">Pharmacies</div></div>
-    <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-capsules"></i></div><div class="stat-value">{{ stats.medicines }}</div><div class="stat-label">Médicaments</div></div>
-    <div class="stat-card"><div class="stat-icon green"><i class="fas fa-shopping-cart"></i></div><div class="stat-value">{{ stats.orders }}</div><div class="stat-label">Commandes</div></div>
+    <div class="stat-card">
+        <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+        <div class="stat-value">{{ stats.users|default:0 }}</div>
+        <div class="stat-label">Utilisateurs</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green"><i class="fas fa-store"></i></div>
+        <div class="stat-value">{{ stats.pharmacies|default:0 }}</div>
+        <div class="stat-label">Pharmacies</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon blue"><i class="fas fa-capsules"></i></div>
+        <div class="stat-value">{{ stats.medicines|default:0 }}</div>
+        <div class="stat-label">Médicaments</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green"><i class="fas fa-shopping-cart"></i></div>
+        <div class="stat-value">{{ stats.orders|default:0 }}</div>
+        <div class="stat-label">Commandes</div>
+    </div>
 </div>
+
 <div class="section-title">👥 Derniers utilisateurs</div>
 <div class="table-wrapper">
-    <table><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Vérifié</th></tr></thead>
-    <tbody>
-        {% for u in recent_users %}
-        <tr>
-            <td>{{ u.full_name or '—' }}</td>
-            <td>{{ u.email }}</td>
-            <td><span class="badge {% if u.role == 'admin' %}badge-success{% else %}badge-warning{% endif %}">{{ u.role|title }}</span></td>
-            <td>{{ '✅' if u.is_verified else '❌' }}</td>
-        </tr>
-        {% else %}
-        <tr><td colspan="4">Aucun utilisateur récent</td></tr>
-        {% endfor %}
-    </tbody>
+    <table>
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Rôle</th>
+                <th>Vérifié</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in recent_users %}
+            <tr>
+                <td>{{ u.get_full_name|default:"—" }}</td>
+                <td>{{ u.email }}</td>
+                <td>
+                    <span class="badge {% if u.role == 'admin' %}badge-success{% elif u.role == 'pharmacien' %}badge-info{% else %}badge-warning{% endif %}">
+                        {{ u.role|title }}
+                    </span>
+                </td>
+                <td>
+                    {% if u.is_verified %}
+                        <span style="color: #166534;">✅ Vérifié</span>
+                    {% else %}
+                        <span style="color: #dc2626;">❌ Non vérifié</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center">Aucun utilisateur récent</td></tr>
+            {% endfor %}
+        </tbody>
     </table>
 </div>
+
 <div class="section-title">🏥 Pharmacies en attente</div>
 <div class="table-wrapper">
-    <table><thead><tr><th>Nom</th><th>Licence</th><th>Ville</th><th>Action</th></tr></thead>
-    <tbody>
-        {% for p in pending_pharmacies %}
-        <tr>
-            <td>{{ p.name }}</td>
-            <td>{{ p.license_number }}</td>
-            <td>{{ p.city or '—' }}</td>
-            <td><a href="#" class="text-vert-principal">Valider</a></td>
-        </tr>
-        {% else %}
-        <tr><td colspan="4">Aucune pharmacie en attente</td></tr>
-        {% endfor %}
-    </tbody>
+    <table>
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Licence</th>
+                <th>Ville</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in pending_pharmacies %}
+            <tr>
+                <td>{{ p.name }}</td>
+                <td>{{ p.license_number|default:"—" }}</td>
+                <td>{{ p.city|default:"—" }}</td>
+                <td>
+                    <a href="{% url 'admin:pharmacies_pharmacy_change' p.id %}" class="text-vert-principal">Valider</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center">Aucune pharmacie en attente</td></tr>
+            {% endfor %}
+        </tbody>
     </table>
 </div>
 {% endif %}
 
-{% if session.role == 'grossiste' %}
+<!-- Grossiste Dashboard -->
+{% if user.role == 'grossiste' %}
 <div class="stats-grid">
-    <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-chart-line"></i></div><div class="stat-value">{{ stats.supplier_orders|default(0) }}</div><div class="stat-label">Commandes fournisseurs</div></div>
-    <div class="stat-card"><div class="stat-icon green"><i class="fas fa-truck-fast"></i></div><div class="stat-value">{{ stats.deliveries|default(0) }}</div><div class="stat-label">Livraisons en cours</div></div>
-    <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-chart-pie"></i></div><div class="stat-value">{{ stats.revenue|default('0 FCFA') }}</div><div class="stat-label">CA mensuel</div></div>
+    <div class="stat-card">
+        <div class="stat-icon blue"><i class="fas fa-chart-line"></i></div>
+        <div class="stat-value">{{ stats.supplier_orders|default:0 }}</div>
+        <div class="stat-label">Commandes fournisseurs</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green"><i class="fas fa-truck-fast"></i></div>
+        <div class="stat-value">{{ stats.deliveries|default:0 }}</div>
+        <div class="stat-label">Livraisons en cours</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon blue"><i class="fas fa-chart-pie"></i></div>
+        <div class="stat-value">{{ stats.revenue|default:"0 FCFA" }}</div>
+        <div class="stat-label">CA mensuel</div>
+    </div>
 </div>
+
 <div class="section-title">📦 Dernières commandes</div>
 <div class="table-wrapper">
-    <table><thead><tr><th>Référence</th><th>Pharmacie</th><th>Montant</th><th>Statut</th></tr></thead>
-    <tbody>
-        {% for order in recent_orders %}
-        <tr>
-            <td>{{ order.reference }}</td>
-            <td>{{ order.pharmacy.name }}</td>
-            <td>{{ order.total_amount }} FCFA</td>
-            <td><span class="badge badge-warning">{{ order.status }}</span></td>
-        </tr>
-        {% else %}
-        <tr><td colspan="4">Aucune commande récente</td></tr>
-        {% endfor %}
-    </tbody>
+    <table>
+        <thead>
+            <tr>
+                <th>Référence</th>
+                <th>Pharmacie</th>
+                <th>Montant</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in recent_orders %}
+            <tr>
+                <td>{{ order.reference }}</td>
+                <td>{{ order.pharmacy.name }}</td>
+                <td>{{ order.total_amount }} FCFA</td>
+                <td>
+                    <span class="badge 
+                        {% if order.status == 'livre' %}badge-success
+                        {% elif order.status == 'en_attente' %}badge-warning
+                        {% elif order.status == 'annule' %}badge-danger
+                        {% else %}badge-info{% endif %}">
+                        {{ order.status|title }}
+                    </span>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center">Aucune commande récente</td></tr>
+            {% endfor %}
+        </tbody>
     </table>
 </div>
 {% endif %}
+
+<!-- Si l'utilisateur n'a pas de rôle spécifique -->
+{% if not user.role %}
+<div class="stats-grid">
+    <div class="stat-card" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+        <div class="stat-icon blue" style="margin: 0 auto 1rem;"><i class="fas fa-user-circle"></i></div>
+        <div class="stat-value" style="font-size: 1.2rem;">Bienvenue sur PharmaConnect</div>
+        <div class="stat-label" style="font-size: 1rem; margin-top: 0.5rem;">
+            Pour commencer, veuillez compléter votre profil ou contacter l'administrateur.
+        </div>
+        <a href="{% url 'auth:profile' %}" class="btn-primary" style="display: inline-block; margin-top: 1rem;">
+            <i class="fas fa-user-edit"></i> Compléter mon profil
+        </a>
+    </div>
+</div>
+{% endif %}
+
 {% endblock %}

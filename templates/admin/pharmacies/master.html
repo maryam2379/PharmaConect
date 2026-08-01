@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PharmaConnect · {% block title %}Accueil{% endblock %}</title>
+    <title>PharmaConnect · {% block title %}Dashboard Pharmacie{% endblock %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -55,9 +55,7 @@
                 border-right: none;
                 z-index: 60;
             }
-            .sidebar.open {
-                transform: translateX(0);
-            }
+            .sidebar.open { transform: translateX(0); }
             .sidebar-overlay {
                 display: none;
                 position: fixed;
@@ -65,32 +63,14 @@
                 background: rgba(0,0,0,0.4);
                 z-index: 50;
             }
-            .sidebar-overlay.active {
-                display: block;
-            }
+            .sidebar-overlay.active { display: block; }
         }
         .sidebar-header {
             padding: 2rem 1.5rem;
             border-bottom: 1px solid var(--gris-bordure);
             background: linear-gradient(135deg, rgba(46,139,87,0.03), rgba(15,76,129,0.02));
         }
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-        }
-        .logo-icon {
-            width: 42px;
-            height: 42px;
-            background: linear-gradient(135deg, var(--vert-principal), var(--bleu-profondeur));
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.3rem;
-        }
+        .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
         .logo-text {
             font-family: 'Goodly', 'Ubuntu', sans-serif;
             font-weight: 800;
@@ -121,18 +101,9 @@
             font-weight: bold;
             font-size: 1.2rem;
         }
-        .user-details h4 {
-            font-size: 0.95rem;
-            font-weight: 700;
-            margin-bottom: 2px;
-        }
-        .user-details p {
-            font-size: 0.7rem;
-            color: var(--texte-mute);
-        }
-        .nav-menu {
-            padding: 0 1rem 1rem;
-        }
+        .user-details h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 2px; }
+        .user-details p { font-size: 0.7rem; color: var(--texte-mute); }
+        .nav-menu { padding: 0 1rem 1rem; }
         .nav-item {
             display: flex;
             align-items: center;
@@ -165,11 +136,7 @@
             display: flex;
             flex-direction: column;
         }
-        @media (max-width: 768px) {
-            .main-content {
-                margin-left: 0;
-            }
-        }
+        @media (max-width: 768px) { .main-content { margin-left: 0; } }
         .top-bar {
             background: var(--blanc-carte);
             padding: 1rem 2rem;
@@ -181,11 +148,7 @@
             top: 0;
             z-index: 30;
         }
-        .top-bar-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+        .top-bar-left { display: flex; align-items: center; gap: 12px; }
         .menu-toggle {
             display: none;
             background: none;
@@ -195,11 +158,7 @@
             cursor: pointer;
             padding: 4px 8px;
         }
-        @media (max-width: 768px) {
-            .menu-toggle {
-                display: block;
-            }
-        }
+        @media (max-width: 768px) { .menu-toggle { display: block; } }
         .page-title {
             font-family: 'Goodly', 'Ubuntu', sans-serif;
             font-weight: 700;
@@ -217,9 +176,7 @@
             transition: 0.2s;
         }
         .btn-logout:hover { background: #dc2626; color: white; }
-        @media (max-width: 768px) {
-            .btn-logout { display: none; }
-        }
+        @media (max-width: 768px) { .btn-logout { display: none; } }
         .flash-messages { padding: 1rem 2rem; }
         .alert {
             padding: 12px 16px;
@@ -235,10 +192,7 @@
         .alert-warning { background: #fef3c7; border-left: 4px solid #f59e0b; color: #b45309; }
         .alert-info { background: #dbeafe; border-left: 4px solid #3b82f6; color: #1e40af; }
         .content { padding: 2rem; flex: 1; }
-        @media (max-width: 768px) {
-            .content { padding: 1rem; padding-bottom: 90px; }
-        }
-
+        @media (max-width: 768px) { .content { padding: 1rem; padding-bottom: 90px; } }
         .mobile-bottom-nav {
             display: none;
             position: fixed;
@@ -254,12 +208,7 @@
             z-index: 100;
             padding: 8px 12px;
         }
-        .mobile-nav-items {
-            display: flex;
-            justify-content: space-evenly;
-            align-items: center;
-            width: 100%;
-        }
+        .mobile-nav-items { display: flex; justify-content: space-evenly; align-items: center; width: 100%; }
         .mobile-nav-item {
             flex: 1;
             display: flex;
@@ -272,19 +221,9 @@
             transition: all 0.2s;
             border-radius: 30px;
         }
-        .mobile-nav-item i {
-            font-size: 1.4rem;
-        }
-        .mobile-nav-item.active {
-            color: var(--vert-principal);
-            background: rgba(46,139,87,0.15);
-        }
-        .mobile-nav-center {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+        .mobile-nav-item i { font-size: 1.4rem; }
+        .mobile-nav-item.active { color: var(--vert-principal); background: rgba(46,139,87,0.15); }
+        .mobile-nav-center { flex: 1; display: flex; justify-content: center; align-items: center; }
         .mobile-nav-center .mobile-nav-item {
             background: linear-gradient(135deg, var(--vert-principal), var(--bleu-profondeur));
             color: white;
@@ -294,14 +233,8 @@
             margin-top: -20px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
-        .mobile-nav-center .mobile-nav-item i {
-            font-size: 1.8rem;
-        }
-        @media (max-width: 768px) {
-            .mobile-bottom-nav {
-                display: block;
-            }
-        }
+        .mobile-nav-center .mobile-nav-item i { font-size: 1.8rem; }
+        @media (max-width: 768px) { .mobile-bottom-nav { display: block; } }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -310,15 +243,7 @@
 
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            {% if user.role == 'pharmacien' %}
-                <a href="{% url 'pharmacies:dashboard' %}" class="logo">
-            {% elif user.role == 'grossiste' %}
-                <a href="{% url 'wholesalers:dashboard' %}" class="logo">
-            {% elif user.role == 'admin' %}
-                <a href="{% url 'admin:index' %}" class="logo">
-            {% else %}
-                <a href="{% url 'auth:home' %}" class="logo">
-            {% endif %}
+            <a href="{% url 'pharmacies:dashboard' %}" class="logo">
                 <img src="{% static 'images/Group 2.svg' %}" alt="PharmaConnect Logo" style="width: 42px; height: 42px; object-fit: contain;">
                 <span class="logo-text">Dashboard</span>
             </a>
@@ -327,48 +252,18 @@
             <div class="avatar">{{ user.get_full_name|first|upper|default:'U' }}</div>
             <div class="user-details">
                 <h4>{{ user.get_full_name|default:user.username }}</h4>
-                <p><i class="fas fa-user-tag"></i> {{ user.role|title }}</p>
+                <p><i class="fas fa-user-tag"></i> Pharmacien</p>
             </div>
         </div>
         <nav class="nav-menu">
             <div class="nav-section">Navigation</div>
-
-            {% if user.role == 'patient' %}
-                <a href="{% url 'auth:home' %}" class="nav-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
-                    <i class="fas fa-home"></i> Accueil
-                </a>
-                <a href="{% url 'auth:dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                    <i class="fas fa-tachometer-alt"></i> Tableau de bord
-                </a>
-                <a href="{% url 'patients:search' %}" class="nav-item"><i class="fas fa-search"></i> Rechercher</a>
-                <a href="{% url 'anticounterfeit:scan_page' %}" class="nav-item"><i class="fas fa-qrcode"></i> Scanner</a>
-                <a href="{% url 'pharmacies:nearby' %}" class="nav-item"><i class="fas fa-map-marker-alt"></i> Pharmacies proches</a>
-
-            {% elif user.role == 'pharmacien' %}
-                <a href="{% url 'pharmacies:dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                    <i class="fas fa-tachometer-alt"></i> Tableau de bord
-                </a>
-                <a href="{% url 'pharmacies:stock_list' %}" class="nav-item"><i class="fas fa-boxes"></i> Stocks</a>
-                <a href="{% url 'orders:order_list' %}" class="nav-item"><i class="fas fa-truck"></i> Commandes</a>
-                <a href="{% url 'anticounterfeit:scan_page' %}" class="nav-item"><i class="fas fa-qrcode"></i> QR codes</a>
-                <a href="{% url 'pharmacies:dashboard' %}" class="nav-item"><i class="fas fa-store"></i> Ma pharmacie</a>
-
-            {% elif user.role == 'admin' %}
-                <a href="{% url 'admin:index' %}" class="nav-item">
-                    <i class="fas fa-tachometer-alt"></i> Tableau de bord
-                </a>
-                <a href="{% url 'admin:index' %}" class="nav-item"><i class="fas fa-users"></i> Utilisateurs</a>
-                <a href="{% url 'admin:pharmacies_pharmacy_changelist' %}" class="nav-item"><i class="fas fa-store"></i> Pharmacies</a>
-                <a href="#" class="nav-item"><i class="fas fa-chart-pie"></i> Statistiques</a>
-
-            {% elif user.role == 'grossiste' %}
-                <a href="{% url 'wholesalers:dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                    <i class="fas fa-tachometer-alt"></i> Tableau de bord
-                </a>
-                <a href="{% url 'wholesalers:offer_list' %}" class="nav-item"><i class="fas fa-chart-simple"></i> Approvisionnements</a>
-                <a href="{% url 'orders:order_list' %}" class="nav-item"><i class="fas fa-truck-fast"></i> Livraisons</a>
-                <a href="{% url 'wholesalers:dashboard' %}" class="nav-item"><i class="fas fa-warehouse"></i> Mon dépôt</a>
-            {% endif %}
+            <a href="{% url 'pharmacies:dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <i class="fas fa-tachometer-alt"></i> Tableau de bord
+            </a>
+            <a href="{% url 'pharmacies:stock_list' %}" class="nav-item"><i class="fas fa-boxes"></i> Stocks</a>
+            <a href="{% url 'orders:order_list' %}" class="nav-item"><i class="fas fa-truck"></i> Commandes</a>
+            <a href="{% url 'anticounterfeit:scan_page' %}" class="nav-item"><i class="fas fa-qrcode"></i> QR codes</a>
+            <a href="{% url 'pharmacies:pharmacy_detail' pharmacy_id=pharmacy.id %}" class="nav-item"><i class="fas fa-store"></i> Ma pharmacie</a>
 
             <div class="nav-section">Compte</div>
             <a href="{% url 'auth:profile' %}" class="nav-item"><i class="fas fa-user-cog"></i> Mon profil</a>
@@ -403,54 +298,20 @@
 
     <div class="mobile-bottom-nav">
         <div class="mobile-nav-items">
-            {% if user.role == 'patient' %}
-                <a href="{% url 'auth:dashboard' %}" class="mobile-nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                    <i class="fas fa-tachometer-alt"></i>
-                </a>
-                <a href="{% url 'anticounterfeit:scan_page' %}" class="mobile-nav-item">
-                    <i class="fas fa-qrcode"></i>
-                </a>
-            {% elif user.role == 'pharmacien' %}
-                <a href="{% url 'pharmacies:dashboard' %}" class="mobile-nav-item">
-                    <i class="fas fa-tachometer-alt"></i>
-                </a>
-                <a href="{% url 'anticounterfeit:scan_page' %}" class="mobile-nav-item">
-                    <i class="fas fa-qrcode"></i>
-                </a>
-            {% elif user.role == 'admin' %}
-                <a href="{% url 'admin:index' %}" class="mobile-nav-item">
-                    <i class="fas fa-tachometer-alt"></i>
-                </a>
-                <a href="{% url 'admin:index' %}" class="mobile-nav-item">
-                    <i class="fas fa-users"></i>
-                </a>
-            {% elif user.role == 'grossiste' %}
-                <a href="{% url 'wholesalers:dashboard' %}" class="mobile-nav-item">
-                    <i class="fas fa-tachometer-alt"></i>
-                </a>
-                <a href="{% url 'wholesalers:offer_list' %}" class="mobile-nav-item">
-                    <i class="fas fa-chart-simple"></i>
-                </a>
-            {% endif %}
-
+            <a href="{% url 'pharmacies:dashboard' %}" class="mobile-nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <i class="fas fa-tachometer-alt"></i>
+            </a>
+            <a href="{% url 'anticounterfeit:scan_page' %}" class="mobile-nav-item">
+                <i class="fas fa-qrcode"></i>
+            </a>
             <div class="mobile-nav-center">
-                {% if user.role == 'pharmacien' %}
-                    <a href="{% url 'pharmacies:dashboard' %}" class="mobile-nav-item">
-                {% elif user.role == 'grossiste' %}
-                    <a href="{% url 'wholesalers:dashboard' %}" class="mobile-nav-item">
-                {% elif user.role == 'admin' %}
-                    <a href="{% url 'admin:index' %}" class="mobile-nav-item">
-                {% else %}
-                    <a href="{% url 'auth:home' %}" class="mobile-nav-item">
-                {% endif %}
+                <a href="{% url 'pharmacies:dashboard' %}" class="mobile-nav-item">
                     <img src="{% static 'images/Group 2.svg' %}" alt="Logo" style="width: 30px; height: 30px; object-fit: contain;">
                 </a>
             </div>
-
             <a href="{% url 'auth:profile' %}" class="mobile-nav-item">
                 <i class="fas fa-user-circle"></i>
             </a>
-
             <a href="{% url 'auth:logout' %}" class="mobile-nav-item">
                 <i class="fas fa-sign-out-alt"></i>
             </a>
@@ -467,32 +328,21 @@
             overlay.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
-
         function closeSidebar() {
             sidebar.classList.remove('open');
             overlay.classList.remove('active');
             document.body.style.overflow = '';
         }
-
         toggleBtn.addEventListener('click', function(e) {
             e.stopPropagation();
-            if (sidebar.classList.contains('open')) {
-                closeSidebar();
-            } else {
-                openSidebar();
-            }
+            sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
         });
-
         overlay.addEventListener('click', closeSidebar);
-
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', function() {
-                if (window.innerWidth <= 768) {
-                    closeSidebar();
-                }
+                if (window.innerWidth <= 768) closeSidebar();
             });
         });
-
         window.addEventListener('resize', function() {
             if (window.innerWidth > 768) {
                 sidebar.classList.remove('open');

@@ -87,14 +87,20 @@ def register(request):
                 is_verified=False,
             )
 
-        send_verification_email(new_user, _build_verification_url(request, new_user.verification_token))
+        # Envoyer l'email de vérification avec gestion d'erreur
+        email_sent = send_verification_email(new_user, _build_verification_url(request, new_user.verification_token))
+        
+        if email_sent:
+            print(f"✅ Email de vérification envoyé à {new_user.email}")
+        else:
+            print(f"❌ Échec d'envoi de l'email à {new_user.email}")
 
         upgrade_id = f"pharmaconnect-CM-{new_user.id:05d}"
         return JsonResponse({
             'success': True,
             'upgrade_id': upgrade_id,
             'email': new_user.email,
-            'message': 'Inscription réussie. Vérifiez votre boîte email.',
+            'message': 'Inscription réussie. Vérifiez votre boîte email.' if email_sent else 'Inscription réussie mais l\'email de vérification n\'a pas pu être envoyé. Veuillez contacter le support.',
         })
 
     # Cas formulaire classique
@@ -143,10 +149,16 @@ def register(request):
     # Stocker l'ID de l'utilisateur en session pour la vérification
     request.session['pending_user_id'] = new_user.id
     
-    # Envoyer l'email de vérification
-    send_verification_email(new_user, _build_verification_url(request, new_user.verification_token))
+    # Envoyer l'email de vérification avec gestion d'erreur
+    email_sent = send_verification_email(new_user, _build_verification_url(request, new_user.verification_token))
     
-    messages.success(request, "Compte créé avec succès ! Un email de vérification vous a été envoyé.")
+    if email_sent:
+        print(f"✅ Email de vérification envoyé à {new_user.email}")
+        messages.success(request, "Compte créé avec succès ! Un email de vérification vous a été envoyé.")
+    else:
+        print(f"❌ Échec d'envoi de l'email à {new_user.email}")
+        messages.warning(request, "Compte créé avec succès ! Cependant, l'email de vérification n'a pas pu être envoyé. Veuillez contacter le support ou réessayer plus tard.")
+    
     return redirect("auth:verification_choice")
 
 
@@ -204,9 +216,12 @@ def send_otp_route(request):
 
     user = User.objects.filter(id=user_id).first()
     if user:
-        if send_otp_email(user):
+        email_sent = send_otp_email(user)
+        if email_sent:
+            print(f"✅ Code OTP envoyé à {user.email}")
             messages.info(request, "Un code OTP a été envoyé à votre adresse email.")
         else:
+            print(f"❌ Échec d'envoi du code OTP à {user.email}")
             messages.error(request, "Erreur lors de l'envoi du code. Réessayez plus tard.")
     return redirect("auth:verify_otp")
 
@@ -246,9 +261,13 @@ def send_verification_link(request):
     user = User.objects.filter(id=user_id).first()
     if user:
         url = _build_verification_url(request, user.verification_token)
-        if send_verification_email(user, url):
+        email_sent = send_verification_email(user, url)
+        
+        if email_sent:
+            print(f"✅ Lien de vérification envoyé à {user.email}")
             messages.info(request, "Un lien de vérification a été envoyé à votre adresse email.")
         else:
+            print(f"❌ Échec d'envoi du lien de vérification à {user.email}")
             messages.error(request, "Erreur d'envoi. Réessayez plus tard.")
     return redirect("auth:verification_choice")
 
@@ -316,7 +335,7 @@ def login_view(request):
     elif user.role == "grossiste":
         return redirect("wholesalers:dashboard")
     else:
-        return redirect("auth:dashboard")
+        return redirect("patients:dashboard")
 
 
 def logout_view(request):
@@ -336,7 +355,7 @@ def dashboard(request):
         pharmacy = Pharmacy.objects.filter(manager=request.user).first()
         context["pharmacy"] = pharmacy
 
-    return render(request, "auth/dashboard.html", context)
+    return render(request, "admin/patients/dashboard.html", context)
 
 
 @login_required
@@ -349,4 +368,4 @@ def profile(request):
         messages.success(request, "Profil mis à jour.")
         return redirect("auth:profile")
 
-    return render(request, "auth/profile.html", {"user": request.user})
+    return render(request, "admin/profile.html", {"user": request.user})

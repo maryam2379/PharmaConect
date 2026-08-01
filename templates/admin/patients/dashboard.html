@@ -1,0 +1,100 @@
+{% extends "admin/master.html" %}
+
+{% block page_title %}Mon tableau de bord{% endblock %}
+
+{% block content %}
+
+<!-- BARRE DE RECHERCHE RAPIDE -->
+<div class="bg-gradient-to-r from-[#2C5F8A] to-[#2E8B57] rounded-2xl p-6 mb-8 text-white">
+    <h3 class="font-bold text-lg mb-3">Rechercher un médicament</h3>
+    <form action="{% url 'patients:search' %}" method="get" class="flex gap-3">
+        <input type="text" name="q" placeholder="Ex : Paracétamol, Amoxicilline..."
+               class="flex-1 rounded-full px-5 py-3 text-gray-800 focus:outline-none">
+        <button type="submit" class="bg-white text-[#2C5F8A] px-6 py-3 rounded-full font-medium hover:bg-gray-100 transition-all">
+            <i class="fas fa-search"></i> Rechercher
+        </button>
+    </form>
+</div>
+
+<!-- CARTES STATS -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm">Recherches effectuées</p>
+                <p class="text-2xl font-bold text-gray-800 mt-1">{{ search_count }}</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-[#2C5F8A]/10 flex items-center justify-center">
+                <i class="fas fa-search text-[#2C5F8A]"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm">Scans vérification</p>
+                <p class="text-2xl font-bold text-[#2E8B57] mt-1">{{ scan_count }}</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-[#2E8B57]/10 flex items-center justify-center">
+                <i class="fas fa-qrcode text-[#2E8B57]"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm">Commandes en cours</p>
+                <p class="text-2xl font-bold text-orange-500 mt-1">{{ pending_orders_count }}</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center">
+                <i class="fas fa-truck text-orange-500"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- DERNIÈRES RECHERCHES -->
+<div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-8">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h3 class="font-bold text-gray-800">Dernières recherches</h3>
+        <a href="{% url 'patients:history' %}" class="text-sm text-[#2C5F8A] hover:underline">Voir tout</a>
+    </div>
+    <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-gray-500 text-left">
+            <tr>
+                <th class="px-6 py-3">Médicament recherché</th>
+                <th class="px-6 py-3">Date</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for search in recent_searches %}
+            <tr>
+                <td class="px-6 py-3 font-medium text-gray-800">{{ search.medicine_name }}</td>
+                <td class="px-6 py-3 text-gray-500">{{ search.searched_at|date:"d/m/Y H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="2" class="px-6 py-6 text-center text-gray-400">Aucune recherche récente</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- ALERTE SÉCURITÉ -->
+<div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+    <div class="flex items-start gap-4">
+        <div class="w-12 h-12 rounded-xl bg-[#2E8B57]/10 flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-shield-alt text-[#2E8B57] text-xl"></i>
+        </div>
+        <div>
+            <h4 class="font-bold text-gray-800">Toujours vérifier avant d'acheter</h4>
+            <p class="text-gray-600 text-sm mt-1">Scannez le QR code de vos médicaments pour vous assurer de leur authenticité et éviter les contrefaçons.</p>
+            <a href="{% url 'anticounterfeit:scan_page' %}" class="inline-block mt-3 text-sm text-[#2E8B57] font-medium hover:underline">
+                Scanner maintenant <i class="fas fa-arrow-right text-xs"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
