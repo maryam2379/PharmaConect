@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from django.conf import settings
+from django.conf.urls.static import static
 
 # Charger les variables d'environnement depuis .env
 load_dotenv()
@@ -200,3 +202,4 @@ MEDIA_ROOT = BASE_DIR / 'media'
 SESSION_COOKIE_AGE = 1209600  # 2 semaines en secondes
 SESSION_COOKIE_SECURE = False  # Mettre à True en production avec HTTPS
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+# urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

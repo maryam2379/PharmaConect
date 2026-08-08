@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,6 +16,7 @@
             src: local('Goodly'), local('SF Pro Text'), local('Segoe UI');
             font-display: swap;
         }
+
         :root {
             --vert-principal: #2E8B57;
             --vert-fonce: #267349;
@@ -27,13 +29,20 @@
             --texte-mute: #64748b;
             --ombre: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             background: var(--gris-fond);
             font-family: 'Ubuntu', sans-serif;
             color: var(--texte-fonce);
             overflow-x: hidden;
         }
+
         .sidebar {
             position: fixed;
             left: 0;
@@ -47,30 +56,46 @@
             transition: transform 0.3s ease;
             overflow-y: auto;
         }
+
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
                 display: block;
-                box-shadow: 0 0 30px rgba(0,0,0,0.2);
+                box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
                 border-right: none;
                 z-index: 60;
             }
-            .sidebar.open { transform: translateX(0); }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
             .sidebar-overlay {
                 display: none;
                 position: fixed;
                 inset: 0;
-                background: rgba(0,0,0,0.4);
+                background: rgba(0, 0, 0, 0.4);
                 z-index: 50;
             }
-            .sidebar-overlay.active { display: block; }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
         }
+
         .sidebar-header {
             padding: 2rem 1.5rem;
             border-bottom: 1px solid var(--gris-bordure);
-            background: linear-gradient(135deg, rgba(46,139,87,0.03), rgba(15,76,129,0.02));
+            background: linear-gradient(135deg, rgba(46, 139, 87, 0.03), rgba(15, 76, 129, 0.02));
         }
-        .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
         .logo-text {
             font-family: 'Goodly', 'Ubuntu', sans-serif;
             font-weight: 800;
@@ -80,6 +105,7 @@
             -webkit-background-clip: text;
             color: transparent;
         }
+
         .user-info {
             padding: 1.5rem;
             background: var(--bleu-clair);
@@ -89,6 +115,7 @@
             align-items: center;
             gap: 12px;
         }
+
         .avatar {
             width: 48px;
             height: 48px;
@@ -101,9 +128,22 @@
             font-weight: bold;
             font-size: 1.2rem;
         }
-        .user-details h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 2px; }
-        .user-details p { font-size: 0.7rem; color: var(--texte-mute); }
-        .nav-menu { padding: 0 1rem 1rem; }
+
+        .user-details h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .user-details p {
+            font-size: 0.7rem;
+            color: var(--texte-mute);
+        }
+
+        .nav-menu {
+            padding: 0 1rem 1rem;
+        }
+
         .nav-item {
             display: flex;
             align-items: center;
@@ -116,13 +156,22 @@
             transition: all 0.2s;
             font-weight: 500;
         }
-        .nav-item i { width: 24px; color: var(--vert-principal); }
-        .nav-item:hover { background: var(--bleu-clair); }
+
+        .nav-item i {
+            width: 24px;
+            color: var(--vert-principal);
+        }
+
+        .nav-item:hover {
+            background: var(--bleu-clair);
+        }
+
         .nav-item.active {
-            background: linear-gradient(135deg, rgba(46,139,87,0.12), rgba(15,76,129,0.08));
+            background: linear-gradient(135deg, rgba(46, 139, 87, 0.12), rgba(15, 76, 129, 0.08));
             border-right: 3px solid var(--vert-principal);
             color: var(--vert-principal);
         }
+
         .nav-section {
             font-size: 0.7rem;
             text-transform: uppercase;
@@ -130,13 +179,20 @@
             color: var(--texte-mute);
             padding: 1.2rem 1rem 0.5rem;
         }
+
         .main-content {
             margin-left: 280px;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
-        @media (max-width: 768px) { .main-content { margin-left: 0; } }
+
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
         .top-bar {
             background: var(--blanc-carte);
             padding: 1rem 2rem;
@@ -148,7 +204,13 @@
             top: 0;
             z-index: 30;
         }
-        .top-bar-left { display: flex; align-items: center; gap: 12px; }
+
+        .top-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
         .menu-toggle {
             display: none;
             background: none;
@@ -158,15 +220,22 @@
             cursor: pointer;
             padding: 4px 8px;
         }
-        @media (max-width: 768px) { .menu-toggle { display: block; } }
+
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: block;
+            }
+        }
+
         .page-title {
             font-family: 'Goodly', 'Ubuntu', sans-serif;
             font-weight: 700;
             font-size: 1.5rem;
             color: var(--texte-fonce);
         }
+
         .btn-logout {
-            background: rgba(239,68,68,0.1);
+            background: rgba(239, 68, 68, 0.1);
             padding: 8px 18px;
             border-radius: 40px;
             color: #dc2626;
@@ -175,9 +244,22 @@
             font-size: 0.85rem;
             transition: 0.2s;
         }
-        .btn-logout:hover { background: #dc2626; color: white; }
-        @media (max-width: 768px) { .btn-logout { display: none; } }
-        .flash-messages { padding: 1rem 2rem; }
+
+        .btn-logout:hover {
+            background: #dc2626;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .btn-logout {
+                display: none;
+            }
+        }
+
+        .flash-messages {
+            padding: 1rem 2rem;
+        }
+
         .alert {
             padding: 12px 16px;
             border-radius: 16px;
@@ -187,12 +269,43 @@
             gap: 10px;
             font-size: 0.85rem;
         }
-        .alert-success { background: #e0f2e9; border-left: 4px solid var(--vert-principal); color: #166534; }
-        .alert-danger { background: #fee2e2; border-left: 4px solid #dc2626; color: #991b1b; }
-        .alert-warning { background: #fef3c7; border-left: 4px solid #f59e0b; color: #b45309; }
-        .alert-info { background: #dbeafe; border-left: 4px solid #3b82f6; color: #1e40af; }
-        .content { padding: 2rem; flex: 1; }
-        @media (max-width: 768px) { .content { padding: 1rem; padding-bottom: 90px; } }
+
+        .alert-success {
+            background: #e0f2e9;
+            border-left: 4px solid var(--vert-principal);
+            color: #166534;
+        }
+
+        .alert-danger {
+            background: #fee2e2;
+            border-left: 4px solid #dc2626;
+            color: #991b1b;
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            color: #b45309;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            color: #1e40af;
+        }
+
+        .content {
+            padding: 2rem;
+            flex: 1;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 1rem;
+                padding-bottom: 90px;
+            }
+        }
+
         .mobile-bottom-nav {
             display: none;
             position: fixed;
@@ -203,12 +316,19 @@
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-radius: 40px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.05);
-            border: 1px solid rgba(255,255,255,0.6);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.6);
             z-index: 100;
             padding: 8px 12px;
         }
-        .mobile-nav-items { display: flex; justify-content: space-evenly; align-items: center; width: 100%; }
+
+        .mobile-nav-items {
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+            width: 100%;
+        }
+
         .mobile-nav-item {
             flex: 1;
             display: flex;
@@ -221,9 +341,23 @@
             transition: all 0.2s;
             border-radius: 30px;
         }
-        .mobile-nav-item i { font-size: 1.4rem; }
-        .mobile-nav-item.active { color: var(--vert-principal); background: rgba(46,139,87,0.15); }
-        .mobile-nav-center { flex: 1; display: flex; justify-content: center; align-items: center; }
+
+        .mobile-nav-item i {
+            font-size: 1.4rem;
+        }
+
+        .mobile-nav-item.active {
+            color: var(--vert-principal);
+            background: rgba(46, 139, 87, 0.15);
+        }
+
+        .mobile-nav-center {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
         .mobile-nav-center .mobile-nav-item {
             background: linear-gradient(135deg, var(--vert-principal), var(--bleu-profondeur));
             color: white;
@@ -231,20 +365,30 @@
             height: 52px;
             border-radius: 30px;
             margin-top: -20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
-        .mobile-nav-center .mobile-nav-item i { font-size: 1.8rem; }
-        @media (max-width: 768px) { .mobile-bottom-nav { display: block; } }
+
+        .mobile-nav-center .mobile-nav-item i {
+            font-size: 1.8rem;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-bottom-nav {
+                display: block;
+            }
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
+
 <body>
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <a href="{% url 'pharmacies:dashboard' %}" class="logo">
-                <img src="{% static 'images/Group 2.svg' %}" alt="PharmaConnect Logo" style="width: 42px; height: 42px; object-fit: contain;">
+                <img src="{% static 'images/Group 2.svg' %}" alt="PharmaConnect Logo"
+                    style="width: 42px; height: 42px; object-fit: contain;">
                 <span class="logo-text">Dashboard</span>
             </a>
         </div>
@@ -257,13 +401,20 @@
         </div>
         <nav class="nav-menu">
             <div class="nav-section">Navigation</div>
-            <a href="{% url 'pharmacies:dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            <a href="{% url 'pharmacies:dashboard' %}"
+                class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                 <i class="fas fa-tachometer-alt"></i> Tableau de bord
             </a>
-            <a href="{% url 'pharmacies:stock_list' %}" class="nav-item"><i class="fas fa-boxes"></i> Stocks</a>
+            <a href="{% url 'pharmacies:stock_list' %}"
+                class="nav-item {% if request.resolver_match.url_name == 'stock_list' %}active{% endif %}"><i
+                    class="fas fa-boxes"></i> Stocks</a>
             <a href="{% url 'orders:order_list' %}" class="nav-item"><i class="fas fa-truck"></i> Commandes</a>
-            <a href="{% url 'anticounterfeit:scan_page' %}" class="nav-item"><i class="fas fa-qrcode"></i> QR codes</a>
-            <a href="{% url 'pharmacies:pharmacy_detail' pharmacy_id=pharmacy.id %}" class="nav-item"><i class="fas fa-store"></i> Ma pharmacie</a>
+            <a href="{% url 'pharmacies:scan' %}"
+                class="nav-item {% if request.resolver_match.url_name == 'scan' %}active{% endif %}"><i
+                    class="fas fa-qrcode"></i> QR codes</a>
+            <a href="{% url 'pharmacies:my_pharmacy' %}" class="nav-item">
+                <i class="fas fa-store"></i> Ma pharmacie
+            </a>
 
             <div class="nav-section">Compte</div>
             <a href="{% url 'auth:profile' %}" class="nav-item"><i class="fas fa-user-cog"></i> Mon profil</a>
@@ -283,12 +434,14 @@
         </header>
         <div class="flash-messages">
             {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'success' %}success{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}">
-                        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
-                        {{ message }}
-                    </div>
-                {% endfor %}
+            {% for message in messages %}
+            <div
+                class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'success' %}success{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}">
+                <i
+                    class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                {{ message }}
+            </div>
+            {% endfor %}
             {% endif %}
         </div>
         <main class="content">
@@ -298,15 +451,18 @@
 
     <div class="mobile-bottom-nav">
         <div class="mobile-nav-items">
-            <a href="{% url 'pharmacies:dashboard' %}" class="mobile-nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            <a href="{% url 'pharmacies:dashboard' %}"
+                class="mobile-nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                 <i class="fas fa-tachometer-alt"></i>
             </a>
             <a href="{% url 'anticounterfeit:scan_page' %}" class="mobile-nav-item">
                 <i class="fas fa-qrcode"></i>
             </a>
             <div class="mobile-nav-center">
-                <a href="{% url 'pharmacies:dashboard' %}" class="mobile-nav-item">
-                    <img src="{% static 'images/Group 2.svg' %}" alt="Logo" style="width: 30px; height: 30px; object-fit: contain;">
+                <a href="{% url 'pharmacies:scan' %}"
+                    class="mobile-nav-item {% if request.resolver_match.url_name == 'scan' %}active{% endif %}">
+                    <img src="{% static 'images/Group 2.svg' %}" alt="Logo"
+                        style="width: 30px; height: 30px; object-fit: contain;">
                 </a>
             </div>
             <a href="{% url 'auth:profile' %}" class="mobile-nav-item">
@@ -333,17 +489,17 @@
             overlay.classList.remove('active');
             document.body.style.overflow = '';
         }
-        toggleBtn.addEventListener('click', function(e) {
+        toggleBtn.addEventListener('click', function (e) {
             e.stopPropagation();
             sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
         });
         overlay.addEventListener('click', closeSidebar);
         document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', function() {
+            item.addEventListener('click', function () {
                 if (window.innerWidth <= 768) closeSidebar();
             });
         });
-        window.addEventListener('resize', function() {
+        window.addEventListener('resize', function () {
             if (window.innerWidth > 768) {
                 sidebar.classList.remove('open');
                 overlay.classList.remove('active');
@@ -353,4 +509,5 @@
     </script>
     {% block extra_js %}{% endblock %}
 </body>
+
 </html>

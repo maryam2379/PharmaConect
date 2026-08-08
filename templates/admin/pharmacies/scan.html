@@ -1,0 +1,486 @@
+{% extends "admin/pharmacies/master.html" %}
+{% block title %}Anti-Contrefaçon{% endblock %}
+{% block page_title %}Vérification anti-contrefaçon{% endblock %}
+
+{% block extra_css %}
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.5);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 28px;
+        transition: all 0.3s ease;
+    }
+
+    .method-card {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+    }
+
+    .method-card:hover {
+        transform: translateY(-4px);
+        background: rgba(255, 255, 255, 0.7);
+        border-color: var(--vert-principal);
+    }
+
+    .method-card.active {
+        border-color: var(--vert-principal);
+        background: rgba(46, 139, 87, 0.1);
+    }
+
+    .scanner-area {
+        background: #1e293b;
+        border-radius: 24px;
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .result-card {
+        background: var(--blanc-carte);
+        border-radius: 24px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+        box-shadow: var(--ombre);
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: var(--texte-mute);
+    }
+
+    .authentic-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 30px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+
+    .authentic-true {
+        background: #e0f2e9;
+        color: #166534;
+    }
+
+    .authentic-false {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .field-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1.5px solid var(--gris-bordure);
+        border-radius: 20px;
+        font-size: 0.9rem;
+        background: var(--blanc-carte);
+    }
+
+    .field-input:focus {
+        outline: none;
+        border-color: var(--vert-principal);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--vert-principal), var(--vert-fonce));
+        color: white;
+        border: none;
+        padding: 0.7rem 1.8rem;
+        border-radius: 40px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-secondary {
+        background: transparent;
+        border: 1.5px solid var(--gris-bordure);
+        padding: 0.7rem 1.8rem;
+        border-radius: 40px;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    .loader {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(0, 0, 0, 0.2);
+        border-radius: 50%;
+        border-top-color: var(--vert-principal);
+        animation: spin 0.6s linear infinite;
+        margin-right: 8px;
+        vertical-align: middle;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .text-green-600 {
+        color: #166534;
+    }
+
+    .text-red-600 {
+        color: #991b1b;
+    }
+
+    .bg-yellow-50 {
+        background: #fefce8;
+    }
+
+    @media (max-width: 640px) {
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-800">
+            <span class="text-[#2E8B57]">Vérification</span> anti-contrefaçon
+        </h1>
+        <div class="w-20 h-1 bg-[#2E8B57] mx-auto mt-3 rounded-full"></div>
+        <p class="text-gray-600 mt-4 max-w-2xl mx-auto">
+            Choisissez votre méthode de vérification et protégez-vous des faux médicaments
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="glass-card method-card p-5 text-center" data-method="scan">
+            <i class="fas fa-camera text-4xl text-[#2E8B57] mb-3"></i>
+            <h3 class="font-bold text-lg">Scanner par caméra</h3>
+            <p class="text-sm text-gray-500 mt-1">Cadrez le QR code ou code‑barres et prenez une photo</p>
+        </div>
+        <div class="glass-card method-card p-5 text-center" data-method="manual">
+            <i class="fas fa-keyboard text-4xl text-[#2E8B57] mb-3"></i>
+            <h3 class="font-bold text-lg">Saisie manuelle</h3>
+            <p class="text-sm text-gray-500 mt-1">Entrez le numéro de série ou le code inscrit sur l'emballage</p>
+        </div>
+        <div class="glass-card method-card p-5 text-center" data-method="upload">
+            <i class="fas fa-image text-4xl text-[#2E8B57] mb-3"></i>
+            <h3 class="font-bold text-lg">Téléverser une photo</h3>
+            <p class="text-sm text-gray-500 mt-1">Importez une image du QR code depuis votre appareil</p>
+        </div>
+    </div>
+
+    <div class="glass-card p-6">
+        <div id="method-scan" class="method-content" style="display: none;">
+            <div class="scanner-area">
+                <div style="position: relative; max-width: 500px; margin: 0 auto;">
+                    <div id="video-container"
+                        style="background:#000; border-radius:16px; min-height:200px; display:flex; align-items:center; justify-content:center; color:#fff;">
+                        <video id="video" autoplay playsinline
+                            style="width:100%; border-radius:16px; display:none;"></video>
+                        <div id="camera-placeholder" style="text-align:center; padding:20px;">
+                            <i class="fas fa-camera fa-3x text-gray-500"></i>
+                            <p class="text-gray-300 mt-2">Appuyez sur "Activer la caméra"</p>
+                        </div>
+                    </div>
+                    <canvas id="canvas" style="display:none;"></canvas>
+                    <div class="mt-3 flex flex-wrap gap-2 justify-center">
+                        <button id="enableCameraBtn" class="btn-primary"><i class="fas fa-video"></i> Activer la
+                            caméra</button>
+                        <button id="captureBtn" class="btn-primary" style="display: none;"><i class="fas fa-camera"></i>
+                            Prendre la photo</button>
+                        <button id="restartCameraBtn" class="btn-secondary" style="display: none;">🔄 Changer de
+                            caméra</button>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-300 mt-2" id="camera-status">Cliquez sur "Activer la caméra" pour démarrer
+                </p>
+            </div>
+            <div id="scan-result" class="result-card" style="display: none;">
+                <h3 class="font-bold mb-2">Résultat du scan</h3>
+                <div id="scan-result-content"></div>
+                <button id="reset-scanner" class="btn-secondary mt-3">📷 Scanner un autre</button>
+            </div>
+        </div>
+
+        <div id="method-manual" class="method-content" style="display: none;">
+            <div class="max-w-md mx-auto">
+                <label class="block text-sm font-medium mb-1">Code à vérifier</label>
+                <input type="text" id="manualCode" class="field-input" placeholder="Ex: PHARMA-CM-123456789">
+                <button id="verifyManualBtn" class="btn-primary w-full mt-4">Vérifier</button>
+                <div id="manual-result" class="result-card mt-4" style="display: none;"></div>
+            </div>
+        </div>
+
+        <div id="method-upload" class="method-content" style="display: none;">
+            <div class="max-w-md mx-auto text-center">
+                <label class="block w-full cursor-pointer">
+                    <input type="file" id="qrImageInput" accept="image/*" class="hidden">
+                    <div
+                        class="border-2 border-dashed border-gray-300 rounded-2xl p-8 hover:border-[#2E8B57] transition">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
+                        <p class="text-sm text-gray-500">Cliquez ou glissez une image contenant un QR code ou
+                            code‑barres</p>
+                    </div>
+                </label>
+                <div id="upload-result" class="result-card mt-4" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    const CSRF_TOKEN = "{{ csrf_token }}";
+    const apiScanUrl = "{% url 'pharmacies:api_scan' %}";
+    const apiUploadUrl = "{% url 'pharmacies:api_upload_qrcode' %}";
+
+    let videoStream = null;
+    let currentMethod = null;
+    let cameraReady = false;
+
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const captureBtn = document.getElementById('captureBtn');
+    const restartBtn = document.getElementById('restartCameraBtn');
+    const enableBtn = document.getElementById('enableCameraBtn');
+    const cameraPlaceholder = document.getElementById('camera-placeholder');
+    const statusText = document.getElementById('camera-status');
+
+    const methodCards = document.querySelectorAll('.method-card');
+    const methodContents = {
+        scan: document.getElementById('method-scan'),
+        manual: document.getElementById('method-manual'),
+        upload: document.getElementById('method-upload')
+    };
+
+    async function startCamera(facingMode = "environment") {
+        if (videoStream) stopCamera();
+        try {
+            const constraints = { video: { facingMode: facingMode, width: { ideal: 640 }, height: { ideal: 480 } } };
+            videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+            video.srcObject = videoStream;
+            await video.play();
+            video.style.display = 'block';
+            cameraPlaceholder.style.display = 'none';
+            captureBtn.style.display = 'inline-flex';
+            restartBtn.style.display = 'inline-flex';
+            enableBtn.style.display = 'none';
+            statusText.textContent = 'Caméra active – cadrez le code puis cliquez sur "Prendre la photo"';
+            statusText.className = 'text-sm text-gray-300 mt-2';
+            cameraReady = true;
+        } catch (err) {
+            let errorMsg = "Impossible d'accéder à la caméra. ";
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                errorMsg += "Veuillez autoriser l'accès à la caméra dans les paramètres de votre navigateur.";
+            } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                errorMsg += 'Aucune caméra trouvée sur cet appareil.';
+            } else {
+                errorMsg += err.message || 'Vérifiez que vous êtes en HTTPS (ou localhost).';
+            }
+            statusText.textContent = '❌ ' + errorMsg;
+            statusText.className = 'text-red-400 text-sm mt-2';
+            video.style.display = 'none';
+            cameraPlaceholder.style.display = 'block';
+            captureBtn.style.display = 'none';
+            restartBtn.style.display = 'none';
+            enableBtn.style.display = 'inline-flex';
+            enableBtn.textContent = '🔄 Réessayer';
+            cameraReady = false;
+        }
+    }
+
+    function stopCamera() {
+        if (videoStream) {
+            videoStream.getTracks().forEach(track => track.stop());
+            videoStream = null;
+        }
+        video.srcObject = null;
+        video.style.display = 'none';
+        cameraPlaceholder.style.display = 'block';
+        captureBtn.style.display = 'none';
+        restartBtn.style.display = 'none';
+        enableBtn.style.display = 'inline-flex';
+        enableBtn.textContent = '📷 Activer la caméra';
+        statusText.textContent = 'Caméra arrêtée. Cliquez pour réactiver.';
+        statusText.className = 'text-sm text-gray-300 mt-2';
+        cameraReady = false;
+    }
+
+    async function captureAndSend() {
+        if (!cameraReady || !video.videoWidth) {
+            alert("La caméra n'est pas prête. Activez-la d'abord.");
+            return;
+        }
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob(async (blob) => {
+            const formData = new FormData();
+            formData.append('image', blob, 'capture.jpg');
+
+            const resultDiv = document.getElementById('scan-result');
+            const contentDiv = document.getElementById('scan-result-content');
+            resultDiv.style.display = 'block';
+            contentDiv.innerHTML = '<div class="loader"></div> Analyse en cours...';
+
+            try {
+                const response = await fetch(apiUploadUrl, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': CSRF_TOKEN },
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.success) {
+                    verifyCode(data.code, 'scan-result-content', 'scan-result');
+                } else {
+                    contentDiv.innerHTML = `<div class="text-red-600">❌ ${data.message || 'Aucun code détecté'}</div>`;
+                }
+            } catch (err) {
+                contentDiv.innerHTML = '<div class="text-red-600">❌ Erreur de connexion au serveur</div>';
+            }
+        }, 'image/jpeg', 0.9);
+    }
+
+    function sourceLabel(source) {
+        const labels = {
+            'gs1': '📦 GS1 / DataMatrix',
+            'gtin': '🔢 GTIN / EAN',
+            'json': '🗂️ JSON structuré',
+            'pipe': '📋 Format interne',
+            'raw': '🔡 Code brut'
+        };
+        return labels[source] || source || '-';
+    }
+
+    async function verifyCode(code, resultDivId, containerId) {
+        const contentDiv = document.getElementById(resultDivId);
+        contentDiv.innerHTML = '<div class="loader"></div> Analyse et déchiffrage du code en cours...';
+
+        try {
+            const scanResponse = await fetch(apiScanUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+                body: JSON.stringify({ code: code })
+            });
+            const data = await scanResponse.json();
+            const resultDiv = document.getElementById(containerId);
+            resultDiv.style.display = 'block';
+
+            if (data.success) {
+                const med = data.medicine;
+                const authenticHtml = med.authentic
+                    ? '<span class="authentic-badge authentic-true">✓ Authentique</span>'
+                    : '<span class="authentic-badge authentic-false">✗ Déjà scanné - Risque</span>';
+
+                let insertBadge = '';
+                if (data.auto_inserted) {
+                    insertBadge = data.is_new_medicine
+                        ? `<div class="text-green-600 font-semibold mb-3 p-2 bg-green-50 rounded-xl">✅ Nouveau médicament créé et ajouté au stock automatiquement <span class="text-xs text-gray-400 ml-2">(${sourceLabel(data.source)})</span></div>`
+                        : `<div class="text-blue-600 font-semibold mb-3 p-2 bg-blue-50 rounded-xl">🔄 Stock mis à jour automatiquement <span class="text-xs text-gray-400 ml-2">(${sourceLabel(data.source)})</span></div>`;
+                } else if (data.already_known) {
+                    insertBadge = `<div class="text-gray-400 text-xs mb-3">📌 Médicament déjà enregistré en base</div>`;
+                }
+
+                contentDiv.innerHTML = `
+          ${insertBadge}
+          <div class="info-grid">
+            <div><span class="info-label">Médicament :</span> ${med.name || '-'}</div>
+            <div><span class="info-label">Générique :</span> ${med.generic_name || '-'}</div>
+            <div><span class="info-label">Fabricant :</span> ${med.manufacturer || '-'}</div>
+            <div><span class="info-label">Dosage :</span> ${med.dosage || '-'}</div>
+            <div><span class="info-label">Forme :</span> ${med.form || '-'}</div>
+            <div><span class="info-label">Authenticité :</span> ${authenticHtml}</div>
+            <div><span class="info-label">Ordonnance :</span> ${med.prescription_required ? 'Oui' : 'Non'}</div>
+            ${med.batch_number ? `<div><span class="info-label">N° lot :</span> ${med.batch_number}</div>` : ''}
+            ${med.expiry_date ? `<div><span class="info-label">Expiration :</span> ${med.expiry_date}</div>` : ''}
+            ${med.gtin ? `<div><span class="info-label">GTIN :</span> ${med.gtin}</div>` : ''}
+          </div>
+        `;
+            } else if (data.not_found) {
+                contentDiv.innerHTML = `<div class="bg-yellow-50 p-3 rounded-xl"><i class="fas fa-exclamation-triangle text-yellow-600"></i> ${data.message}</div>`;
+            } else {
+                contentDiv.innerHTML = `<div class="text-red-600">${data.message}</div>`;
+            }
+        } catch (err) {
+            document.getElementById(resultDivId).innerHTML = '<div class="text-red-600">Erreur de connexion</div>';
+            document.getElementById(containerId).style.display = 'block';
+        }
+    }
+
+    methodCards.forEach(card => {
+        card.addEventListener('click', () => {
+            const method = card.dataset.method;
+            if (currentMethod === method) return;
+            currentMethod = method;
+            methodCards.forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            if (currentMethod !== 'scan') stopCamera();
+            Object.values(methodContents).forEach(content => content.style.display = 'none');
+            methodContents[method].style.display = 'block';
+            if (method === 'scan') {
+                enableBtn.style.display = 'inline-flex';
+                enableBtn.textContent = '📷 Activer la caméra';
+                statusText.textContent = 'Cliquez sur "Activer la caméra" pour démarrer';
+                statusText.className = 'text-sm text-gray-300 mt-2';
+                video.style.display = 'none';
+                cameraPlaceholder.style.display = 'block';
+                captureBtn.style.display = 'none';
+                restartBtn.style.display = 'none';
+                cameraReady = false;
+            }
+        });
+    });
+
+    enableBtn?.addEventListener('click', () => startCamera('environment'));
+    restartBtn?.addEventListener('click', () => {
+        const currentFacing = videoStream?.getVideoTracks()[0]?.getSettings()?.facingMode || 'environment';
+        startCamera(currentFacing === 'environment' ? 'user' : 'environment');
+    });
+    captureBtn?.addEventListener('click', captureAndSend);
+
+    document.getElementById('reset-scanner')?.addEventListener('click', () => {
+        document.getElementById('scan-result').style.display = 'none';
+    });
+
+    document.getElementById('verifyManualBtn')?.addEventListener('click', () => {
+        const code = document.getElementById('manualCode').value.trim();
+        if (!code) { alert('Veuillez entrer un code'); return; }
+        verifyCode(code, 'manual-result', 'manual-result');
+    });
+
+    const fileInput = document.getElementById('qrImageInput');
+    fileInput?.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('image', file);
+        const resultDiv = document.getElementById('upload-result');
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '<div class="loader"></div> Décodage en cours...';
+        try {
+            const response = await fetch(apiUploadUrl, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': CSRF_TOKEN },
+                body: formData
+            });
+            const data = await response.json();
+            if (data.success) {
+                verifyCode(data.code, 'upload-result', 'upload-result');
+            } else {
+                resultDiv.innerHTML = `<div class="text-red-600">❌ ${data.message}</div>`;
+            }
+        } catch (err) {
+            resultDiv.innerHTML = '<div class="text-red-600">❌ Erreur de connexion</div>';
+        }
+        fileInput.value = '';
+    });
+
+    if (methodCards.length) methodCards[0].click();
+</script>
+{% endblock %}

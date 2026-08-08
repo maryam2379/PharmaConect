@@ -39,7 +39,10 @@ class ScanLog(models.Model):
         ('unknown', 'Inconnu'),
     ]
     raw_code = models.TextField()
+    code = models.CharField(max_length=255, unique=True, default="CM0000")
     result = models.CharField(max_length=20, choices=RESULT_CHOICES)
     scanned_by = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, related_name='scans')
     qrcode = models.ForeignKey(QRCode, on_delete=models.SET_NULL, null=True, blank=True)
     scanned_at = models.DateTimeField(auto_now_add=True)
+    medicine = models.ForeignKey('Medicine', null=True, blank=True, on_delete=models.SET_NULL)
+    batch_number = models.CharField(max_length=100, blank=True)

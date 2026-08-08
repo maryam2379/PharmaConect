@@ -15,6 +15,7 @@ class Pharmacy(models.Model):
     longitude = models.FloatField(null=True, blank=True)
     phone = models.CharField(max_length=20)
     email = models.EmailField()
+    logo = models.ImageField(upload_to='pharmacies/logos/', null=True, blank=True)  # <-- nouveau
     subscription_plan = models.CharField(max_length=20, choices=PLAN_CHOICES, default='basic')
     subscription_end = models.DateTimeField(null=True, blank=True)
     is_verified = models.BooleanField(default=False)
