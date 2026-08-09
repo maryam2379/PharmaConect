@@ -17,6 +17,9 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap"
         rel="stylesheet">
+    <link rel="manifest" href="{% static 'js/manifest.json' %}">
+    <meta name="theme-color" content="#2E8B57">
+    <link rel="apple-touch-icon" href="{% static 'icons/icon-192.png' %}">
 
     <style>
         /* Définition de la police Goodly */
@@ -101,7 +104,7 @@
 </head>
 
 <body class="antialiased">
-{% include 'layout/menu.html' %}
+    {% include 'layout/menu.html' %}
 
     <!-- CONTENU PRINCIPAL -->
     <main class="animate-fadeIn">
@@ -139,6 +142,15 @@
         }
     </script>
 
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((reg) => console.log('SW enregistré:', reg.scope))
+                    .catch((err) => console.error('Échec SW:', err));
+            });
+        }
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 

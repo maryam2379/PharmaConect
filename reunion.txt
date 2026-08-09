@@ -1,0 +1,12 @@
+REUNION 1:
+    - non de commande et reception de maniere numerique,
+    - ajouut des roles dans la gestions des tocks
+    - enregistrement des sigantures et pose de la sgnature de maniere automatique
+    - travailler sur jira
+    - attribuer une app a chacun d'entre nous
+    - on reste concentre sur
+    - rajouter lesrolessurla gestion de stock cote utilisateur
+    - rajouter une pwaet reflechir sur le modele pwaet
+    - POS00 qui sgnifie procedure standars
+    -  
+

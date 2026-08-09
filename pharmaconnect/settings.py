@@ -13,8 +13,6 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-from django.conf import settings
-from django.conf.urls.static import static
 
 # Charger les variables d'environnement depuis .env
 load_dotenv()
@@ -50,6 +48,7 @@ INSTALLED_APPS = [
     'anticounterfeit',
     'orders',
     'patients',
+    'pwa',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
@@ -169,7 +168,7 @@ else:
     EMAIL_HOST_USER = os.getenv('MAIL_USERNAME')
     EMAIL_HOST_PASSWORD = os.getenv('MAIL_PASSWORD')
     DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
-    
+
     # Vérifier que les variables sont définies
     if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
         print("⚠️  ATTENTION : Les variables MAIL_USERNAME et MAIL_PASSWORD doivent être définies dans .env")
@@ -202,4 +201,31 @@ MEDIA_ROOT = BASE_DIR / 'media'
 SESSION_COOKIE_AGE = 1209600  # 2 semaines en secondes
 SESSION_COOKIE_SECURE = False  # Mettre à True en production avec HTTPS
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-# urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Default primary key field type
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# ==============================================
+# CONFIGURATION PWA (django-pwa)
+# ==============================================
+
+PWA_APP_NAME = 'PharmaConnect'
+PWA_APP_DESCRIPTION = "Gestion de pharmacie anti-contrefaçon"
+PWA_APP_THEME_COLOR = '#2E8B57'
+PWA_APP_BACKGROUND_COLOR = '#ffffff'
+PWA_APP_DISPLAY = 'standalone'
+PWA_APP_SCOPE = '/'
+PWA_APP_ORIENTATION = 'portrait'
+PWA_APP_START_URL = '/pharmacies/dashboard/'
+PWA_APP_ICONS = [
+    {'src': '/static/icons/icon-192.png', 'sizes': '192x192'},
+    {'src': '/static/icons/icon-512.png', 'sizes': '512x512'},
+]
+PWA_APP_ICONS_APPLE = [
+    {'src': '/static/icons/icon-192.png', 'sizes': '192x192'}
+]
+PWA_APP_SPLASH_SCREEN = []
+PWA_APP_DIR = 'ltr'
+PWA_APP_LANG = 'fr-FR'
+PWA_SERVICE_WORKER_PATH = os.path.join(BASE_DIR, 'static', 'js', 'serviceworker.js')

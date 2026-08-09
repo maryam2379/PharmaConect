@@ -13,7 +13,7 @@
     }
     .field-input {
         width: 100%;
-        padding: 0.75rem 1rem;
+        padding: 0.7rem 1rem;
         border: 1.5px solid #e5e7eb;
         border-radius: 20px;
         font-size: 0.9rem;
@@ -31,10 +31,10 @@
         cursor: not-allowed;
     }
     .field-label {
-        font-size: 0.8rem;
+        font-size: 0.78rem;
         font-weight: 600;
         color: #6b7280;
-        margin-bottom: 0.35rem;
+        margin-bottom: 0.3rem;
         display: block;
     }
     .btn-save {
@@ -63,15 +63,37 @@
         display: inline-flex;
         align-items: center;
     }
+    .btn-locate {
+        background: rgba(44, 95, 138, 0.1);
+        color: #2C5F8A;
+        border: 1.5px solid rgba(44, 95, 138, 0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .btn-locate:hover {
+        background: rgba(44, 95, 138, 0.18);
+    }
+    .btn-locate:disabled {
+        opacity: 0.6;
+        cursor: wait;
+    }
     .logo-wrapper {
         position: relative;
-        width: 128px;
-        height: 128px;
+        width: 112px;
+        height: 112px;
         margin: 0 auto;
     }
     .logo-wrapper img {
-        width: 128px;
-        height: 128px;
+        width: 112px;
+        height: 112px;
         object-fit: cover;
         border-radius: 50%;
         border: 3px solid white;
@@ -81,8 +103,8 @@
         position: absolute;
         bottom: 2px;
         right: 2px;
-        width: 34px;
-        height: 34px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
         background: #2E8B57;
         color: white;
@@ -104,11 +126,19 @@
         padding: 0.9rem 1.2rem;
         margin-bottom: 1.5rem;
     }
+    .status-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        font-size: 0.8rem;
+    }
+    .status-row:last-child { border-bottom: none; }
 </style>
 
-<section class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-    <div class="mb-8">
+    <div class="mb-6">
         <h1 class="text-2xl md:text-3xl font-bold text-gray-800">
             <i class="fas fa-store text-[#2E8B57] mr-2"></i>Ma pharmacie
         </h1>
@@ -128,115 +158,126 @@
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
 
-        <!-- Logo -->
-        <div class="glass-card p-6 mb-6 text-center">
-            <div class="logo-wrapper">
-                <img id="logo-preview"
-                     src="{% if pharmacy.logo %}{{ pharmacy.logo.url }}{% else %}https://ui-avatars.com/api/?name={{ pharmacy.name|urlencode }}&background=2E8B57&color=fff&size=128{% endif %}"
-                     alt="Logo de la pharmacie">
-                <label for="logo-input" class="logo-edit-btn" title="Changer le logo">
-                    <i class="fas fa-camera text-sm"></i>
-                </label>
-                <input type="file" id="logo-input" name="logo" accept="image/*" class="hidden"
-                       onchange="previewLogo(event)">
-            </div>
-            <p class="text-xs text-gray-400 mt-3">JPG ou PNG, 2 Mo maximum</p>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            {% if pharmacy.logo %}
-                <label class="inline-flex items-center gap-2 mt-2 text-xs text-gray-500 cursor-pointer">
-                    <input type="checkbox" name="remove_logo" value="1" class="rounded">
-                    Supprimer le logo actuel
-                </label>
-            {% endif %}
-        </div>
+            <!-- Colonne gauche : logo + infos figées -->
+            <div class="lg:col-span-1 space-y-6">
 
-        <!-- Infos éditables -->
-        <div class="glass-card p-6 mb-6">
-            <h3 class="font-bold text-gray-800 mb-4">
-                <i class="fas fa-pen-to-square text-[#2C5F8A] mr-2"></i>Informations modifiables
-            </h3>
+                <div class="glass-card p-6 text-center">
+                    <div class="logo-wrapper">
+                        <img id="logo-preview"
+                             src="{% if pharmacy.logo %}{{ pharmacy.logo.url }}{% else %}https://ui-avatars.com/api/?name={{ pharmacy.name|urlencode }}&background=2E8B57&color=fff&size=112{% endif %}"
+                             alt="Logo de la pharmacie">
+                        <label for="logo-input" class="logo-edit-btn" title="Changer le logo">
+                            <i class="fas fa-camera text-sm"></i>
+                        </label>
+                        <input type="file" id="logo-input" name="logo" accept="image/*" class="hidden"
+                               onchange="previewLogo(event)">
+                    </div>
+                    <p class="text-xs text-gray-400 mt-3">JPG ou PNG, 2 Mo maximum</p>
 
-            <div class="mb-4">
-                <label class="field-label">Nom de la pharmacie</label>
-                <input type="text" name="name" class="field-input"
-                       value="{{ posted.name|default:pharmacy.name }}" required>
-            </div>
-
-            <div class="mb-4">
-                <label class="field-label">Adresse</label>
-                <input type="text" name="address" class="field-input"
-                       value="{{ posted.address|default:pharmacy.address }}" required>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="field-label">Ville</label>
-                    <input type="text" name="city" class="field-input"
-                           value="{{ posted.city|default:pharmacy.city }}" required>
-                </div>
-                <div>
-                    <label class="field-label">Téléphone</label>
-                    <input type="text" name="phone" class="field-input"
-                           value="{{ posted.phone|default:pharmacy.phone }}" required>
-                </div>
-            </div>
-
-            <div class="mb-4">
-                <label class="field-label">Email</label>
-                <input type="email" name="email" class="field-input"
-                       value="{{ posted.email|default:pharmacy.email }}" required>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="field-label"><i class="fas fa-location-dot text-[#2E8B57] mr-1"></i>Latitude</label>
-                    <input type="text" name="latitude" class="field-input"
-                           value="{{ posted.latitude|default:pharmacy.latitude|default_if_none:'' }}"
-                           placeholder="ex: 3.848">
-                </div>
-                <div>
-                    <label class="field-label"><i class="fas fa-location-dot text-[#2E8B57] mr-1"></i>Longitude</label>
-                    <input type="text" name="longitude" class="field-input"
-                           value="{{ posted.longitude|default:pharmacy.longitude|default_if_none:'' }}"
-                           placeholder="ex: 11.502">
-                </div>
-            </div>
-        </div>
-
-        <!-- Infos non modifiables -->
-        <div class="glass-card p-6 mb-8">
-            <h3 class="font-bold text-gray-800 mb-4">
-                <i class="fas fa-lock text-gray-400 mr-2"></i>Informations non modifiables
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label class="field-label">Numéro de licence</label>
-                    <input type="text" class="field-input" value="{{ pharmacy.license_number }}" disabled>
-                </div>
-                <div>
-                    <label class="field-label">Plan d'abonnement</label>
-                    <input type="text" class="field-input" value="{{ pharmacy.get_subscription_plan_display }}" disabled>
-                </div>
-                <div>
-                    <label class="field-label">Statut</label>
-                    {% if pharmacy.is_verified %}
-                        <div class="field-input flex items-center text-[#2E8B57] font-medium">
-                            <i class="fas fa-check-circle mr-2"></i>Vérifiée
-                        </div>
-                    {% else %}
-                        <div class="field-input flex items-center text-orange-500 font-medium">
-                            <i class="fas fa-clock mr-2"></i>En attente
-                        </div>
+                    {% if pharmacy.logo %}
+                        <label class="inline-flex items-center gap-2 mt-2 text-xs text-gray-500 cursor-pointer">
+                            <input type="checkbox" name="remove_logo" value="1" class="rounded">
+                            Supprimer le logo actuel
+                        </label>
                     {% endif %}
                 </div>
-            </div>
-        </div>
 
-        <div class="flex justify-end gap-3">
-            <a href="{% url 'pharmacies:dashboard' %}" class="btn-cancel">Annuler</a>
-            <button type="submit" class="btn-save">
-                <i class="fas fa-save mr-1"></i> Enregistrer
-            </button>
+                <div class="glass-card p-5">
+                    <h3 class="font-bold text-gray-800 text-sm mb-2">
+                        <i class="fas fa-lock text-gray-400 mr-1"></i>Non modifiable
+                    </h3>
+                    <div class="status-row">
+                        <span class="text-gray-500">Licence</span>
+                        <span class="font-medium text-gray-800">{{ pharmacy.license_number }}</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="text-gray-500">Plan</span>
+                        <span class="font-medium text-gray-800">{{ pharmacy.get_subscription_plan_display }}</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="text-gray-500">Statut</span>
+                        {% if pharmacy.is_verified %}
+                            <span class="text-[#2E8B57] font-medium"><i class="fas fa-check-circle"></i> Vérifiée</span>
+                        {% else %}
+                            <span class="text-orange-500 font-medium"><i class="fas fa-clock"></i> En attente</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Colonne droite : formulaire -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <div class="glass-card p-6">
+                    <h3 class="font-bold text-gray-800 mb-4">
+                        <i class="fas fa-pen-to-square text-[#2C5F8A] mr-2"></i>Coordonnées
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="md:col-span-2">
+                            <label class="field-label">Nom de la pharmacie</label>
+                            <input type="text" name="name" class="field-input"
+                                   value="{{ posted.name|default:pharmacy.name }}" required>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="field-label">Adresse</label>
+                            <input type="text" name="address" class="field-input"
+                                   value="{{ posted.address|default:pharmacy.address }}" required>
+                        </div>
+                        <div>
+                            <label class="field-label">Ville</label>
+                            <input type="text" name="city" class="field-input"
+                                   value="{{ posted.city|default:pharmacy.city }}" required>
+                        </div>
+                        <div>
+                            <label class="field-label">Téléphone</label>
+                            <input type="text" name="phone" class="field-input"
+                                   value="{{ posted.phone|default:pharmacy.phone }}" required>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="field-label">Email</label>
+                            <input type="email" name="email" class="field-input"
+                                   value="{{ posted.email|default:pharmacy.email }}" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card p-6">
+                    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                        <h3 class="font-bold text-gray-800">
+                            <i class="fas fa-map-location-dot text-[#2E8B57] mr-2"></i>Localisation
+                        </h3>
+                        <button type="button" id="locateBtn" class="btn-locate">
+                            <i class="fas fa-location-crosshairs"></i> Récupérer ma localisation
+                        </button>
+                    </div>
+                    <p id="locateStatus" class="text-xs text-gray-400 mb-3"></p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="field-label">Latitude</label>
+                            <input type="text" id="latitude" name="latitude" class="field-input"
+                                   value="{{ posted.latitude|default:pharmacy.latitude|default_if_none:'' }}"
+                                   placeholder="ex: 3.848">
+                        </div>
+                        <div>
+                            <label class="field-label">Longitude</label>
+                            <input type="text" id="longitude" name="longitude" class="field-input"
+                                   value="{{ posted.longitude|default:pharmacy.longitude|default_if_none:'' }}"
+                                   placeholder="ex: 11.502">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3">
+                    <a href="{% url 'pharmacies:dashboard' %}" class="btn-cancel">Annuler</a>
+                    <button type="submit" class="btn-save">
+                        <i class="fas fa-save mr-1"></i> Enregistrer
+                    </button>
+                </div>
+            </div>
         </div>
     </form>
 </section>
@@ -252,5 +293,38 @@
             reader.readAsDataURL(file);
         }
     }
+
+    const locateBtn = document.getElementById('locateBtn');
+    const locateStatus = document.getElementById('locateStatus');
+
+    locateBtn.addEventListener('click', () => {
+        if (!navigator.geolocation) {
+            locateStatus.textContent = "La géolocalisation n'est pas supportée par votre navigateur.";
+            locateStatus.className = 'text-xs text-red-500 mb-3';
+            return;
+        }
+
+        locateBtn.disabled = true;
+        locateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Localisation en cours...';
+        locateStatus.textContent = '';
+
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                document.getElementById('latitude').value = pos.coords.latitude.toFixed(6);
+                document.getElementById('longitude').value = pos.coords.longitude.toFixed(6);
+                locateStatus.textContent = 'Position récupérée avec succès.';
+                locateStatus.className = 'text-xs text-[#2E8B57] mb-3';
+                locateBtn.disabled = false;
+                locateBtn.innerHTML = '<i class="fas fa-location-crosshairs"></i> Récupérer ma localisation';
+            },
+            (err) => {
+                locateStatus.textContent = "Impossible d'obtenir votre position : " + err.message;
+                locateStatus.className = 'text-xs text-red-500 mb-3';
+                locateBtn.disabled = false;
+                locateBtn.innerHTML = '<i class="fas fa-location-crosshairs"></i> Récupérer ma localisation';
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    });
 </script>
 {% endblock %}
