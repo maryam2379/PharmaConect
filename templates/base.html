@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>{% block title %}PharmaConnect Cameroun{% endblock %}</title>
-
+    <link rel="manifest" href="{% url 'manifest' %}">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -155,3 +155,9 @@
 </body>
 
 </html>
+
+<script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("{% url 'sw.js' %}");
+  }
+</script>

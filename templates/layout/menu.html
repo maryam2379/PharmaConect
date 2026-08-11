@@ -98,6 +98,23 @@
         border-color: rgba(44, 95, 138, 0.6);
         transform: translateY(-1px);
     }
+    .btn-install {
+        background: rgba(255, 255, 255, 0.35);
+        backdrop-filter: blur(4px);
+        border: 1px solid rgba(46, 139, 87, 0.4);
+        color: var(--pharma-vert);
+        transition: all 0.25s ease;
+        font-size: 0.85rem;
+        padding: 0.5rem 1rem;
+    }
+    .btn-install i {
+        font-size: 0.8rem;
+    }
+    .btn-install:hover {
+        background: rgba(46, 139, 87, 0.12);
+        border-color: rgba(46, 139, 87, 0.7);
+        transform: translateY(-1px);
+    }
     .logo-text {
         font-size: 1rem;
     }
@@ -108,7 +125,7 @@
         .logo-text { font-size: 1.1rem; }
         .slogan-text { font-size: 0.65rem; }
         .nav-link-glass { font-size: 0.9rem; }
-        .btn-solid, .btn-outline-glass { font-size: 0.9rem; }
+        .btn-solid, .btn-outline-glass, .btn-install { font-size: 0.9rem; }
     }
     .nav-inner {
         display: flex;
@@ -193,6 +210,11 @@
             <!-- BOUTONS DYNAMIQUES (connecté / non connecté) -->
             <div class="buttons-section">
                 <div class="flex items-center gap-2.5">
+                    <!-- Bouton d'installation PWA -->
+                    <button id="install-button" type="button" style="display:none;"
+                        class="hidden sm:inline-flex items-center gap-2 rounded-full font-medium btn-install transition-all">
+                        <i class="fas fa-download"></i><span>Télécharger l'app</span>
+                    </button>
                     {% if user.is_authenticated %}
                         <!-- Utilisateur connecté -->
                         <a href="{% url 'auth:dashboard' %}" id="a"
@@ -237,6 +259,10 @@
         <a href="{% url 'orders:order_list' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 text-sm font-medium hover:bg-white/60">
             <i class="fas fa-truck w-4 text-[#2C5F8A]"></i><span>Commandes</span>
         </a>
+        <button id="install-button-mobile" type="button" style="display:none;"
+            class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#2E8B57] text-sm font-medium hover:bg-white/60">
+            <i class="fas fa-download w-4 text-[#2E8B57]"></i><span>Télécharger l'app</span>
+        </button>
         <div class="pt-3 flex flex-col gap-2 mt-2 border-t border-white/50">
             {% if user.is_authenticated %}
                 <a href="{% url 'auth:dashboard' %}" class="flex items-center justify-center gap-2 px-3 py-2 rounded-full bg-[#2E8B57] text-white text-sm font-medium">
@@ -271,4 +297,37 @@
             });
         });
     }
+
+    // --- Installation PWA ---
+    let deferredPrompt;
+    const installBtnDesktop = document.getElementById('install-button');
+    const installBtnMobile = document.getElementById('install-button-mobile');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (installBtnDesktop) installBtnDesktop.style.display = 'inline-flex';
+        if (installBtnMobile) installBtnMobile.style.display = 'flex';
+    });
+
+    async function handleInstallClick() {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            console.log("PWA installée");
+        }
+        deferredPrompt = null;
+        if (installBtnDesktop) installBtnDesktop.style.display = 'none';
+        if (installBtnMobile) installBtnMobile.style.display = 'none';
+    }
+
+    if (installBtnDesktop) installBtnDesktop.addEventListener('click', handleInstallClick);
+    if (installBtnMobile) installBtnMobile.addEventListener('click', handleInstallClick);
+
+    window.addEventListener('appinstalled', () => {
+        if (installBtnDesktop) installBtnDesktop.style.display = 'none';
+        if (installBtnMobile) installBtnMobile.style.display = 'none';
+        deferredPrompt = null;
+    });
 </script>

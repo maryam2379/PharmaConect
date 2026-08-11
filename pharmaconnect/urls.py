@@ -16,8 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
-# urls.py (racine du projet)
-from django.views.generic import TemplateView
+
+from pharmaconnect.views import service_worker, manifest
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -27,8 +27,8 @@ urlpatterns = [
     path('grossistes/', include('wholesalers.urls', namespace='wholesalers')),
     path('anticounterfeit/', include('anticounterfeit.urls', namespace='anticounterfeit')),
     path('orders/', include('orders.urls', namespace='orders')),
-    path('sw.js', TemplateView.as_view(
-            template_name='js/sw.js',
-            content_type='application/javascript'
-        ), name='sw.js'),
+
+    # PWA : servis à la racine pour couvrir tout le site (voir pharmaconnect/views.py)
+    path('sw.js', service_worker, name='sw.js'),
+    path('manifest.json', manifest, name='manifest'),
 ]
