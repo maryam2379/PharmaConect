@@ -54,7 +54,7 @@
         font-size: 0.7rem;
         font-weight: 600;
     }
-    
+
     #map {
         height: 550px;
         border-radius: 24px;
@@ -89,6 +89,30 @@
         font-size: 0.7rem;
         font-weight: 500;
         color: #2E8B57;
+    }
+
+    .locate-status {
+        font-size: 0.72rem;
+        color: #2C5F8A;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .btn-locate {
+        background: rgba(44, 95, 138, 0.12);
+        color: #2C5F8A;
+        border-radius: 40px;
+        padding: 0.4rem 0.9rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        border: 1px solid rgba(44, 95, 138, 0.25);
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .btn-locate:hover {
+        background: rgba(44, 95, 138, 0.2);
     }
 </style>
 
@@ -132,14 +156,22 @@
                 </button>
             </div>
         </div>
-        <div class="flex justify-between items-center mt-3 pt-2 border-t border-white/40">
-            <div class="filter-stats">
-                <i class="fas fa-store text-[#2E8B57] text-xs"></i>
-                <span id="resultCount" class="result-count ml-2">0 pharmacies</span>
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mt-3 pt-2 border-t border-white/40">
+            <div class="flex items-center gap-3">
+                <div class="filter-stats">
+                    <i class="fas fa-store text-[#2E8B57] text-xs"></i>
+                    <span id="resultCount" class="result-count ml-2">0 pharmacies</span>
+                </div>
+                <span id="locateStatus" class="locate-status"></span>
             </div>
-            <div class="filter-stats">
-                <i class="fas fa-info-circle text-[#2C5F8A] text-xs"></i>
-                <span class="ml-1">Cliquez sur un marqueur pour réserver</span>
+            <div class="flex items-center gap-3">
+                <button id="locateBtn" class="btn-locate">
+                    <i class="fas fa-location-crosshairs"></i> Me localiser
+                </button>
+                <div class="filter-stats hidden sm:block">
+                    <i class="fas fa-info-circle text-[#2C5F8A] text-xs"></i>
+                    <span class="ml-1">Cliquez sur un marqueur pour réserver</span>
+                </div>
             </div>
         </div>
     </div>
@@ -200,21 +232,81 @@
     let map;
     let markers = [];
     let currentPharmacyId = null;
+    let userLat = null;
+    let userLng = null;
+    let userMarker = null;
 
     // ============================================
     // INITIALISATION DE LA CARTE
     // ============================================
     function initMap() {
         map = L.map('map').setView([5.5, 11.5], 7);
-        
+
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; CartoDB',
             subdomains: 'abcd',
             maxZoom: 18
         }).addTo(map);
-        
-        // Charger les pharmacies depuis l'API
-        loadPharmacies();
+
+        locateUser();
+    }
+
+    // ============================================
+    // CALCUL DE DISTANCE (formule de Haversine, résultat en km)
+    // ============================================
+    function getDistanceKm(lat1, lng1, lat2, lng2) {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
+    // ============================================
+    // GÉOLOCALISATION DE L'UTILISATEUR
+    // ============================================
+    function locateUser() {
+        const statusEl = document.getElementById('locateStatus');
+
+        if (!navigator.geolocation) {
+            statusEl.innerHTML = '<i class="fas fa-triangle-exclamation text-amber-500"></i> Géolocalisation non supportée';
+            loadPharmacies();
+            return;
+        }
+
+        statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Localisation en cours...';
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                userLat = position.coords.latitude;
+                userLng = position.coords.longitude;
+
+                map.setView([userLat, userLng], 13);
+
+                const userIcon = L.divIcon({
+                    html: `<div style="background-color: #2C5F8A; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 4px rgba(44,95,138,0.25);"></div>`,
+                    className: 'custom-marker',
+                    iconSize: [20, 20],
+                });
+                if (userMarker) map.removeLayer(userMarker);
+                userMarker = L.marker([userLat, userLng], { icon: userIcon })
+                    .addTo(map)
+                    .bindPopup("<strong>Vous êtes ici</strong>");
+
+                statusEl.innerHTML = '<i class="fas fa-circle-check text-[#2E8B57]"></i> Position détectée';
+                loadPharmacies();
+            },
+            (error) => {
+                console.warn("Géolocalisation refusée ou indisponible:", error.message);
+                statusEl.innerHTML = '<i class="fas fa-triangle-exclamation text-amber-500"></i> Position non disponible';
+                loadPharmacies();
+            },
+            { enableHighAccuracy: true, timeout: 8000 }
+        );
     }
 
     // ============================================
@@ -242,13 +334,12 @@
     // AJOUT DES MARQUEURS SUR LA CARTE
     // ============================================
     function addMarkersToMap(pharmacies) {
-        // Supprimer les anciens marqueurs
         markers.forEach(marker => map.removeLayer(marker));
         markers = [];
-        
+
         pharmacies.forEach(pharmacy => {
             if (!pharmacy.lat || !pharmacy.lng) return;
-            
+
             const iconColor = pharmacy.is_open ? '#2E8B57' : '#9ca3af';
             const customIcon = L.divIcon({
                 html: `<div style="background-color: ${iconColor}; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
@@ -258,13 +349,14 @@
                 iconSize: [36, 36],
                 popupAnchor: [0, -18]
             });
-            
+
             const marker = L.marker([pharmacy.lat, pharmacy.lng], { icon: customIcon }).addTo(map);
             marker.bindPopup(`
                 <div style="font-family: 'Goodly', sans-serif; padding: 6px; min-width: 180px;">
                     <strong style="color: #2C5F8A; font-size: 14px;">${pharmacy.name}</strong><br>
                     <i class="fas fa-map-pin" style="color: #2E8B57; font-size: 11px;"></i> ${pharmacy.address}<br>
                     <i class="fas fa-phone" style="color: #2C5F8A; font-size: 11px;"></i> ${pharmacy.phone}<br>
+                    ${pharmacy.distance !== undefined ? `<i class="fas fa-route" style="color:#2E8B57; font-size: 11px;"></i> ${pharmacy.distance.toFixed(1)} km<br>` : ''}
                     <span class="${pharmacy.is_open ? 'badge-open' : 'badge-closed'}" style="display: inline-block; margin-top: 6px; font-size: 11px;">
                         ${pharmacy.is_open ? '✓ Ouvert' : '✗ Fermé'} | ${pharmacy.schedule}
                     </span><br>
@@ -279,38 +371,37 @@
     }
 
     // ============================================
-    // FILTRAGE ET MISE À JOUR DE LA CARTE
+    // FILTRAGE, TRI PAR DISTANCE ET MISE À JOUR DE LA CARTE
     // ============================================
     function filterAndUpdateMap() {
         const searchText = document.getElementById('searchInput').value.toLowerCase();
         const city = document.getElementById('cityFilter').value;
-        
+
         let filtered = pharmaciesData.filter(p => {
             const matchCity = city === 'all' || p.city === city;
-            const matchSearch = searchText === '' || 
-                p.name.toLowerCase().includes(searchText) || 
-                p.city.toLowerCase().includes(searchText) || 
+            const matchSearch = searchText === '' ||
+                p.name.toLowerCase().includes(searchText) ||
+                p.city.toLowerCase().includes(searchText) ||
                 p.address.toLowerCase().includes(searchText);
             return matchCity && matchSearch;
         });
-        
-        // Mettre à jour le compteur
-        const resultCount = document.getElementById('resultCount');
-        if (filtered.length === 1) {
-            resultCount.innerHTML = `${filtered.length} pharmacie`;
-        } else {
-            resultCount.innerHTML = `${filtered.length} pharmacies`;
+
+        if (userLat !== null && userLng !== null) {
+            filtered = filtered
+                .map(p => ({ ...p, distance: getDistanceKm(userLat, userLng, p.lat, p.lng) }))
+                .sort((a, b) => a.distance - b.distance);
         }
-        
-        // Mettre à jour les marqueurs
+
+        const resultCount = document.getElementById('resultCount');
+        resultCount.innerHTML = filtered.length === 1
+            ? `${filtered.length} pharmacie`
+            : `${filtered.length} pharmacies`;
+
         addMarkersToMap(filtered);
-        
-        // Ajuster la vue de la carte
-        if (filtered.length > 0) {
+
+        if (userLat === null && filtered.length > 0) {
             const bounds = L.latLngBounds(filtered.map(p => [p.lat, p.lng]));
             map.fitBounds(bounds);
-        } else {
-            map.setView([5.5, 11.5], 6);
         }
     }
 
@@ -337,12 +428,12 @@
         const patientPhone = document.getElementById('patientPhone').value;
         const reservationDate = document.getElementById('reservationDate').value;
         const message = document.getElementById('reservationMessage').value;
-        
+
         if (!patientName || !patientPhone || !reservationDate) {
             alert('Veuillez remplir tous les champs obligatoires');
             return;
         }
-        
+
         alert(`✅ ${patientName}, votre réservation a bien été envoyée à la pharmacie.\n\nUn pharmacien vous contactera au ${patientPhone} sous 24h.`);
         closeModal();
     }
@@ -367,6 +458,7 @@
         document.getElementById('cityFilter').value = 'all';
         filterAndUpdateMap();
     });
+    document.getElementById('locateBtn').addEventListener('click', locateUser);
 
     // ============================================
     // LANCEMENT AU CHARGEMENT DU DOM

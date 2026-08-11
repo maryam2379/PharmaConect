@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
+    /* (styles inchangés) */
     * {
       margin: 0;
       padding: 0;
@@ -671,6 +672,7 @@
   }
   function goToStep(step) { if (step>=0 && step<=4) { currentStep = step; updateStepUI(); } }
 
+  // ----- Fonction de géolocalisation améliorée (stocke latitude/longitude) -----
   async function getGeolocation(targetInputId, statusDivId, buttonId) {
     const btn = document.getElementById(buttonId);
     const statusDiv = document.getElementById(statusDivId);
@@ -684,8 +686,13 @@
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Localisation...';
     statusDiv.innerText = 'Recherche de votre position...';
     statusDiv.className = 'geo-status';
+
     navigator.geolocation.getCurrentPosition(async (pos) => {
       const { latitude, longitude } = pos.coords;
+      // --- Stockage des coordonnées dans profileData ---
+      profileData.latitude = latitude;
+      profileData.longitude = longitude;
+
       try {
         const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=fr`);
         const data = await resp.json();
@@ -697,18 +704,20 @@
         let fullAddress = `${rue ? rue + ', ' : ''}${ville} ${departement ? ', ' + departement : ''}, ${pays}`.trim();
         if (!fullAddress || fullAddress === ',') fullAddress = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
         inputAddr.value = fullAddress;
-        statusDiv.innerText = '✓ Adresse récupérée avec succès';
-        statusDiv.className = 'geo-status success';
+        // Pour le patient, on stocke l'adresse dans profileData
         if (selectedRole === 'patient') profileData.adresse = fullAddress;
         else profileData.geoInput = fullAddress;
+        statusDiv.innerText = '✓ Adresse récupérée avec succès';
+        statusDiv.className = 'geo-status success';
         const regionField = document.getElementById('region');
         if (regionField && !regionField.value && ville) regionField.value = ville;
       } catch (error) {
+        // En cas d'échec du reverse geocoding, on utilise les coordonnées brutes
         inputAddr.value = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-        statusDiv.innerText = '✓ Coordonnées approximatives enregistrées';
-        statusDiv.className = 'geo-status success';
         if (selectedRole === 'patient') profileData.adresse = inputAddr.value;
         else profileData.geoInput = inputAddr.value;
+        statusDiv.innerText = '✓ Coordonnées approximatives enregistrées';
+        statusDiv.className = 'geo-status success';
       }
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-check-circle"></i> Localisation OK';
@@ -718,12 +727,9 @@
       btn.innerHTML = '<i class="fas fa-map-marker-alt"></i> Me localiser';
       let msg = '';
       switch(err.code) {
-        case 1: msg = 'Permission refusée. Activez la localisation.';
-          break;
-        case 2: msg = 'Position indisponible. Vérifiez votre connexion.';
-          break;
-        case 3: msg = 'Délai dépassé. Réessayez.';
-          break;
+        case 1: msg = 'Permission refusée. Activez la localisation.'; break;
+        case 2: msg = 'Position indisponible. Vérifiez votre connexion.'; break;
+        case 3: msg = 'Délai dépassé. Réessayez.'; break;
         default: msg = 'Erreur de géolocalisation.';
       }
       statusDiv.innerText = '❌ ' + msg;
@@ -785,6 +791,7 @@
         profileData.nom = nom;
         profileData.region = region;
         if (adresse) profileData.adresse = adresse;
+        // les coordonnées sont déjà dans profileData via getGeolocation
       }
     } else {
       const nomPh = document.getElementById('nomPharmacie')?.value.trim();
@@ -803,6 +810,7 @@
         profileData.pharmacien = pharmacien;
         profileData.geoInput = adresse;
         profileData.region = region;
+        // coordonnées déjà stockées
       }
     }
     return ok;
@@ -857,7 +865,6 @@
     if (!file || file.size > 5*1024*1024) { alert('Fichier trop volumineux (max 5 Mo)'); input.value=''; return; }
     const fd = new FormData();
     fd.append('document', file); fd.append('type', docId); 
-    // Ne pas ajouter _token dans FormData, utiliser le header
     const zone = document.getElementById(`ua_${docId}`);
     const original = zone.innerHTML;
     zone.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Téléchargement...';
@@ -898,6 +905,7 @@
     if (!validateDocs()) return;
     const btn = document.getElementById('submitFinalBtn');
     btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi...';
+    // On s'assure que les coordonnées sont bien dans profileData (elles le sont déjà via getGeolocation)
     const payload = {
       role: selectedRole,
       email: profileData.email,

@@ -1,7 +1,7 @@
 {
-  "name": "Mon Application",
-  "short_name": "MonApp",
-  "description": "Description de mon application Django",
+  "name": "Pharmaconnect",
+  "short_name": "Pharmaconnect",
+  "description": "Detection de faux medicaament",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

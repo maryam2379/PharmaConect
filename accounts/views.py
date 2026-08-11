@@ -59,6 +59,12 @@ def register(request):
         full_name = f"{prenom} {nom}".strip() or email.split('@')[0]
         phone = profile_data.get('telephone', '')
 
+        # --- Récupération des coordonnées GPS ---
+        latitude = profile_data.get('latitude')
+        longitude = profile_data.get('longitude')
+        # Récupération de l'adresse textuelle (selon le rôle)
+        address = profile_data.get('adresse') or profile_data.get('geoInput', '')
+
         new_user = User(
             username=email,
             email=email,
@@ -71,21 +77,29 @@ def register(request):
             verification_token=secrets.token_urlsafe(32),
             otp_code=f"{random.randint(100000, 999999)}",
             documents=uploaded_docs,
+            address=address,
+            latitude=latitude,
+            longitude=longitude,
         )
         new_user.set_password(password)
         new_user.save()
 
         if role == 'pharmacien':
-            Pharmacy.objects.create(
-                name=profile_data.get('nomPharmacie', ''),
-                license_number=profile_data.get('ordreOnpc', ''),
-                address=profile_data.get('geoInput', ''),
-                city=profile_data.get('region', ''),
-                phone=phone,
-                email=email,
-                manager=new_user,
-                is_verified=False,
-            )
+            pharmacy_kwargs = {
+                'name': profile_data.get('nomPharmacie', ''),
+                'license_number': profile_data.get('ordreOnpc', ''),
+                'address': profile_data.get('geoInput', ''),
+                'city': profile_data.get('region', ''),
+                'phone': phone,
+                'email': email,
+                'manager': new_user,
+                'is_verified': False,
+            }
+            # Ajout des coordonnées si le modèle Pharmacy les supporte
+            if hasattr(Pharmacy, 'latitude'):
+                pharmacy_kwargs['latitude'] = latitude
+                pharmacy_kwargs['longitude'] = longitude
+            Pharmacy.objects.create(**pharmacy_kwargs)
 
         # Envoyer l'email de vérification avec gestion d'erreur
         email_sent = send_verification_email(new_user, _build_verification_url(request, new_user.verification_token))
@@ -109,6 +123,10 @@ def register(request):
     full_name = request.POST.get("full_name", "")
     password = request.POST.get("password")
     role = request.POST.get("role")
+    # Pour le formulaire classique, on peut aussi récupérer la localisation si elle est envoyée
+    latitude = request.POST.get("latitude")
+    longitude = request.POST.get("longitude")
+    address = request.POST.get("address", "")
 
     # Vérification des champs obligatoires
     if not email or not phone or not password or not role:
@@ -130,21 +148,28 @@ def register(request):
         is_verified=False,
         verification_token=secrets.token_urlsafe(32),
         otp_code=f"{random.randint(100000, 999999)}",
+        address=address,
+        latitude=latitude,
+        longitude=longitude,
     )
     new_user.set_password(password)
     new_user.save()
 
     if role == "pharmacien":
-        Pharmacy.objects.create(
-            name=request.POST.get("pharmacy_name", ""),
-            license_number=request.POST.get("license_number", ""),
-            address=request.POST.get("pharmacy_address", ""),
-            city=request.POST.get("pharmacy_city", ""),
-            phone=request.POST.get("pharmacy_phone", phone),
-            email=request.POST.get("pharmacy_email", email),
-            manager=new_user,
-            is_verified=False,
-        )
+        pharmacy_kwargs = {
+            'name': request.POST.get("pharmacy_name", ""),
+            'license_number': request.POST.get("license_number", ""),
+            'address': request.POST.get("pharmacy_address", ""),
+            'city': request.POST.get("pharmacy_city", ""),
+            'phone': request.POST.get("pharmacy_phone", phone),
+            'email': request.POST.get("pharmacy_email", email),
+            'manager': new_user,
+            'is_verified': False,
+        }
+        if hasattr(Pharmacy, 'latitude'):
+            pharmacy_kwargs['latitude'] = latitude
+            pharmacy_kwargs['longitude'] = longitude
+        Pharmacy.objects.create(**pharmacy_kwargs)
 
     # Stocker l'ID de l'utilisateur en session pour la vérification
     request.session['pending_user_id'] = new_user.id
@@ -364,6 +389,13 @@ def profile(request):
         request.user.first_name = request.POST.get("first_name", request.user.first_name)
         request.user.last_name = request.POST.get("last_name", request.user.last_name)
         request.user.phone = request.POST.get("phone", request.user.phone)
+        # Mise à jour éventuelle de la localisation depuis le profil
+        request.user.address = request.POST.get("address", request.user.address)
+        lat = request.POST.get("latitude")
+        lon = request.POST.get("longitude")
+        if lat and lon:
+            request.user.latitude = float(lat)
+            request.user.longitude = float(lon)
         request.user.save()
         messages.success(request, "Profil mis à jour.")
         return redirect("auth:profile")
