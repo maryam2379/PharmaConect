@@ -25,12 +25,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-oux^15ge06mwt%czc5f^mc0*pvq$cs0x6n9az#l7il%#ovf)&f'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = []  # À compléter pour la production
+ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', '').split(',') if h.strip()]
 
 
 # Application definition
@@ -81,8 +81,10 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'pharmaconnect.wsgi.application'
+
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 
 # ==============================================
@@ -206,7 +208,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Session settings
 SESSION_COOKIE_AGE = 1209600  # 2 semaines en secondes
-SESSION_COOKIE_SECURE = False  # Mettre à True en production avec HTTPS
+SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'False') == 'True'  # Mettre à True en production avec HTTPS
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 # Default primary key field type
