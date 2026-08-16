@@ -85,11 +85,6 @@ WSGI_APPLICATION = 'pharmaconnect.wsgi.application'
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
-
 # ==============================================
 # CONFIGURATION BASE DE DONNÉES - PostgreSQL
 # ==============================================
