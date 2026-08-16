@@ -1,0 +1,9 @@
+# Fichiers d'environnement
+.env
+env/
+
+# Dossiers Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
