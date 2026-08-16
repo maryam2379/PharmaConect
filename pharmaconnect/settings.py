@@ -30,7 +30,7 @@ SECRET_KEY = 'django-insecure-oux^15ge06mwt%czc5f^mc0*pvq$cs0x6n9az#l7il%#ovf)&f
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = []  # À compléter pour la production
 
 
 # Application definition
@@ -140,9 +140,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'fr-fr'  # Changé en français
+LANGUAGE_CODE = 'fr-fr'
 
-TIME_ZONE = 'Africa/Douala'  # Changé pour le Cameroun
+TIME_ZONE = 'Africa/Douala'
 
 USE_I18N = True
 
@@ -150,28 +150,35 @@ USE_TZ = True
 
 
 # ==============================================
-# CONFIGURATION EMAIL (depuis le fichier .env)
+# CONFIGURATION EMAIL
 # ==============================================
 
-# Email configuration
-if DEBUG:
-    # En développement, on affiche les emails dans la console pour éviter les erreurs
+if os.getenv('EMAIL_BACKEND_CONSOLE', 'False') == 'True':
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-    print("📧 Mode développement : Les emails seront affichés dans la console")
+    print(" Mode console : Les emails seront affichés dans la console (aucun envoi réel)")
 else:
-    # En production, on utilise le serveur SMTP
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
     EMAIL_HOST = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
     EMAIL_PORT = int(os.getenv('MAIL_PORT', 587))
-    EMAIL_USE_TLS = os.getenv('MAIL_USE_TLS', 'True') == 'True'
-    EMAIL_USE_SSL = os.getenv('MAIL_USE_SSL', 'False') == 'True'
+
+    # Gestion cohérente TLS / SSL (on ne peut pas avoir les deux)
+    use_tls = os.getenv('MAIL_USE_TLS', 'True') == 'True'
+    use_ssl = os.getenv('MAIL_USE_SSL', 'False') == 'True'
+    if use_tls and use_ssl:
+        # Si les deux sont True, on privilégie TLS (car c'est le plus standard)
+        use_ssl = False
+        print("⚠️  MAIL_USE_TLS et MAIL_USE_SSL sont tous les deux True. On privilégie TLS.")
+    EMAIL_USE_TLS = use_tls
+    EMAIL_USE_SSL = use_ssl
+
     EMAIL_HOST_USER = os.getenv('MAIL_USERNAME')
     EMAIL_HOST_PASSWORD = os.getenv('MAIL_PASSWORD')
-    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
+    DEFAULT_FROM_EMAIL = os.getenv('MAIL_DEFAULT_SENDER', EMAIL_HOST_USER)
 
-    # Vérifier que les variables sont définies
     if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
         print("⚠️  ATTENTION : Les variables MAIL_USERNAME et MAIL_PASSWORD doivent être définies dans .env")
+    else:
+        print(f" Configuration SMTP : {EMAIL_HOST}:{EMAIL_PORT} TLS={EMAIL_USE_TLS} SSL={EMAIL_USE_SSL}")
 
 
 # ==============================================
@@ -219,11 +226,11 @@ PWA_APP_SCOPE = '/'
 PWA_APP_ORIENTATION = 'portrait'
 PWA_APP_START_URL = '/pharmacies/dashboard/'
 PWA_APP_ICONS = [
-    {'src': '/static/icons/icon-192.png', 'sizes': '192x192'},
-    {'src': '/static/icons/icon-512.png', 'sizes': '512x512'},
+    {'src': '/static/icons/icon-192x192.png', 'sizes': '192x192'},
+    {'src': '/static/icons/icon-512x512.png', 'sizes': '512x512'},
 ]
 PWA_APP_ICONS_APPLE = [
-    {'src': '/static/icons/icon-192.png', 'sizes': '192x192'}
+    {'src': '/static/icons/icon-192x192.png', 'sizes': '192x192'}
 ]
 PWA_APP_SPLASH_SCREEN = []
 PWA_APP_DIR = 'ltr'
