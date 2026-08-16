@@ -1,0 +1,22 @@
+{
+  "name": "Pharmaconnect",
+  "short_name": "Pharmaconnect",
+  "description": "Detection de faux medicaament",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#2C5F8A",
+  "theme_color": "#2E8B57",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
